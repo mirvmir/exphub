@@ -1,0 +1,53 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: mentoring-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: bookstore_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: psql_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bookstore_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mentoring-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_MODE: docker
+      DB_DOCKER_URL: jdbc:postgresql://db:5432/bookstore_db
+      DB_USER: postgres
+      DB_PASSWORD: psql_password
+      LIQUIBASE_ENABLED: "true"
+      HIBERNATE_HBM2DDL_AUTO: validate
+      LOG_DIR: /usr/local/tomcat/logs/app
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./storage/uploads:/usr/local/tomcat/storage/uploads
+      - ./logs:/usr/local/tomcat/logs/app
+    secrets:
+      - jwt_public_key
+      - jwt_private_key
+
+secrets:
+  jwt_public_key:
+    file: ./data/secrets/public.pem
+  jwt_private_key:
+    file: ./data/secrets/private.pem
+
+volumes:
+  postgres-data:

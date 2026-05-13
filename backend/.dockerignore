@@ -1,0 +1,9 @@
+.git
+.idea
+.smarttomcat
+**/target
+logs
+storage
+*.iml
+*.log
+.DS_Store
