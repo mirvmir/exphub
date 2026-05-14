@@ -10,14 +10,9 @@ public interface ActivitySlotRepository {
     List<ActivitySlot> findByActivityId(Long activityId);
     ActivitySlot findById(Long activitySlotId);
     boolean existsPlannedByActivityId(Long activityId);
-    ActivitySlot saveGroupSlotWithAuthorLock(
-            Long authorId,
-            ActivitySlot slot
-    );
-
-    ActivitySlot saveIndividualSlotWithAuthorLock(
-            Long authorId,
-            Long activityTimeId,
-            ActivitySlot slot
-    );
+    ActivitySlot saveGroupSlotWithAuthorLock(Long authorId,
+                                             ActivitySlot slot);
+    ActivitySlot saveIndividualSlotWithAuthorLock(Long authorId,
+                                                  Long activityTimeId,
+                                                  ActivitySlot slot);
 }

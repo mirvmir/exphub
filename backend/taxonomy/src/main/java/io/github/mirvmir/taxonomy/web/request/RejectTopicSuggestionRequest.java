@@ -1,4 +1,9 @@
 package io.github.mirvmir.taxonomy.web.request;
 
-public record RejectTopicSuggestionRequest(String moderationComment) {
+import jakarta.validation.constraints.NotBlank;
+
+public record RejectTopicSuggestionRequest(
+        @NotBlank
+        String moderationComment
+) {
 }

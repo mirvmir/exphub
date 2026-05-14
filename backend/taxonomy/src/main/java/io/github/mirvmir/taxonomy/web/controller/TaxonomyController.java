@@ -3,6 +3,7 @@ package io.github.mirvmir.taxonomy.web.controller;
 import io.github.mirvmir.taxonomy.application.service.interfaces.TaxonomyService;
 import io.github.mirvmir.taxonomy.web.request.CreateTopicSuggestionRequest;
 import io.github.mirvmir.taxonomy.web.response.*;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +30,7 @@ public class TaxonomyController {
             Long subjectId,
             @PathVariable("sectionId")
             Long sectionId,
+            @Valid
             @RequestBody
             CreateTopicSuggestionRequest request
     ) {

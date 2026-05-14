@@ -46,8 +46,6 @@ public class DefaultReviewService implements ReviewService {
             );
         }
 
-        validateScore(request.score());
-
         Review review = checkReviewDoesNotExist(
                 activityId,
                 currentUserId,
@@ -87,8 +85,6 @@ public class DefaultReviewService implements ReviewService {
                     "Пользователь не является студентом данного курса"
             );
         }
-
-        validateScore(request.score());
 
         Review review = checkReviewDoesNotExist(
                 courseId,
@@ -147,19 +143,6 @@ public class DefaultReviewService implements ReviewService {
                 ratingAvg,
                 reviewCount
         );
-    }
-    private void validateScore(Double score) {
-        if (score == null) {
-            throw new ValidationException(
-                    "Оценка обязательна"
-            );
-        }
-
-        if (score < 1 || score > 5) {
-            throw new ValidationException(
-                    "Оценка должна быть от 1 до 5"
-            );
-        }
     }
 
     private Review checkReviewDoesNotExist(Long toItemId,

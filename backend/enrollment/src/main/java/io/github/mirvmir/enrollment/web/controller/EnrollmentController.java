@@ -3,6 +3,7 @@ package io.github.mirvmir.enrollment.web.controller;
 import io.github.mirvmir.enrollment.application.service.interfaces.EnrollmentBookingService;
 import io.github.mirvmir.enrollment.web.request.BookIndividualActivityRequest;
 import io.github.mirvmir.enrollment.web.response.BookingResponse;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -41,6 +42,7 @@ public class EnrollmentController {
     public BookingResponse bookIndividualActivity(
             @PathVariable("activityId")
             Long activityId,
+            @Valid
             @RequestBody
             BookIndividualActivityRequest request
     ) {

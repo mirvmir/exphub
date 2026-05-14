@@ -58,7 +58,9 @@ public enum CourseErrorCode implements ErrorCode {
     COURSE_ENROLLMENT_VERSION_NOT_FOUND("COURSE_ENROLLMENT_VERSION_NOT_FOUND",
             "Course version is not assigned to enrollment"),
     COURSE_VERSION_NOT_FOUND("COURSE_VERSION_NOT_FOUND",
-            "COURSE_VERSION_NOT_FOUND");
+            "Course version not found"),
+    TOPIC_SUBJECT_MISMATCH("TOPIC_SUBJECT_MISMATCH",
+            "One or more topics do not belong to the specified subject");
 
     private final String code;
     private final String message;

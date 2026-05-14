@@ -5,10 +5,13 @@ import io.github.mirvmir.payment.application.service.interfaces.PaymentService;
 import io.github.mirvmir.payment.web.request.*;
 import io.github.mirvmir.payment.web.response.BindCardResponse;
 import io.github.mirvmir.payment.web.response.ConfirmPaymentResponse;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @AllArgsConstructor
 @RestController
@@ -19,9 +22,17 @@ public class PaymentController {
 
     @RequiresCompletedProfile
     @PreAuthorize("hasAuthority('ROLE_USER')")
-    @PostMapping("/bind")
+    @GetMapping("/card/bind")
+    public List<BindCardResponse> getCard() {
+        return paymentService.getMyCard();
+    }
+
+    @RequiresCompletedProfile
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @PostMapping("/card/bind")
     @ResponseStatus(HttpStatus.CREATED)
     public BindCardResponse bindCard(
+            @Valid
             @RequestBody
             BindCardRequest request
     ) {
@@ -30,10 +41,22 @@ public class PaymentController {
 
     @RequiresCompletedProfile
     @PreAuthorize("hasAuthority('ROLE_USER')")
+    @PatchMapping("/card/bind")
+    public void setDefaultCard(
+            @Valid
+            @RequestBody
+            DefaultCardRequest request
+    ) {
+        paymentService.setDefaultCard(request.cardId());
+    }
+
+    @RequiresCompletedProfile
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     @PostMapping("/{paymentId}/start")
     public ConfirmPaymentResponse startPayment(
             @PathVariable("paymentId")
             Long paymentId,
+            @Valid
             @RequestBody(required = false)
             ConfirmPaymentRequest request
     ) {
@@ -46,6 +69,7 @@ public class PaymentController {
     @PostMapping("/webhook/bank")
     @ResponseStatus(HttpStatus.OK)
     public void handleBankWebhook(
+            @Valid
             @RequestBody
             BankPaymentWebhookRequest request
     ) {
@@ -55,6 +79,7 @@ public class PaymentController {
     @PostMapping("/webhook/bank/payout")
     @ResponseStatus(HttpStatus.OK)
     public void handleBankPayoutWebhook(
+            @Valid
             @RequestBody
             BankPayoutWebhookRequest request
     ) {
@@ -64,6 +89,7 @@ public class PaymentController {
     @PostMapping("/webhook/bank/refund")
     @ResponseStatus(HttpStatus.OK)
     public void handleBankRefundWebhook(
+            @Valid
             @RequestBody
             BankRefundWebhookRequest request
     ) {

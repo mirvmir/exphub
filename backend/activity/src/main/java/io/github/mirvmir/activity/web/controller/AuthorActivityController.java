@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Set;
+
 @AllArgsConstructor
 @RequiresCompletedProfile
 @RestController
@@ -23,12 +25,32 @@ public class AuthorActivityController {
     private final ActivitySlotService activitySlotService;
     private final AuthorActivityTimeService authorActivityTimeService;
 
-    @GetMapping("/{activityId}")
-    public AuthorActivityDescriptionResponse getByIdForAuthor(
-            @PathVariable("activityId")
-            Long id
+    @GetMapping("/{activityId}/description")
+    public AuthorActivityDescriptionResponse getDescriptionForAuthor(
+            @PathVariable Long activityId
     ) {
-        return authorActivityService.getActivityByAuthor(id);
+        return authorActivityService.getDescriptionForAuthor(activityId);
+    }
+
+    @GetMapping("/{activityId}/availability-times")
+    public Set<ActivityTimeResponse> getAvailabilityTimesForAuthor(
+            @PathVariable Long activityId
+    ) {
+        return authorActivityTimeService.getAvailabilityTimesForAuthor(activityId);
+    }
+
+    @GetMapping("/{activityId}/individual-slots")
+    public Set<IndividualActivitySlotResponse> getIndividualSlotsForAuthor(
+            @PathVariable Long activityId
+    ) {
+        return authorActivityService.getIndividualSlotsForAuthor(activityId);
+    }
+
+    @GetMapping("/{activityId}/group-slots")
+    public Set<GroupActivitySlotResponse> getGroupSlotsForAuthor(
+            @PathVariable Long activityId
+    ) {
+        return authorActivityService.getGroupSlotsForAuthor(activityId);
     }
 
     @PostMapping
@@ -45,6 +67,7 @@ public class AuthorActivityController {
     public ActivityResponse updateActivity(
             @PathVariable("activityId")
             Long activityId,
+            @Valid
             @RequestBody
             UpdateActivityRequest request
     ) {
@@ -64,6 +87,20 @@ public class AuthorActivityController {
             UpdateActivitySlotRoomJoinUrlRequest request
     ) {
         activitySlotService.updateRoomJoinUrl(
+                activitySlotId,
+                request
+        );
+    }
+
+    @PatchMapping("/{activityId}/topics")
+    public void updateTopics(
+            @PathVariable("activityId")
+            Long activitySlotId,
+            @Valid
+            @RequestBody
+            UpdateActivityTopicsRequest request
+    ) {
+        activitySlotService.updateTopics(
                 activitySlotId,
                 request
         );
@@ -96,6 +133,15 @@ public class AuthorActivityController {
         authorActivityService.unarchive(activityId);
     }
 
+    @DeleteMapping("/{activityId}/availability-times/{activityTimeId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteAvailabilityTime(
+            @PathVariable Long activityId,
+            @PathVariable Long activityTimeId
+    ) {
+        authorActivityTimeService.deleteAvailabilityTime(activityId, activityTimeId);
+    }
+
     @DeleteMapping("/{activityId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteActivity(
@@ -103,19 +149,6 @@ public class AuthorActivityController {
             Long activityId
     ) {
         authorActivityService.deleteActivity(activityId);
-    }
-
-    @PatchMapping("/{activityId}/topics")
-    public void updateTopics(
-            @PathVariable("activityId")
-            Long activitySlotId,
-            @RequestBody
-            UpdateActivityTopicsRequest request
-    ) {
-        activitySlotService.updateTopics(
-                activitySlotId,
-                request
-        );
     }
 
     @PostMapping("/{activitySlotId}/cancel")
@@ -143,6 +176,7 @@ public class AuthorActivityController {
     public ActivitySlotResponse createGroupSlot(
             @PathVariable("activityId")
             Long activityId,
+            @Valid
             @RequestBody
             CreateGroupActivitySlotRequest request
     ) {
@@ -156,6 +190,7 @@ public class AuthorActivityController {
     public ActivityTimeResponse createAvailabilityTime(
             @PathVariable("activityId")
             Long activityId,
+            @Valid
             @RequestBody
             CreateAvailabilityTimeRequest request
     ) {

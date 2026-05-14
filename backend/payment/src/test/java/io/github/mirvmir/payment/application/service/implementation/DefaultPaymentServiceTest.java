@@ -2,6 +2,7 @@ package io.github.mirvmir.payment.application.service.implementation;
 
 import io.github.mirvmir.common.exception.NotFoundException;
 import io.github.mirvmir.enrollment.api.EnrollmentApi;
+import io.github.mirvmir.identity.api.IdentityApi;
 import io.github.mirvmir.payment.api.event.PaymentSucceededEvent;
 import io.github.mirvmir.payment.application.integration.BankPaymentGatewayClient;
 import io.github.mirvmir.payment.application.integration.dto.BankBindCardResponse;
@@ -43,6 +44,7 @@ import static org.mockito.Mockito.*;
 class DefaultPaymentServiceTest {
 
     private EnrollmentApi enrollmentApi;
+    private IdentityApi identityApi;
     private BankPaymentGatewayClient bankPaymentGatewayClient;
     private UserCardRepository userCardRepository;
     private PaymentRepository paymentRepository;
@@ -60,6 +62,7 @@ class DefaultPaymentServiceTest {
     @BeforeEach
     void setUp() {
         enrollmentApi = mock(EnrollmentApi.class);
+        identityApi = mock(IdentityApi.class);
         bankPaymentGatewayClient = mock(BankPaymentGatewayClient.class);
         userCardRepository = mock(UserCardRepository.class);
         paymentRepository = mock(PaymentRepository.class);
@@ -69,6 +72,7 @@ class DefaultPaymentServiceTest {
 
         service = new DefaultPaymentService(
                 enrollmentApi,
+                identityApi,
                 bankPaymentGatewayClient,
                 userCardRepository,
                 paymentRepository,
@@ -82,7 +86,6 @@ class DefaultPaymentServiceTest {
     @Test
     void bindCard_shouldSaveCardAndReturnResponse() {
         BindCardRequest request = new BindCardRequest(
-                1L,
                 "4111111111111111",
                 "IVAN IVANOV",
                 "12",
@@ -103,6 +106,7 @@ class DefaultPaymentServiceTest {
         when(userCardRepository.existsByUserIdAndCardToken(1L, "token-1")).thenReturn(false);
         when(userCardRepository.existsByUserId(1L)).thenReturn(false);
         when(userCardRepository.save(any())).thenReturn(savedCard);
+        when(identityApi.getCurrentUserId()).thenReturn(1L);
 
         BindCardResponse response = service.bindCard(request);
 
@@ -121,7 +125,6 @@ class DefaultPaymentServiceTest {
     @Test
     void bindCard_shouldThrowCardBindingException_whenBankStatusIsNotSucceeded() {
         BindCardRequest request = new BindCardRequest(
-                1L,
                 "4111111111111111",
                 "IVAN IVANOV",
                 "12",
@@ -138,6 +141,7 @@ class DefaultPaymentServiceTest {
         );
 
         when(bankPaymentGatewayClient.bindCard(any())).thenReturn(bankResponse);
+        when(identityApi.getCurrentUserId()).thenReturn(1L);
 
         CardBindingException exception = assertThrows(CardBindingException.class,
                 () -> service.bindCard(request));
@@ -149,7 +153,6 @@ class DefaultPaymentServiceTest {
     @Test
     void bindCard_shouldThrowCardBindingException_whenCardAlreadyBound() {
         BindCardRequest request = new BindCardRequest(
-                1L,
                 "4111111111111111",
                 "IVAN IVANOV",
                 "12",
@@ -167,6 +170,7 @@ class DefaultPaymentServiceTest {
 
         when(bankPaymentGatewayClient.bindCard(any())).thenReturn(bankResponse);
         when(userCardRepository.existsByUserIdAndCardToken(1L, "token-1")).thenReturn(true);
+        when(identityApi.getCurrentUserId()).thenReturn(1L);
 
         CardBindingException exception = assertThrows(CardBindingException.class,
                 () -> service.bindCard(request));

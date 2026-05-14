@@ -60,7 +60,7 @@ public class HibernatePracticeSubmissionAnswerRepository implements PracticeSubm
                 where psa.practiceSubmissionId in :practiceSubmissionIds
                 order by psa.createdAt asc
                 """, PracticeSubmissionAnswerEntity.class)
-                    .setParameter("practiceSubmissionIds", practiceSubmissionIds)
+                .setParameter("practiceSubmissionIds", practiceSubmissionIds)
                 .getResultList()
                 .stream()
                 .map(practiceSubmissionAnswerMapper::toDomain)

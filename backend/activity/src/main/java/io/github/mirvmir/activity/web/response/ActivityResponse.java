@@ -4,7 +4,6 @@ import io.github.mirvmir.activity.domain.ActivityType;
 
 import java.math.BigDecimal;
 import java.util.Currency;
-import java.util.Set;
 
 public record ActivityResponse(
         Long id,
@@ -14,8 +13,6 @@ public record ActivityResponse(
         BigDecimal priceAmount,
         Currency priceCurrency,
         Integer durationMinutes,
-        ActivityType type,
-        Long subjectId,
-        Set<Long> topicIds
+        ActivityType type
 ) {
 }

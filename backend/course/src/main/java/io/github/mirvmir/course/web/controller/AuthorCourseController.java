@@ -7,6 +7,7 @@ import io.github.mirvmir.course.web.response.AuthorCourseLessonResponse;
 import io.github.mirvmir.course.web.response.AuthorCourseModuleResponse;
 import io.github.mirvmir.course.web.response.AuthorCourseResponse;
 import io.github.mirvmir.course.web.response.IdResponse;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -58,6 +59,7 @@ public class AuthorCourseController {
 
     @PostMapping
     public IdResponse createCourse(
+            @Valid
             @RequestBody
             CreateCourseRequest request
     ) {
@@ -68,6 +70,7 @@ public class AuthorCourseController {
     public void updateTopics(
             @PathVariable("courseId")
             Long courseId,
+            @Valid
             @RequestBody
             UpdateCourseTopicsRequest request
     ) {
@@ -80,6 +83,7 @@ public class AuthorCourseController {
             Long courseId,
             @PathVariable("stableLessonId")
             UUID stableLessonId,
+            @Valid
             @RequestBody
             UpdateLessonOpensAtRequest request
     ) {
@@ -90,6 +94,7 @@ public class AuthorCourseController {
     public AuthorCourseResponse updateDraftCourse(
             @PathVariable("courseId")
             Long courseId,
+            @Valid
             @RequestBody
             UpdateCourseDraftRequest request
     ) {
@@ -100,6 +105,7 @@ public class AuthorCourseController {
     public AuthorCourseResponse saveDraftModules(
             @PathVariable("courseId")
             Long courseId,
+            @Valid
             @RequestBody
             SaveDraftModulesRequest request
     ) {
@@ -112,6 +118,7 @@ public class AuthorCourseController {
             Long courseId,
             @PathVariable("moduleId")
             Long moduleId,
+            @Valid
             @RequestBody
             SaveDraftModuleLessonsRequest request
     ) {
@@ -124,6 +131,7 @@ public class AuthorCourseController {
             Long courseId,
             @PathVariable("lessonId")
             Long lessonId,
+            @Valid
             @RequestBody
             SaveDraftLessonBlocksRequest request
     ) {

@@ -8,6 +8,7 @@ import io.github.mirvmir.profile.web.response.EditProfileResponse;
 import io.github.mirvmir.profile.web.response.MyProfileResponse;
 import io.github.mirvmir.profile.web.response.PublicProfileResponse;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -37,6 +38,7 @@ public class ProfileController {
 
     @PutMapping("/me")
     public EditProfileResponse editMyProfile(
+            @Valid
             @RequestBody
             EditProfileRequest request,
             HttpServletResponse response

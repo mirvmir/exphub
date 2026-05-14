@@ -22,6 +22,7 @@ public class Course {
     private Long id;
     private Long authorId;
     private ContentStatus status;
+    private Long subjectId;
     private Set<Long> topicIds;
     private Set<CourseLessonOpening> lessonOpenings;
     private CourseVersion publishedVersion;
@@ -37,6 +38,7 @@ public class Course {
                 null,
                 authorId,
                 ContentStatus.DRAFT,
+                null,
                 new HashSet<>(),
                 new HashSet<>(),
                 null,
@@ -47,6 +49,7 @@ public class Course {
     public static Course load(Long id,
                               Long authorId,
                               ContentStatus status,
+                              Long subjectId,
                               Set<Long> topicIds,
                               Set<CourseLessonOpening> lessonOpenings,
                               CourseVersion publishedVersion,
@@ -55,6 +58,7 @@ public class Course {
                 id,
                 authorId,
                 status,
+                subjectId,
                 topicIds == null ? new HashSet<>() : new HashSet<>(topicIds),
                 lessonOpenings == null ? new HashSet<>() : new HashSet<>(lessonOpenings),
                 publishedVersion,
@@ -66,9 +70,11 @@ public class Course {
         this.id = id;
     }
 
-    public void updateTopics(Set<Long> topicIds) {
+    public void updateTopics(Set<Long> topicIds, Long subjectId) {
         ensureNotDeleted();
+        ensureNotBlocked();
 
+        this.subjectId = subjectId;
         this.topicIds = topicIds == null
                 ? new HashSet<>()
                 : new HashSet<>(topicIds);

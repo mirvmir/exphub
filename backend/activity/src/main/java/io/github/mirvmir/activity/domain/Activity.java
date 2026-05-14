@@ -159,9 +159,7 @@ public class Activity {
                      Integer maxBookableSeats,
                      BigDecimal amount,
                      Currency currency,
-                     Integer durationMinutes,
-                     Long subjectId,
-                     Set<Long> topicIds) {
+                     Integer durationMinutes) {
         if (ContentStatus.DRAFT != this.contentStatus
                 || !(ModerationStatus.DRAFT == this.moderationStatus
                 || ModerationStatus.REJECTED == this.moderationStatus)) {
@@ -174,10 +172,6 @@ public class Activity {
         this.maxBookableSeats = maxBookableSeats;
         this.price = new Money(amount, currency);
         this.durationMinutes = durationMinutes;
-        this.subjectId = subjectId;
-        this.topicIds = topicIds == null
-                ? new HashSet<>()
-                : new HashSet<>(topicIds);
 
         this.moderationStatus = ModerationStatus.DRAFT;
     }
@@ -261,10 +255,11 @@ public class Activity {
         this.contentStatus = ContentStatus.DELETED;
     }
 
-    public void updateTopics(Set<Long> topicIds) {
+    public void updateTopics(Set<Long> topicIds, Long subjectId) {
         ensureNotBlocked();
         ensureNotDeleted();
 
+        this.subjectId = subjectId;
         this.topicIds = topicIds == null
                 ? new HashSet<>()
                 : new HashSet<>(topicIds);

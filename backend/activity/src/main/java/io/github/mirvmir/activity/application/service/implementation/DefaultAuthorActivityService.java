@@ -59,79 +59,66 @@ public class DefaultAuthorActivityService implements AuthorActivityService {
 
     @Override
     @Transactional(readOnly = true)
-    public AuthorActivityDescriptionResponse getActivityByAuthor(Long id) {
-        log.debug("Getting author activity description: activityId={}", id);
+    public AuthorActivityDescriptionResponse getDescriptionForAuthor(Long id) {
+        Activity activity = getActivityForCurrentAuthor(id);
 
-        Activity activity = activityRepository.findById(id);
-
-        if (activity == null) {
-            log.warn("Activity not found: activityId={}", id);
-            throw new NotFoundException(
-                    ActivityErrorCode.ACTIVITY_NOT_FOUND,
-                    "Activity with id=" + id + " not found"
-            );
-        }
-
-        Long authorId = activity.getAuthorId();
-        ensureAuthor(authorId);
-
-        ProfileNameDto author = profileApi.getProfileName(authorId);
-
-        List<ActivitySlot> plannedSlots =
-                activitySlotRepository.findPlannedByActivityId(activity.getId());
-
-        Set<ActivityTimeResponse> activityTimes = Set.of();
-        Set<IndividualActivitySlotResponse> individualActivities = Set.of();
-        Set<GroupActivitySlotResponse> groupActivities = Set.of();
-
-        if (activity.isIndividual()) {
-            activityTimes = activityTimeResponseMapper.toResponseSet(
-                    activity.getActivityTimes()
-            );
-
-            individualActivities =
-                    activitySlotResponseMapper.toIndividualResponseSet(plannedSlots);
-        }
-
-        if (activity.isGroup()) {
-            Set<Long> plannedSlotIds = plannedSlots.stream()
-                    .map(ActivitySlot::getId)
-                    .collect(Collectors.toSet());
-
-            Map<Long, Integer> bookedSeatsBySlotId =
-                    enrollmentApi.countBookedByActivitySlotIds(
-                            plannedSlotIds,
-                            Instant.now(clock)
-                    );
-
-            groupActivities =
-                    activitySlotResponseMapper.toGroupResponseSet(
-                            plannedSlots,
-                            bookedSeatsBySlotId,
-                            activity.getMaxBookableSeats()
-                    );
-        }
+        ProfileNameDto author = profileApi.getProfileName(activity.getAuthorId());
 
         boolean canEdit = activity.isEditable();
         boolean canDelete = !activitySlotRepository.existsPlannedByActivityId(id);
         boolean canRequestPublication = activity.canRequestPublication();
 
-        log.debug("Author activity description prepared: activityId={}, authorId={}, canEdit={}, canDelete={}, canRequestPublication={}",
-                activity.getId(),
-                authorId,
-                canEdit,
-                canDelete,
-                canRequestPublication);
-
         return activityResponseMapper.toAuthorActivityDescriptionResponse(
                 activity,
                 author,
-                activityTimes,
-                individualActivities,
-                groupActivities,
+                Set.of(),
+                Set.of(),
+                Set.of(),
                 canEdit,
                 canDelete,
                 canRequestPublication
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Set<IndividualActivitySlotResponse> getIndividualSlotsForAuthor(Long activityId) {
+        Activity activity = getActivityForCurrentAuthor(activityId);
+
+        if (!activity.isIndividual()) {
+            throw new BusinessException(ActivityErrorCode.ONLY_FOR_INDIVIDUAL);
+        }
+
+        List<ActivitySlot> slots = activitySlotRepository.findByActivityId(activityId);
+
+        return activitySlotResponseMapper.toIndividualResponseSet(slots);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Set<GroupActivitySlotResponse> getGroupSlotsForAuthor(Long activityId) {
+        Activity activity = getActivityForCurrentAuthor(activityId);
+
+        if (!activity.isGroup()) {
+            throw new BusinessException(ActivityErrorCode.ONLY_FOR_GROUP);
+        }
+
+        List<ActivitySlot> slots = activitySlotRepository.findByActivityId(activityId);
+
+        Set<Long> slotIds = slots.stream()
+                .map(ActivitySlot::getId)
+                .collect(Collectors.toSet());
+
+        Map<Long, Integer> bookedSeatsBySlotId =
+                enrollmentApi.countBookedByActivitySlotIds(
+                        slotIds,
+                        Instant.now(clock)
+                );
+
+        return activitySlotResponseMapper.toGroupResponseSet(
+                slots,
+                bookedSeatsBySlotId,
+                activity.getMaxBookableSeats()
         );
     }
 
@@ -208,9 +195,7 @@ public class DefaultAuthorActivityService implements AuthorActivityService {
                 request.maxBookableSeats(),
                 request.priceAmount(),
                 request.priceCurrency(),
-                request.durationMinutes(),
-                request.subjectId(),
-                request.topicIds()
+                request.durationMinutes()
         );
 
         activityRepository.saveOrUpdate(activity);
@@ -367,5 +352,24 @@ public class DefaultAuthorActivityService implements AuthorActivityService {
                     currentUserId);
             throw new ForbiddenException(ActivityErrorCode.ACTIVITY_FORBIDDEN);
         }
+    }
+
+    private Activity getActivityForCurrentAuthor(Long activityId) {
+        Activity activity = activityRepository.findById(activityId);
+
+        if (activity == null) {
+            throw new NotFoundException(
+                    ActivityErrorCode.ACTIVITY_NOT_FOUND,
+                    "Activity with id=" + activityId + " not found"
+            );
+        }
+
+        Long currentUserId = identityApi.getCurrentUserId();
+
+        if (!activity.getAuthorId().equals(currentUserId)) {
+            throw new ForbiddenException(ActivityErrorCode.ACTIVITY_FORBIDDEN);
+        }
+
+        return activity;
     }
 }

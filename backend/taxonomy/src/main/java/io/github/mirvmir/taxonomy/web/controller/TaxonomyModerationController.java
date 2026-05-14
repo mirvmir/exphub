@@ -6,6 +6,7 @@ import io.github.mirvmir.taxonomy.web.response.SectionDetailsResponse;
 import io.github.mirvmir.taxonomy.web.response.SubjectResponse;
 import io.github.mirvmir.taxonomy.web.response.TopicDetailsResponse;
 import io.github.mirvmir.taxonomy.web.response.TopicSuggestionResponse;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -37,6 +38,7 @@ public class TaxonomyModerationController {
     public TopicSuggestionResponse mergeTopicSuggestion(
             @PathVariable("suggestionId")
             Long suggestionId,
+            @Valid
             @RequestBody
             MergeTopicSuggestionRequest request
     ) {
@@ -47,6 +49,7 @@ public class TaxonomyModerationController {
     public TopicSuggestionResponse rejectTopicSuggestion(
             @PathVariable("suggestionId")
             Long suggestionId,
+            @Valid
             @RequestBody
             RejectTopicSuggestionRequest request
     ) {
@@ -55,6 +58,7 @@ public class TaxonomyModerationController {
 
     @PostMapping("/subjects")
     public SubjectResponse createSubject(
+            @Valid
             @RequestBody
             CreateSubjectRequest request
     ) {
@@ -65,6 +69,7 @@ public class TaxonomyModerationController {
     public SectionDetailsResponse createSection(
             @PathVariable("subjectId")
             Long subjectId,
+            @Valid
             @RequestBody
             CreateSectionRequest request
     ) {
@@ -77,6 +82,7 @@ public class TaxonomyModerationController {
             Long subjectId,
             @PathVariable("sectionId")
             Long sectionId,
+            @Valid
             @RequestBody
             CreateTopicRequest request
     ) {

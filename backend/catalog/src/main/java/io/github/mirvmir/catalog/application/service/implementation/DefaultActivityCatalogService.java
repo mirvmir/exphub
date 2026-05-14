@@ -12,8 +12,6 @@ import io.github.mirvmir.review.api.ReviewApi;
 import io.github.mirvmir.review.api.dto.ReviewRatingInfoResponse;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

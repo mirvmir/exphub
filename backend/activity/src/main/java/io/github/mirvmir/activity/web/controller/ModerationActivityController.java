@@ -2,6 +2,7 @@ package io.github.mirvmir.activity.web.controller;
 
 import io.github.mirvmir.activity.application.service.interfaces.ModerationActivityService;
 import io.github.mirvmir.activity.web.request.RejectActivityRequest;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,6 +30,7 @@ public class ModerationActivityController {
     public void reject(
             @PathVariable("activityId")
             Long activityId,
+            @Valid
             @RequestBody
             RejectActivityRequest request
     ) {

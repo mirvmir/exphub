@@ -2,6 +2,7 @@ package io.github.mirvmir.identity.application.service.implementation;
 
 import io.github.mirvmir.common.exception.NotFoundException;
 import io.github.mirvmir.identity.application.RefreshTokenHasher;
+import io.github.mirvmir.identity.application.properties.JwtProperties;
 import io.github.mirvmir.identity.application.service.dto.RefreshDto;
 import io.github.mirvmir.identity.application.service.port.repository.RefreshTokenRepository;
 import io.github.mirvmir.identity.application.service.port.repository.UserRepository;
@@ -17,6 +18,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 
@@ -25,10 +27,12 @@ import java.util.List;
 @Service
 public class DefaultRefreshService implements RefreshService {
 
-    private final RefreshTokenHasher tokenHasher;
-
     private final RefreshTokenRepository tokenRepo;
     private final UserRepository userRepo;
+
+    private final RefreshTokenHasher tokenHasher;
+    private final JwtProperties jwtProperties;
+    private final Clock clock;
 
     @Transactional
     @Override
@@ -75,6 +79,22 @@ public class DefaultRefreshService implements RefreshService {
                 List.of(new SimpleGrantedAuthority("ROLE_" + role.name())),
                 user.isProfileCompleted()
         );
+    }
+
+    @Override
+    public void deleteExpiredRefreshTokens() {
+        Instant now = Instant.now(clock);
+
+        log.info("Start expiring overdue orders: now={}",
+                now);
+
+        for (int i = 0; i < jwtProperties.getMaxBatch(); i++) {
+            int deleted = tokenRepo.deleteExpiredBatch(now, jwtProperties.getBatch());
+
+            if (0 == deleted) {
+                break;
+            }
+        }
     }
 }
 

@@ -1,4 +1,11 @@
 package io.github.mirvmir.taxonomy.web.request;
 
-public record MergeTopicSuggestionRequest(Long resolvedTopicId) {
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
+public record MergeTopicSuggestionRequest(
+        @NotNull
+        @Positive
+        Long resolvedTopicId
+) {
 }

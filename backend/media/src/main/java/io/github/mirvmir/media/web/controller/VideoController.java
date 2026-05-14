@@ -6,6 +6,7 @@ import io.github.mirvmir.media.web.response.UploadedVideoResponse;
 import io.github.mirvmir.media.web.response.VideoAssetResponse;
 import io.github.mirvmir.media.web.response.VideoPlaybackUrlResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -47,10 +48,12 @@ public class VideoController {
         return videoService.createPlaybackUrl(videoId);
     }
 
+    @Validated
     @GetMapping("/{videoId}/stream")
     public ResponseEntity<Resource> streamVideo(
             @PathVariable("videoId")
             Long videoId,
+            @NotBlank
             @RequestParam("token")
             String token,
             @RequestHeader(value = HttpHeaders.RANGE, required = false)

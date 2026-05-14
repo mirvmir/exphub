@@ -46,6 +46,9 @@ public class CourseEntity {
     @JoinColumn(name = "draft_version", unique = true, nullable = false)
     private CourseVersionEntity draftVersion;
 
+    @Column(name = "subject_id")
+    private Long subjectId;
+
     @OneToMany(
             mappedBy = "courseEntity",
             cascade = CascadeType.ALL,

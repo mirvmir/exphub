@@ -7,6 +7,8 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
+
 @AllArgsConstructor
 @Repository
 public class HibernateRefreshTokenRepository implements RefreshTokenRepository {
@@ -35,6 +37,24 @@ public class HibernateRefreshTokenRepository implements RefreshTokenRepository {
     public void delete(RefreshToken refreshToken) {
         Session session = sessionFactory.getCurrentSession();
         session.remove(refreshToken);
+    }
+
+    @Override
+    public int deleteExpiredBatch(Instant now, int batchSize) {
+        Session session = sessionFactory.getCurrentSession();
+
+        return session.createNativeQuery("""
+            delete from refresh_token
+            where ctid in (
+                select ctid
+                from refresh_token
+                where expires_at < :now
+                limit :batchSize
+            )
+            """)
+                .setParameter("now", now)
+                .setParameter("batchSize", batchSize)
+                .executeUpdate();
     }
 }
 

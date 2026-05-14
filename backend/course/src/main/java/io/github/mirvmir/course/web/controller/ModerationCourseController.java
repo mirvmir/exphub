@@ -2,6 +2,7 @@ package io.github.mirvmir.course.web.controller;
 
 import io.github.mirvmir.course.application.service.interfaces.ModerationCourseService;
 import io.github.mirvmir.course.web.request.RejectCourseRequest;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +27,7 @@ public class ModerationCourseController {
     public void reject(
             @PathVariable("courseId")
             Long courseId,
+            @Valid
             @RequestBody
             RejectCourseRequest request
     ) {

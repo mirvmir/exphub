@@ -1,5 +1,6 @@
 package io.github.mirvmir.course.application.service.implementation;
 
+import io.github.mirvmir.common.exception.BusinessException;
 import io.github.mirvmir.common.exception.ForbiddenException;
 import io.github.mirvmir.common.exception.NotFoundException;
 import io.github.mirvmir.course.api.event.CourseChangeTopicIds;
@@ -23,11 +24,14 @@ import io.github.mirvmir.course.web.response.IdResponse;
 import io.github.mirvmir.identity.api.IdentityApi;
 import io.github.mirvmir.profile.api.ProfileApi;
 import io.github.mirvmir.profile.api.dto.ProfileNameDto;
+import io.github.mirvmir.taxonomy.api.TaxonomyApi;
+import io.github.mirvmir.taxonomy.api.dto.TopicTaxonomyInfoResponse;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @AllArgsConstructor
@@ -37,6 +41,7 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
 
     private final IdentityApi identityApi;
     private final ProfileApi profileApi;
+    private final TaxonomyApi taxonomyApi;
 
     private final CourseRepository courseRepository;
     private final CourseVersionRepository courseVersionRepository;
@@ -204,7 +209,17 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
         Course course = getExistingCourse(courseId);
         ensureAuthor(course);
 
-        course.updateTopics(request.topicIds());
+        List<TopicTaxonomyInfoResponse> topicsInfo = taxonomyApi.getTopicTaxonomyInfo(request.topicIds());
+        boolean inSubject = topicsInfo.stream()
+                .allMatch(
+                        topicInfo ->
+                                request.subjectId().equals(topicInfo.subjectId())
+                );
+        if (!inSubject) {
+            throw new BusinessException(CourseErrorCode.TOPIC_SUBJECT_MISMATCH);
+        }
+
+        course.updateTopics(request.topicIds(), request.subjectId());
 
         Course savedCourse = courseRepository.saveOrUpdate(course);
         eventPublisher.changeTopic(

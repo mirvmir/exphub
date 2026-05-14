@@ -1,4 +1,9 @@
 package io.github.mirvmir.taxonomy.web.request;
 
-public record CreateSectionRequest(String name) {
+import jakarta.validation.constraints.NotBlank;
+
+public record CreateSectionRequest(
+        @NotBlank
+        String name
+) {
 }

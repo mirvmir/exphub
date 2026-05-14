@@ -2,6 +2,7 @@ package io.github.mirvmir.activity.application.service.implementation;
 
 import io.github.mirvmir.activity.application.persistence.mapper.ActivityTimeResponseMapper;
 import io.github.mirvmir.activity.application.service.port.repository.ActivityRepository;
+import io.github.mirvmir.activity.application.service.port.repository.ActivityTimeRepository;
 import io.github.mirvmir.activity.domain.Activity;
 import io.github.mirvmir.activity.domain.ActivityTime;
 import io.github.mirvmir.activity.domain.ActivityType;
@@ -33,6 +34,7 @@ class DefaultAuthorActivityTimeServiceTest {
     private ActivityRepository activityRepository;
     private ActivityTimeResponseMapper activityTimeResponseMapper;
     private DefaultAuthorActivityTimeService service;
+    private ActivityTimeRepository activityTimeRepository;
 
     private final Clock clock = Clock.fixed(Instant.parse("2026-05-12T10:00:00Z"), ZoneOffset.UTC);
 
@@ -40,11 +42,13 @@ class DefaultAuthorActivityTimeServiceTest {
     void setUp() {
         identityApi = mock(IdentityApi.class);
         activityRepository = mock(ActivityRepository.class);
+        activityTimeRepository = mock(ActivityTimeRepository.class);
         activityTimeResponseMapper = mock(ActivityTimeResponseMapper.class);
 
         service = new DefaultAuthorActivityTimeService(
                 identityApi,
                 activityRepository,
+                activityTimeRepository,
                 activityTimeResponseMapper,
                 clock
         );

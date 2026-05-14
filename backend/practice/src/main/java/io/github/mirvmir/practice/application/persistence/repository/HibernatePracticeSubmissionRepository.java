@@ -87,12 +87,12 @@ public class HibernatePracticeSubmissionRepository implements PracticeSubmission
     public boolean existsCheckedByLessonIdAndStudentId(Long lessonId, Long studentId) {
         Boolean exists = sessionFactory.getCurrentSession()
                 .createQuery("""
-                        select count(ps.id) > 0
-                        from PracticeSubmissionEntity ps
-                        where ps.lessonId = :lessonId
-                          and ps.studentId = :studentId
-                          and ps.checkedAt is not null
-                        """, Boolean.class)
+                select count(ps.id) > 0
+                from PracticeSubmissionEntity ps
+                where ps.lessonId = :lessonId
+                  and ps.studentId = :studentId
+                  and ps.checkedAt is not null
+                """, Boolean.class)
                 .setParameter("lessonId", lessonId)
                 .setParameter("studentId", studentId)
                 .uniqueResult();

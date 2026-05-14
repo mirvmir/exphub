@@ -6,6 +6,7 @@ import io.github.mirvmir.media.web.response.MediaFileAccessUrlResponse;
 import io.github.mirvmir.media.web.response.MediaFileAssetResponse;
 import io.github.mirvmir.media.web.response.UploadedMediaFileResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -30,10 +31,12 @@ public class MediaFileController {
         return mediaFileService.createAccessUrl(fileId);
     }
 
+    @Validated
     @GetMapping("/{fileId}/content")
     public ResponseEntity<Resource> getContent(
             @PathVariable("fileId")
             Long fileId,
+            @NotBlank
             @RequestParam("token")
             String token
     ) {

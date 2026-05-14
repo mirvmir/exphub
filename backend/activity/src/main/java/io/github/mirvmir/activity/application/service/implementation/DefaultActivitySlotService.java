@@ -18,6 +18,8 @@ import io.github.mirvmir.common.exception.ForbiddenException;
 import io.github.mirvmir.common.exception.NotFoundException;
 import io.github.mirvmir.enrollment.api.EnrollmentApi;
 import io.github.mirvmir.identity.api.IdentityApi;
+import io.github.mirvmir.taxonomy.api.TaxonomyApi;
+import io.github.mirvmir.taxonomy.api.dto.TopicTaxonomyInfoResponse;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
+import java.util.Objects;
 
 @AllArgsConstructor
 @Slf4j
@@ -33,6 +37,7 @@ public class DefaultActivitySlotService implements ActivitySlotService {
 
     private final IdentityApi identityApi;
     private final EnrollmentApi enrollmentApi;
+    private final TaxonomyApi taxonomyApi;
 
     private final ActivityRepository activityRepository;
     private final ActivitySlotRepository activitySlotRepository;
@@ -204,7 +209,14 @@ public class DefaultActivitySlotService implements ActivitySlotService {
             throw new ForbiddenException(ActivityErrorCode.ACTIVITY_FORBIDDEN);
         }
 
-        activity.updateTopics(request.topicIds());
+        List<TopicTaxonomyInfoResponse> topicsInfo = taxonomyApi.getTopicTaxonomyInfo(request.topicIds());
+        boolean inSubject = topicsInfo.stream()
+                .allMatch(topicInfo -> request.subjectId().equals(topicInfo.subjectId()));
+        if (!inSubject) {
+            throw new BusinessException(ActivityErrorCode.TOPIC_SUBJECT_MISMATCH);
+        }
+
+        activity.updateTopics(request.topicIds(), request.subjectId());
 
         Activity savedActivity = activityRepository.saveOrUpdate(activity);
         activityEventPublisher.changeTopic(

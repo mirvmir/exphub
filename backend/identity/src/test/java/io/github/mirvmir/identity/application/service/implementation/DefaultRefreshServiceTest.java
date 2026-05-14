@@ -2,6 +2,7 @@ package io.github.mirvmir.identity.application.service.implementation;
 
 import io.github.mirvmir.common.exception.NotFoundException;
 import io.github.mirvmir.identity.application.RefreshTokenHasher;
+import io.github.mirvmir.identity.application.properties.JwtProperties;
 import io.github.mirvmir.identity.application.service.dto.RefreshDto;
 import io.github.mirvmir.identity.application.service.port.repository.RefreshTokenRepository;
 import io.github.mirvmir.identity.application.service.port.repository.UserRepository;
@@ -11,7 +12,10 @@ import io.github.mirvmir.identity.exception.UnauthorizedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -22,18 +26,26 @@ class DefaultRefreshServiceTest {
     private RefreshTokenRepository tokenRepo;
     private UserRepository userRepo;
 
+    private JwtProperties jwtProperties;
+
     private DefaultRefreshService service;
+
+    private final Instant now = Instant.parse("2026-05-13T10:00:00Z");
+    private final Clock clock = Clock.fixed(now, ZoneOffset.UTC);
 
     @BeforeEach
     void setUp() {
         tokenHasher = mock(RefreshTokenHasher.class);
         tokenRepo = mock(RefreshTokenRepository.class);
         userRepo = mock(UserRepository.class);
+        jwtProperties = mock(JwtProperties.class);
 
         service = new DefaultRefreshService(
-                tokenHasher,
                 tokenRepo,
-                userRepo
+                userRepo,
+                tokenHasher,
+                jwtProperties,
+                clock
         );
     }
 

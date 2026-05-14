@@ -1,7 +1,9 @@
 package io.github.mirvmir.payment.application.service.implementation;
 
+import io.github.mirvmir.common.exception.ForbiddenException;
 import io.github.mirvmir.common.exception.NotFoundException;
 import io.github.mirvmir.enrollment.api.EnrollmentApi;
+import io.github.mirvmir.identity.api.IdentityApi;
 import io.github.mirvmir.payment.api.event.PaymentRefundedEvent;
 import io.github.mirvmir.payment.api.event.PayoutSucceededEvent;
 import io.github.mirvmir.payment.application.service.port.event.PaymentEventPublisher;
@@ -27,12 +29,14 @@ import io.github.mirvmir.payment.web.request.BindCardRequest;
 import io.github.mirvmir.payment.web.response.BindCardResponse;
 import io.github.mirvmir.payment.web.response.ConfirmPaymentResponse;
 import lombok.AllArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @AllArgsConstructor
@@ -42,6 +46,7 @@ public class DefaultPaymentService implements PaymentService {
     private static final BigDecimal CARD_VERIFICATION_AMOUNT = BigDecimal.ONE;
 
     private final EnrollmentApi enrollmentApi;
+    private final IdentityApi identityApi;
 
     private final BankPaymentGatewayClient bankPaymentGatewayClient;
 
@@ -76,19 +81,21 @@ public class DefaultPaymentService implements PaymentService {
             throw new CardBindingException("Не удалось подключить карту");
         }
 
+        Long currentUserId = identityApi.getCurrentUserId();
+
         if (userCardRepository.existsByUserIdAndCardToken(
-                request.userId(),
+                currentUserId,
                 bankResponse.cardToken()
         )) {
             throw new CardBindingException("Карта уже подключена");
         }
 
         boolean isFirstCard = !userCardRepository.existsByUserId(
-                request.userId()
+                currentUserId
         );
 
         UserCard card = UserCard.createBoundCard(
-                request.userId(),
+                currentUserId,
                 bankResponse.bankCardId(),
                 bankResponse.cardToken(),
                 bankResponse.maskedPan(),
@@ -105,6 +112,54 @@ public class DefaultPaymentService implements PaymentService {
                 savedCard.getMaskedPan(),
                 savedCard.getPaymentSystem()
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BindCardResponse> getMyCard() {
+        Long currentUserId = identityApi.getCurrentUserId();
+
+        List<UserCard> cards = userCardRepository.findByUserId(currentUserId);
+
+        return cards.stream()
+                .map(card ->
+                        new BindCardResponse(
+                                card.getId(),
+                                card.getMaskedPan(),
+                                card.getPaymentSystem()
+                        )
+                ).toList();
+    }
+
+    @Override
+    @Transactional
+    public void setDefaultCard(Long cardId) {
+        Long currentUserId = identityApi.getCurrentUserId();
+
+        UserCard newDefaultCard = userCardRepository.findById(cardId);
+
+        if (newDefaultCard == null) {
+            throw new NotFoundException(PaymentErrorCode.CARD_NOT_FOUND);
+        }
+
+        if (!currentUserId.equals(newDefaultCard.getUserId())) {
+            throw new ForbiddenException(PaymentErrorCode.CARD_FORBIDDEN);
+        }
+
+        if (newDefaultCard.isDefaultCard()) {
+            return;
+        }
+
+        UserCard oldDefaultCard =
+                userCardRepository.findDefaultByUserId(currentUserId);
+
+        if (oldDefaultCard != null) {
+            oldDefaultCard.unmarkAsDefault();
+            userCardRepository.save(oldDefaultCard);
+        }
+
+        newDefaultCard.markAsDefault();
+        userCardRepository.save(newDefaultCard);
     }
 
     @Override

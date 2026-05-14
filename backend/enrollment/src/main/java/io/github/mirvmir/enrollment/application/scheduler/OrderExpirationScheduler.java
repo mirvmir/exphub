@@ -16,6 +16,6 @@ public class OrderExpirationScheduler {
     @Scheduled(fixedDelay = 60_000)
     public void expireOrders() {
         log.debug("Running order expiration");
-        orderExpirationService.expireOrders();
+        orderExpirationService.deleteExpiredOrders();
     }
 }

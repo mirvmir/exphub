@@ -12,7 +12,9 @@ public enum PaymentErrorCode implements ErrorCode {
     PAYOUT_NOT_FOUND("PAYOUT_NOT_FOUND",
             "Payout not found"),
     REFUND_NOT_FOUND("REFUND_NOT_FOUND",
-            "Refund not found");
+            "Refund not found"),
+    CARD_FORBIDDEN("CARD_FORBIDDEN",
+            "Card does not belong to user");
 
     private final String code;
     private final String message;

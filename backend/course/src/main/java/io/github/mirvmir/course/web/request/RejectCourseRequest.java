@@ -1,4 +1,9 @@
 package io.github.mirvmir.course.web.request;
 
-public record RejectCourseRequest(String moderationComment) {
+import jakarta.validation.constraints.NotBlank;
+
+public record RejectCourseRequest(
+        @NotBlank
+        String moderationComment
+) {
 }

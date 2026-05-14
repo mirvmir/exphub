@@ -49,12 +49,12 @@ public class HibernateActivitySlotRepository implements ActivitySlotRepository {
         Session session = sessionFactory.getCurrentSession();
 
         return session.createQuery("""
-                        select s
-                        from ActivitySlotEntity s
-                        where s.activityEntity.id = :activityId
-                          and s.status = :status
-                        order by s.startAt asc
-                        """, ActivitySlotEntity.class)
+                select s
+                from ActivitySlotEntity s
+                where s.activityEntity.id = :activityId
+                  and s.status = :status
+                order by s.startAt asc
+                """, ActivitySlotEntity.class)
                 .setParameter("activityId", activityId)
                 .setParameter("status", ActivitySlotStatus.PLANNED)
                 .getResultList()
@@ -68,11 +68,11 @@ public class HibernateActivitySlotRepository implements ActivitySlotRepository {
         Session session = sessionFactory.getCurrentSession();
 
         return session.createQuery("""
-                        select s
-                        from ActivitySlotEntity s
-                        where s.activityEntity.id = :activityId
-                        order by s.startAt asc
-                        """, ActivitySlotEntity.class)
+                select s
+                from ActivitySlotEntity s
+                where s.activityEntity.id = :activityId
+                order by s.startAt asc
+                """, ActivitySlotEntity.class)
                 .setParameter("activityId", activityId)
                 .getResultList()
                 .stream()
@@ -97,11 +97,11 @@ public class HibernateActivitySlotRepository implements ActivitySlotRepository {
         Session session = sessionFactory.getCurrentSession();
 
         Long count = session.createQuery("""
-                        select count(s.id)
-                        from ActivitySlotEntity s
-                        where s.activityEntity.id = :activityId
-                         and s.status = :status
-                        """, Long.class)
+                select count(s.id)
+                from ActivitySlotEntity s
+                where s.activityEntity.id = :activityId
+                 and s.status = :status
+                """, Long.class)
                 .setParameter("activityId", activityId)
                 .setParameter("status", ActivitySlotStatus.PLANNED)
                 .uniqueResult();

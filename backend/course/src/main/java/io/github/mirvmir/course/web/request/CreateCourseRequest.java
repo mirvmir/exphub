@@ -1,4 +1,9 @@
 package io.github.mirvmir.course.web.request;
 
-public record CreateCourseRequest(String title) {
+import jakarta.validation.constraints.NotBlank;
+
+public record CreateCourseRequest(
+        @NotBlank
+        String title
+) {
 }

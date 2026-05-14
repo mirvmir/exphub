@@ -83,4 +83,12 @@ public class UserCard {
                 updatedAt
         );
     }
+
+    public void markAsDefault() {
+        this.defaultCard = true;
+    }
+
+    public void unmarkAsDefault() {
+        this.defaultCard = false;
+    }
 }

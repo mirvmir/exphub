@@ -27,12 +27,14 @@ public class DefaultOrderExpirationService
     private final OrderRepository orderRepository;
     private final ActivityEnrollmentRepository activityEnrollmentRepository;
     private final CourseEnrollmentRepository courseEnrollmentRepository;
+
     private final Clock clock;
+
     private final BookingProperties bookingProperties;
 
     @Override
     @Transactional
-    public void expireOrders() {
+    public void deleteExpiredOrders() {
         Instant now = Instant.now(clock);
 
         log.info("Start expiring overdue orders: now={}",

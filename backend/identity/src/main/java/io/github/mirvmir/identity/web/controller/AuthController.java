@@ -13,24 +13,21 @@ import io.github.mirvmir.identity.web.responce.AccessTokenResponse;
 import io.github.mirvmir.identity.web.responce.LoginResponse;
 import io.github.mirvmir.identity.web.responce.RegisterResponse;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+@AllArgsConstructor
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
 
     private final RefreshService refreshService;
     private final AuthService authService;
-
-    public AuthController(RefreshService refreshService,
-                          AuthService authService) {
-        this.refreshService = refreshService;
-        this.authService = authService;
-    }
 
     @GetMapping("/ping")
     public String ping() {
@@ -39,6 +36,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public LoginResponse login(
+            @Valid
             @RequestBody
             LoginRq request,
             @CookieValue(name = "refresh_token", required = false)
@@ -76,6 +74,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public RegisterResponse register(
+            @Valid
             @RequestBody
             RegisterRq request,
             @CookieValue(name = "refresh_token", required = false)

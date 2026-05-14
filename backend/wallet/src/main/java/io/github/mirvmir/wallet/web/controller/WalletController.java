@@ -3,6 +3,7 @@ package io.github.mirvmir.wallet.web.controller;
 import io.github.mirvmir.common.annotation.RequiresCompletedProfile;
 import io.github.mirvmir.wallet.application.service.interfaces.WalletService;
 import io.github.mirvmir.wallet.web.request.WithdrawWalletRequest;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,6 +23,7 @@ public class WalletController {
 
     @PostMapping("/withdrawals")
     public ResponseEntity<Void> withdraw(
+            @Valid
             @RequestBody
             WithdrawWalletRequest request
     ) {

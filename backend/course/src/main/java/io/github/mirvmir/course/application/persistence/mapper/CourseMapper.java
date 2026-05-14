@@ -39,6 +39,7 @@ public abstract class CourseMapper {
                 entity.getId(),
                 entity.getAuthorId(),
                 entity.getStatus(),
+                entity.getSubjectId(),
                 toTopicIds(entity.getTopicEntities()),
                 toLessonOpenings(entity.getLessonOpeningEntities()),
                 courseVersionMapper.toDomain(entity.getPublishedVersion()),

@@ -1,4 +1,11 @@
 package io.github.mirvmir.identity.web.request;
 
-public record LoginRq(String email, String password) {
+import jakarta.validation.constraints.NotBlank;
+
+public record LoginRq(
+        @NotBlank
+        String email,
+        @NotBlank
+        String password
+) {
 }

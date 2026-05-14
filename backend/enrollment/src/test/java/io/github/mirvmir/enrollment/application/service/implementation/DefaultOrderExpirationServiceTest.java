@@ -56,7 +56,7 @@ class DefaultOrderExpirationServiceTest {
     void expireOrders_shouldDoNothing_whenNoExpiredOrdersFound() {
         when(orderRepository.findExpiredForUpdate(now, 100)).thenReturn(List.of());
 
-        service.expireOrders();
+        service.deleteExpiredOrders();
 
         verify(orderRepository).findExpiredForUpdate(now, 100);
         verify(orderRepository, never()).saveOrUpdate(any());
@@ -72,7 +72,7 @@ class DefaultOrderExpirationServiceTest {
         when(courseEnrollmentRepository.findById(10L)).thenReturn(enrollment);
         when(bookingProperties.getBookingExpiresMinutes()).thenReturn(15L);
 
-        service.expireOrders();
+        service.deleteExpiredOrders();
 
         assertEquals(OrderStatus.EXPIRED, order.getStatus());
         assertEquals(CourseEnrollmentStatus.EXPIRED, enrollment.getStatus());
@@ -91,7 +91,7 @@ class DefaultOrderExpirationServiceTest {
         when(activityEnrollmentRepository.findById(10L)).thenReturn(enrollment);
         when(bookingProperties.getBookingExpiresMinutes()).thenReturn(15L);
 
-        service.expireOrders();
+        service.deleteExpiredOrders();
 
         assertEquals(OrderStatus.EXPIRED, order.getStatus());
         assertEquals(ActivityEnrollmentStatus.EXPIRED, enrollment.getStatus());
@@ -108,7 +108,7 @@ class DefaultOrderExpirationServiceTest {
         when(orderRepository.findExpiredForUpdate(now, 100)).thenReturn(List.of(order));
         when(courseEnrollmentRepository.findById(10L)).thenReturn(null);
 
-        service.expireOrders();
+        service.deleteExpiredOrders();
 
         assertEquals(OrderStatus.EXPIRED, order.getStatus());
         verify(orderRepository).saveOrUpdate(order);
