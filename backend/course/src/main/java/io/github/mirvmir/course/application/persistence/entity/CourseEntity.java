@@ -57,9 +57,13 @@ public class CourseEntity {
     private Set<CourseTopicEntity> topicEntities = new HashSet<>();
 
     public void replaceTopics(Set<Long> topicIds) {
+        if (this.topicEntities == null) {
+            this.topicEntities = new HashSet<>();
+        }
+
         this.topicEntities.clear();
 
-        if (topicIds == null) {
+        if (topicIds == null || topicIds.isEmpty()) {
             return;
         }
 
@@ -69,9 +73,13 @@ public class CourseEntity {
     }
 
     public void replaceLessonOpenings(Set<CourseLessonOpening> lessonOpenings) {
+        if (this.lessonOpeningEntities == null) {
+            this.lessonOpeningEntities = new HashSet<>();
+        }
+
         this.lessonOpeningEntities.clear();
 
-        if (lessonOpenings == null) {
+        if (lessonOpenings == null || lessonOpenings.isEmpty()) {
             return;
         }
 

@@ -79,6 +79,10 @@ public class ActivityEntity {
     private Set<ActivityTopicEntity> topicEntities = new HashSet<>();
 
     public void replaceTopics(Set<Long> topicIds) {
+        if (this.topicEntities == null) {
+            this.topicEntities = new HashSet<>();
+        }
+
         this.topicEntities.clear();
 
         if (topicIds == null) {

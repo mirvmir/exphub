@@ -193,6 +193,14 @@ public class Course {
                 && draftVersion.isEditable();
     }
 
+    public boolean isPublishable() {
+        return ContentStatus.BLOCKED != this.status
+                && ContentStatus.DELETED != this.status
+                && draftVersion != null
+                && draftVersion.isEditable()
+                && draftVersion.isPublishable();
+    }
+
     public boolean isLessonOpened(UUID stableLessonId,
                                   Instant now) {
         if (stableLessonId == null) {

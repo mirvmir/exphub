@@ -36,7 +36,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Currency;
 import java.util.Set;
 
@@ -60,6 +62,8 @@ class ActivityControllersTest {
     private MockMvc studentMockMvc;
     private MockMvc moderationMockMvc;
     private ObjectMapper objectMapper;
+
+    private final Clock clock = Clock.fixed(Instant.parse("2026-05-12T10:00:00Z"), ZoneOffset.UTC);
 
     @BeforeEach
     void setUp() {
@@ -176,9 +180,7 @@ class ActivityControllersTest {
                 4,
                 new BigDecimal("2000"),
                 Currency.getInstance("RUB"),
-                90,
-                8L,
-                Set.of(21L)
+                90
         );
         ActivityResponse response = new ActivityResponse(
                 1L,
@@ -188,9 +190,7 @@ class ActivityControllersTest {
                 request.priceAmount(),
                 request.priceCurrency(),
                 request.durationMinutes(),
-                ActivityType.GROUP,
-                request.subjectId(),
-                request.topicIds()
+                ActivityType.GROUP
         );
 
         when(authorActivityService.updateActivity(eq(1L), any())).thenReturn(response);
@@ -205,7 +205,6 @@ class ActivityControllersTest {
                 actual != null
                         && actual.title().equals("Новое занятие")
                         && actual.maxBookableSeats().equals(4)
-                        && actual.subjectId().equals(8L)
         ));
     }
 
@@ -279,9 +278,14 @@ class ActivityControllersTest {
 
     @Test
     void createGroupSlot_shouldReturn200() throws Exception {
-        Instant startAt = Instant.parse("2026-05-13T10:00:00Z");
+        Instant startAt = Instant.now().plusSeconds(3600);
         CreateGroupActivitySlotRequest request = new CreateGroupActivitySlotRequest(startAt);
-        ActivitySlotResponse response = new ActivitySlotResponse(10L, 1L, startAt, startAt.plusSeconds(3600));
+        ActivitySlotResponse response = new ActivitySlotResponse(
+                10L,
+                1L,
+                startAt,
+                startAt.plusSeconds(3600)
+        );
 
         when(authorActivityService.createGroupSlot(eq(1L), any())).thenReturn(response);
 
@@ -298,9 +302,13 @@ class ActivityControllersTest {
 
     @Test
     void createAvailabilityTime_shouldReturn200() throws Exception {
-        Instant startAt = Instant.parse("2026-05-13T10:00:00Z");
+        Instant startAt = Instant.now().plusSeconds(3600);
         CreateAvailabilityTimeRequest request = new CreateAvailabilityTimeRequest(startAt);
-        ActivityTimeResponse response = new ActivityTimeResponse(null, startAt, startAt.plusSeconds(3600));
+        ActivityTimeResponse response = new ActivityTimeResponse(
+                1L,
+                startAt,
+                startAt.plusSeconds(3600)
+        );
 
         when(authorActivityTimeService.createAvailabilityTime(eq(1L), any())).thenReturn(response);
 
@@ -382,9 +390,7 @@ class ActivityControllersTest {
                 4,
                 new BigDecimal("2000"),
                 Currency.getInstance("RUB"),
-                90,
-                8L,
-                Set.of(21L)
+                90
         );
 
         when(authorActivityService.updateActivity(eq(1L), any()))

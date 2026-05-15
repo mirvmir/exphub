@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.orm.hibernate5.HibernateTransactionManager;
 import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
@@ -40,7 +41,7 @@ public class InfraConfig {
     @Bean
     public SpringLiquibase liquibase(
             DataSource dataSource,
-            @Value("${liquibase.change-log}") String changeLog,
+            @Value("${liquibase.change_log}") String changeLog,
             @Value("${liquibase.enabled:true}") boolean enabled
     ) {
         SpringLiquibase liquibase = new SpringLiquibase();

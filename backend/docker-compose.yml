@@ -1,18 +1,18 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: mentoring-postgres
+    container_name: exphub-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: bookstore_db
+      POSTGRES_DB: exphub
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: psql_password
+      POSTGRES_PASSWORD: password
     ports:
       - "5433:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d bookstore_db"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d exphub"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -21,16 +21,16 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: mentoring-backend
+    container_name: exphub-backend
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     environment:
       APP_MODE: docker
-      DB_DOCKER_URL: jdbc:postgresql://db:5432/bookstore_db
+      DB_DOCKER_URL: jdbc:postgresql://db:5432/exphub
       DB_USER: postgres
-      DB_PASSWORD: psql_password
+      DB_PASSWORD: password
       LIQUIBASE_ENABLED: "true"
       HIBERNATE_HBM2DDL_AUTO: validate
       LOG_DIR: /usr/local/tomcat/logs/app

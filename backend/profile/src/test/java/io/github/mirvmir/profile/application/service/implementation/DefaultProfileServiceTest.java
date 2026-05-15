@@ -3,6 +3,7 @@ package io.github.mirvmir.profile.application.service.implementation;
 import io.github.mirvmir.identity.api.IdentityApi;
 import io.github.mirvmir.identity.dto.TokenDto;
 import io.github.mirvmir.identity.dto.UserInfoDto;
+import io.github.mirvmir.media.api.MediaApi;
 import io.github.mirvmir.profile.api.event.ProfileCompletedEvent;
 import io.github.mirvmir.profile.application.service.dto.EditProfileRqDto;
 import io.github.mirvmir.profile.application.service.dto.EditProfileRsDto;
@@ -20,6 +21,7 @@ import static org.mockito.Mockito.*;
 
 class DefaultProfileServiceTest {
 
+    private MediaApi mediaApi;
     private IdentityApi identityApi;
     private ProfileRepository profileRepository;
     private ApplicationEventPublisher eventPublisher;
@@ -27,12 +29,14 @@ class DefaultProfileServiceTest {
 
     @BeforeEach
     void setUp() {
+        mediaApi = mock(MediaApi.class);
         identityApi = mock(IdentityApi.class);
         profileRepository = mock(ProfileRepository.class);
         eventPublisher = mock(ApplicationEventPublisher.class);
 
         service = new DefaultProfileService(
                 identityApi,
+                mediaApi,
                 profileRepository,
                 eventPublisher
         );
@@ -60,6 +64,7 @@ class DefaultProfileServiceTest {
 
         when(identityApi.getCurrentUserId()).thenReturn(10L);
         when(profileRepository.findByUserId(10L)).thenReturn(profile);
+        when(mediaApi.existsFileById(100L)).thenReturn(true);
 
         EditProfileRsDto response = service.editProfile(request);
 

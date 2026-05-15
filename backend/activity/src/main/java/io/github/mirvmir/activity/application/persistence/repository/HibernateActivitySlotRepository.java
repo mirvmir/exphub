@@ -89,7 +89,9 @@ public class HibernateActivitySlotRepository implements ActivitySlotRepository {
                 activitySlotId
         );
 
-        return activitySlotMapper.toDomain(entity);
+        return entity == null
+                ? null
+                : activitySlotMapper.toDomain(entity);
     }
 
     @Override

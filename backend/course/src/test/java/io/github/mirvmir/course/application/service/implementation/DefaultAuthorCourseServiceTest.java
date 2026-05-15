@@ -12,15 +12,15 @@ import io.github.mirvmir.course.application.service.port.event.CourseEventPublis
 import io.github.mirvmir.course.application.service.port.repository.CourseRepository;
 import io.github.mirvmir.course.application.service.port.repository.CourseVersionRepository;
 import io.github.mirvmir.course.domain.*;
-import io.github.mirvmir.course.domain.content.LessonContent;
-import io.github.mirvmir.course.domain.content.LessonContentType;
 import io.github.mirvmir.course.domain.content.LessonHtml;
 import io.github.mirvmir.course.web.request.*;
 import io.github.mirvmir.course.web.response.AuthorCourseResponse;
 import io.github.mirvmir.course.web.response.IdResponse;
 import io.github.mirvmir.identity.api.IdentityApi;
+import io.github.mirvmir.media.api.MediaApi;
 import io.github.mirvmir.profile.api.ProfileApi;
 import io.github.mirvmir.profile.api.dto.ProfileNameDto;
+import io.github.mirvmir.taxonomy.api.TaxonomyApi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -39,8 +39,12 @@ class DefaultAuthorCourseServiceTest {
 
     private IdentityApi identityApi;
     private ProfileApi profileApi;
+    private TaxonomyApi taxonomyApi;
+    private MediaApi mediaApi;
+
     private CourseRepository courseRepository;
     private CourseVersionRepository courseVersionRepository;
+
     private CourseResponseMapper courseResponseMapper;
     private CourseEventPublisher eventPublisher;
 
@@ -50,6 +54,8 @@ class DefaultAuthorCourseServiceTest {
     void setUp() {
         identityApi = mock(IdentityApi.class);
         profileApi = mock(ProfileApi.class);
+        taxonomyApi = mock(TaxonomyApi.class);
+        mediaApi = mock(MediaApi.class);
         courseRepository = mock(CourseRepository.class);
         courseVersionRepository = mock(CourseVersionRepository.class);
         courseResponseMapper = mock(CourseResponseMapper.class);
@@ -58,6 +64,8 @@ class DefaultAuthorCourseServiceTest {
         service = new DefaultAuthorCourseService(
                 identityApi,
                 profileApi,
+                taxonomyApi,
+                mediaApi,
                 courseRepository,
                 courseVersionRepository,
                 courseResponseMapper,
@@ -98,7 +106,7 @@ class DefaultAuthorCourseServiceTest {
 
         when(courseRepository.findById(1L)).thenReturn(course);
         when(identityApi.getCurrentUserId()).thenReturn(2L);
-        when(courseVersionRepository.findByIdAndCourseIdWithModules(10L, 1L))
+        when(courseVersionRepository.findById(draftVersion.getId()))
                 .thenReturn(draftVersion);
         when(profileApi.getProfileName(2L)).thenReturn(author);
         when(courseResponseMapper.toAuthorCourseResponse(
@@ -106,7 +114,7 @@ class DefaultAuthorCourseServiceTest {
                 draftVersion,
                 author,
                 true,
-                true
+                false
         )).thenReturn(expected);
 
         AuthorCourseResponse result = service.getCourse(1L);
@@ -140,6 +148,7 @@ class DefaultAuthorCourseServiceTest {
     @Test
     void updateDraftCourse_shouldUpdateDraftAndReturnResponse() {
         Course course = draftCourse();
+        Course reloadedCourse = draftCourse();
         AuthorCourseResponse expected = mock(AuthorCourseResponse.class);
         ProfileNameDto author = mock(ProfileNameDto.class);
 
@@ -151,16 +160,16 @@ class DefaultAuthorCourseServiceTest {
                 Currency.getInstance("RUB")
         );
 
-        when(courseRepository.findByIdWithDraftContent(1L)).thenReturn(course);
+        when(courseRepository.findByIdWithDraftInfo(1L)).thenReturn(course);
         when(identityApi.getCurrentUserId()).thenReturn(2L);
-        when(courseRepository.saveOrUpdate(course)).thenReturn(course);
+        when(courseRepository.findByIdWithDraftModules(1L)).thenReturn(reloadedCourse);
         when(profileApi.getProfileName(2L)).thenReturn(author);
         when(courseResponseMapper.toAuthorCourseResponse(
-                eq(course),
-                eq(course.getDraftVersion()),
+                eq(reloadedCourse),
+                eq(reloadedCourse.getDraftVersion()),
                 eq(author),
                 eq(true),
-                eq(true)
+                eq(false)
         )).thenReturn(expected);
 
         AuthorCourseResponse result = service.updateDraftCourse(1L, request);
@@ -168,7 +177,14 @@ class DefaultAuthorCourseServiceTest {
         assertSame(expected, result);
         assertEquals("Новое название", course.getDraftVersion().getTitle());
         assertEquals("Новое кратко", course.getDraftVersion().getShortDescription());
-        verify(courseRepository).saveOrUpdate(course);
+        assertEquals("<p>Новое описание</p>", course.getDraftVersion().getDescriptionHtml());
+        assertEquals(new BigDecimal("4500"), course.getDraftVersion().getPrice().getAmount());
+        assertEquals(Currency.getInstance("RUB"), course.getDraftVersion().getPrice().getCurrency());
+
+        verify(courseRepository).findByIdWithDraftInfo(1L);
+        verify(courseRepository).updateDraftInfo(course);
+        verify(courseRepository).findByIdWithDraftModules(1L);
+        verify(courseRepository, never()).saveOrUpdate(course);
     }
 
     @Test
@@ -179,7 +195,7 @@ class DefaultAuthorCourseServiceTest {
         when(identityApi.getCurrentUserId()).thenReturn(2L);
         when(courseRepository.saveOrUpdate(course)).thenReturn(course);
 
-        service.updateTopics(1L, new UpdateCourseTopicsRequest(Set.of(11L, 12L)));
+        service.updateTopics(1L, new UpdateCourseTopicsRequest(3L, Set.of(11L, 12L)));
 
         assertEquals(Set.of(11L, 12L), course.getTopicIds());
         verify(courseRepository).saveOrUpdate(course);
@@ -190,7 +206,7 @@ class DefaultAuthorCourseServiceTest {
     void updateLessonOpensAt_shouldUpdateLessonOpening() {
         Course course = draftCourse();
 
-        var stableLessonId = java.util.UUID.randomUUID();
+        UUID stableLessonId = UUID.randomUUID();
         Instant opensAt = Instant.parse("2026-05-13T10:00:00Z");
 
         when(courseRepository.findById(1L)).thenReturn(course);
@@ -206,7 +222,7 @@ class DefaultAuthorCourseServiceTest {
                 .stream()
                 .anyMatch(opening ->
                         stableLessonId.equals(opening.getStableLessonId())
-                        && opensAt.equals(opening.getOpensAt())
+                                && opensAt.equals(opening.getOpensAt())
                 ));
 
         verify(courseRepository).saveOrUpdate(course);
@@ -215,14 +231,9 @@ class DefaultAuthorCourseServiceTest {
     @Test
     void requestPublication_shouldMoveDraftToPending() {
         Course course = editableDraftCourseWithContent();
-        CourseVersion draftVersionWithContent = course.getDraftVersion();
 
         when(courseRepository.findByIdWithDraftContent(1L)).thenReturn(course);
         when(identityApi.getCurrentUserId()).thenReturn(2L);
-        when(courseVersionRepository.findByIdAndCourseIdWithModules(
-                draftVersionWithContent.getId(),
-                course.getId()
-        )).thenReturn(draftVersionWithContent);
 
         service.requestPublication(1L);
 
@@ -289,6 +300,7 @@ class DefaultAuthorCourseServiceTest {
                 1L,
                 2L,
                 ContentStatus.DRAFT,
+                3L,
                 Set.of(),
                 Set.of(),
                 null,
@@ -323,9 +335,7 @@ class DefaultAuthorCourseServiceTest {
                                                         LessonBlock.load(
                                                                 300L,
                                                                 UUID.randomUUID(),
-                                                                LessonHtml.load(
-                                                                        "<p>Текст урока</p>"
-                                                                ),
+                                                                LessonHtml.load(1L,"<p>Текст урока</p>"),
                                                                 0,
                                                                 "content-hash"
                                                         )
@@ -340,6 +350,7 @@ class DefaultAuthorCourseServiceTest {
                 1L,
                 2L,
                 ContentStatus.DRAFT,
+                3L,
                 Set.of(11L),
                 Set.of(),
                 null,
@@ -376,6 +387,7 @@ class DefaultAuthorCourseServiceTest {
                 1L,
                 2L,
                 ContentStatus.ACTIVE,
+                3L,
                 Set.of(11L),
                 Set.of(),
                 publishedVersion,

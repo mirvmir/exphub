@@ -33,7 +33,7 @@ public class ActivityCatalogEntity {
     @Column(name = "author_name")
     private String authorName;
 
-    @Column(nullable = false)
+    @Column(name = "short_description", nullable = false)
     private String shortDescription;
 
     @Embedded

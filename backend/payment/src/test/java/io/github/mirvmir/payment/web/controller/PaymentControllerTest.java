@@ -56,11 +56,10 @@ class PaymentControllerTest {
     @Test
     void bindCard_shouldReturn201() throws Exception {
         BindCardRequest request = new BindCardRequest(
-                1L,
                 "4111111111111111",
                 "IVAN IVANOV",
                 "12",
-                "2030",
+                "30",
                 "123"
         );
         BindCardResponse response = new BindCardResponse(
@@ -71,7 +70,7 @@ class PaymentControllerTest {
 
         when(paymentService.bindCard(any())).thenReturn(response);
 
-        mockMvc.perform(post("/payments/bind")
+        mockMvc.perform(post("/payments/card/bind")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -82,7 +81,6 @@ class PaymentControllerTest {
 
         verify(paymentService).bindCard(argThat(actual ->
                 actual != null
-                        && actual.userId().equals(1L)
                         && actual.cardNumber().equals("4111111111111111")
                         && actual.cardHolder().equals("IVAN IVANOV")
         ));
@@ -150,18 +148,17 @@ class PaymentControllerTest {
     @Test
     void bindCard_shouldReturn409_whenCardBindingError() throws Exception {
         BindCardRequest request = new BindCardRequest(
-                1L,
                 "4111111111111111",
                 "IVAN IVANOV",
                 "12",
-                "2030",
+                "30",
                 "123"
         );
 
         when(paymentService.bindCard(any()))
                 .thenThrow(new CardBindingException("Карта уже подключена"));
 
-        mockMvc.perform(post("/payments/bind")
+        mockMvc.perform(post("/payments/card/bind")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
@@ -172,18 +169,17 @@ class PaymentControllerTest {
     @Test
     void bindCard_shouldReturn503_whenPaymentUnavailable() throws Exception {
         BindCardRequest request = new BindCardRequest(
-                1L,
                 "4111111111111111",
                 "IVAN IVANOV",
                 "12",
-                "2030",
+                "30",
                 "123"
         );
 
         when(paymentService.bindCard(any()))
                 .thenThrow(new PaymentUnavailableException("Оплата временно недоступна"));
 
-        mockMvc.perform(post("/payments/bind")
+        mockMvc.perform(post("/payments/card/bind")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isServiceUnavailable())
@@ -211,18 +207,17 @@ class PaymentControllerTest {
     @Test
     void bindCard_shouldReturn503_whenDatabaseUnavailable() throws Exception {
         BindCardRequest request = new BindCardRequest(
-                1L,
                 "4111111111111111",
                 "IVAN IVANOV",
                 "12",
-                "2030",
+                "30",
                 "123"
         );
 
         when(paymentService.bindCard(any()))
                 .thenThrow(new CannotGetJdbcConnectionException("db unavailable"));
 
-        mockMvc.perform(post("/payments/bind")
+        mockMvc.perform(post("/payments/card/bind")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isServiceUnavailable())

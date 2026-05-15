@@ -36,6 +36,7 @@ public class Activity {
     private Money price;
     @NonNull
     private Integer durationMinutes;
+    @NonNull
     private Long subjectId;
     @NonNull
     private ActivityType type;
@@ -181,6 +182,8 @@ public class Activity {
                 && ModerationStatus.REJECTED == moderationStatus) {
             throw new BusinessException(ActivityErrorCode.ACTIVITY_MUST_BE_EDITED_AFTER_REJECTION);
         }
+
+        validateBeforePublication();
 
         ensureState(
                 ContentStatus.DRAFT,
@@ -376,6 +379,12 @@ public class Activity {
                 .filter(m -> m.getId().equals(activityTimeId))
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException(ActivityErrorCode.TIME_NOT_FOUND));
+    }
+
+    private void validateBeforePublication() {
+        if (descriptionHtml == null || descriptionHtml.isBlank()) {
+            throw new BusinessException(ActivityErrorCode.ACTIVITY_DESCRIPTION_REQUIRED);
+        }
     }
 
     private void ensureActive() {

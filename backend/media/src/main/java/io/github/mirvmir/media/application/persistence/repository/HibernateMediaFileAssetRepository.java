@@ -9,6 +9,8 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.springframework.stereotype.Repository;
 
+import java.util.Set;
+
 @Repository
 @AllArgsConstructor
 public class HibernateMediaFileAssetRepository implements MediaFileAssetRepository {
@@ -38,5 +40,22 @@ public class HibernateMediaFileAssetRepository implements MediaFileAssetReposito
         }
 
         return mapper.toDomain(entity);
+    }
+
+    @Override
+    public long countExistingByIds(Set<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return 0;
+        }
+
+        Session session = sessionFactory.getCurrentSession();
+
+        return session.createQuery("""
+                        select count(m.id)
+                        from MediaFileAssetEntity m
+                        where m.id in :fileIds
+                        """, Long.class)
+                .setParameter("fileIds", ids)
+                .getSingleResult();
     }
 }

@@ -35,7 +35,6 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/swagger-ui/**",
-                                "/swagger-ui.html",
                                 "/v3/api-docs/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -44,9 +43,15 @@ public class SecurityConfig {
                         .requestMatchers(PathPatternRequestMatcher.withDefaults()
                                 .matcher("/activities/**")).permitAll()
                         .requestMatchers(PathPatternRequestMatcher.withDefaults()
+                                .matcher("/taxonomy/**")).permitAll()
+                        .requestMatchers(PathPatternRequestMatcher.withDefaults()
                                 .matcher("/profile/**")).permitAll()
                         .requestMatchers(PathPatternRequestMatcher.withDefaults()
+                                .matcher("/reviews/**")).permitAll()
+                        .requestMatchers(PathPatternRequestMatcher.withDefaults()
                                 .matcher("/auth/**")).permitAll()
+                        .requestMatchers(PathPatternRequestMatcher.withDefaults()
+                                .matcher("/catalog")).permitAll()
                         .requestMatchers(PathPatternRequestMatcher.withDefaults()
                                 .matcher("/payments/webhook/**")).permitAll()
                         .anyRequest().authenticated()

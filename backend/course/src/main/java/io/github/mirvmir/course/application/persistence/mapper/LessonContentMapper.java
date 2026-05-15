@@ -12,21 +12,28 @@ import org.springframework.stereotype.Component;
 @Component
 public class LessonContentMapper {
 
-    public LessonContent toDomain(
-            HtmlLessonEntity htmlLesson,
-            FileLessonEntity fileLesson,
-            VideoLessonEntity videoLesson
-    ) {
+    public LessonContent toDomain(HtmlLessonEntity htmlLesson,
+                                  FileLessonEntity fileLesson,
+                                  VideoLessonEntity videoLesson) {
         if (htmlLesson != null) {
-            return LessonHtml.load(htmlLesson.getContent());
+            return LessonHtml.load(
+                    htmlLesson.getId(),
+                    htmlLesson.getContent()
+            );
         }
 
         if (fileLesson != null) {
-            return LessonFile.load(fileLesson.getFileAssetId());
+            return LessonFile.load(
+                    fileLesson.getId(),
+                    fileLesson.getFileAssetId()
+            );
         }
 
         if (videoLesson != null) {
-            return LessonVideo.load(videoLesson.getVideoAssetId());
+            return LessonVideo.load(
+                    videoLesson.getId(),
+                    videoLesson.getVideoAssetId()
+            );
         }
 
         return null;
@@ -35,7 +42,7 @@ public class LessonContentMapper {
     public HtmlLessonEntity toHtmlEntity(LessonContent content) {
         if (content instanceof LessonHtml lessonHtml) {
             return new HtmlLessonEntity(
-                    null,
+                    lessonHtml.getId(),
                     null,
                     lessonHtml.getHtml()
             );
@@ -47,7 +54,7 @@ public class LessonContentMapper {
     public FileLessonEntity toFileEntity(LessonContent content) {
         if (content instanceof LessonFile lessonFile) {
             return new FileLessonEntity(
-                    null,
+                    lessonFile.getId(),
                     null,
                     lessonFile.getFileAssetId()
             );
@@ -55,11 +62,10 @@ public class LessonContentMapper {
 
         return null;
     }
-
     public VideoLessonEntity toVideoEntity(LessonContent content) {
         if (content instanceof LessonVideo lessonVideo) {
             return new VideoLessonEntity(
-                    null,
+                    lessonVideo.getId(),
                     null,
                     lessonVideo.getVideoAssetId()
             );

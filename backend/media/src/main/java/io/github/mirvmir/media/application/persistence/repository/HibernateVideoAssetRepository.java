@@ -9,6 +9,8 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.springframework.stereotype.Repository;
 
+import java.util.Set;
+
 @Repository
 @AllArgsConstructor
 public class HibernateVideoAssetRepository implements VideoAssetRepository {
@@ -31,6 +33,23 @@ public class HibernateVideoAssetRepository implements VideoAssetRepository {
         VideoAssetEntity merged = session.merge(entity);
 
         return videoAssetMapper.toDomain(merged);
+    }
+
+    @Override
+    public long countExistingByIds(Set<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return 0;
+        }
+
+        Session session = sessionFactory.getCurrentSession();
+
+        return session.createQuery("""
+                        select count(m.id)
+                        from VideoAssetEntity m
+                        where m.id in :videoIds
+                        """, Long.class)
+                .setParameter("videoIds", ids)
+                .getSingleResult();
     }
 
     @Override

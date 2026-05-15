@@ -22,7 +22,7 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
-    @Column(nullable = false)
+    @Column(name = "profile_completed", nullable = false)
     private boolean profileCompleted;
 
     protected User() {

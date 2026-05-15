@@ -34,13 +34,12 @@ public class IdentityModuleConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(
-            CustomUserDetailsService userDetailsService,
-            PasswordEncoder passwordEncoder,
-            JwtDecoder jwtDecoder) {
+    public AuthenticationManager authenticationManager(CustomUserDetailsService userDetailsService,
+                                                       PasswordEncoder passwordEncoder,
+                                                       JwtDecoder jwtDecoder) {
 
-        DaoAuthenticationProvider daoProvider = new DaoAuthenticationProvider();
-        daoProvider.setUserDetailsService(userDetailsService);
+        DaoAuthenticationProvider daoProvider =
+                new DaoAuthenticationProvider(userDetailsService);
         daoProvider.setPasswordEncoder(passwordEncoder);
 
         JwtAuthenticationProvider jwtProvider = new JwtAuthenticationProvider(jwtDecoder);

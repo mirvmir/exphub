@@ -1,14 +1,17 @@
 package io.github.mirvmir.course.application.persistence.mapper;
 
+import io.github.mirvmir.course.application.persistence.entity.CourseVersionEntity;
 import io.github.mirvmir.course.domain.Course;
 import io.github.mirvmir.course.domain.CourseLessonOpening;
 import io.github.mirvmir.course.application.persistence.entity.CourseEntity;
 import io.github.mirvmir.course.application.persistence.entity.CourseLessonOpeningEntity;
 import io.github.mirvmir.course.application.persistence.entity.CourseTopicEntity;
+import io.github.mirvmir.course.domain.CourseVersion;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -47,6 +50,40 @@ public abstract class CourseMapper {
         );
     }
 
+    public Course toDomainWithDraftInfo(CourseEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+
+        return Course.load(
+                entity.getId(),
+                entity.getAuthorId(),
+                entity.getStatus(),
+                entity.getSubjectId(),
+                toTopicIds(entity.getTopicEntities()),
+                toLessonOpenings(entity.getLessonOpeningEntities()),
+                null,
+                toVersionInfo(entity.getDraftVersion())
+        );
+    }
+
+    public Course toDomainWithPublishedInfo(CourseEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+
+        return Course.load(
+                entity.getId(),
+                entity.getAuthorId(),
+                entity.getStatus(),
+                entity.getSubjectId(),
+                toTopicIds(entity.getTopicEntities()),
+                toLessonOpenings(entity.getLessonOpeningEntities()),
+                toVersionInfo(entity.getPublishedVersion()),
+                null
+        );
+    }
+
     protected Set<Long> toTopicIds(Set<CourseTopicEntity> topicEntities) {
         if (topicEntities == null) {
             return new HashSet<>();
@@ -68,5 +105,23 @@ public abstract class CourseMapper {
                         entity.getOpensAt()
                 ))
                 .collect(Collectors.toSet());
+    }
+
+    private CourseVersion toVersionInfo(CourseVersionEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+
+        return CourseVersion.load(
+                entity.getId(),
+                entity.getModerationStatus(),
+                entity.getTitle(),
+                entity.getShortDescription(),
+                entity.getDescriptionHtml(),
+                entity.getPrice() == null ? null : entity.getPrice().getAmount(),
+                entity.getPrice() == null ? null : entity.getPrice().getCurrency(),
+                entity.getModerationComment(),
+                new ArrayList<>()
+        );
     }
 }

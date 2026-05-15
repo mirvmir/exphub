@@ -57,7 +57,9 @@ public class LessonBlock {
         return new LessonBlock(
                 null,
                 source.getStableBlockId(),
-                source.getContent(),
+                source.getContent() != null
+                        ? source.getContent().copyToDraft()
+                        : null,
                 source.getSortOrder(),
                 source.getContentHash()
         );
@@ -82,6 +84,10 @@ public class LessonBlock {
         if (content == null || content.type() == null) {
             throw new BusinessException(CourseErrorCode.LESSON_BLOCK_TYPE_REQUIRED);
         }
+    }
+
+    public boolean isPublishable() {
+        return !(content == null || content.type() == null);
     }
 
     public LessonContentType getType() {

@@ -174,7 +174,7 @@ class CourseControllersTest {
     @Test
     void updateTopics_shouldReturn200() throws Exception {
         UpdateCourseTopicsRequest request =
-                new UpdateCourseTopicsRequest(Set.of(11L, 12L));
+                new UpdateCourseTopicsRequest(3L, Set.of(11L, 12L));
 
         authorMockMvc.perform(patch("/author/courses/1/topics")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -190,7 +190,7 @@ class CourseControllersTest {
     @Test
     void updateLessonOpensAt_shouldReturn200() throws Exception {
         UUID stableLessonId = UUID.randomUUID();
-        Instant opensAt = Instant.parse("2026-05-13T10:00:00Z");
+        Instant opensAt = Instant.now().plusSeconds(3600);
 
         UpdateLessonOpensAtRequest request =
                 new UpdateLessonOpensAtRequest(opensAt);

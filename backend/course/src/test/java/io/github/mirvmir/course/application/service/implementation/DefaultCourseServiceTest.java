@@ -101,6 +101,7 @@ class DefaultCourseServiceTest {
                 1L,
                 2L,
                 ContentStatus.ACTIVE,
+                3L,
                 Set.of(11L),
                 Set.of(),
                 publishedVersion,

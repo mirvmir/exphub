@@ -136,9 +136,40 @@ public class CourseLesson {
         }
 
         return switch (request.type()) {
-            case HTML -> new HtmlContentData(request.html());
-            case FILE -> new FileContentData(request.fileAssetId());
-            case VIDEO -> new VideoContentData(request.videoAssetId());
+            case HTML -> {
+                if (request.html() == null || request.html().isBlank()) {
+                    throw new BusinessException(
+                            CourseErrorCode.LESSON_BLOCK_HTML_REQUIRED
+                    );
+                }
+
+                String sanitizedHtml = HtmlSanitizer.sanitize(request.html());
+                if (sanitizedHtml.isBlank()) {
+                    throw new BusinessException(
+                            CourseErrorCode.INVALID_LESSON_BLOCK_HTML
+                    );
+                }
+
+                yield new HtmlContentData(sanitizedHtml);
+            }
+            case FILE -> {
+                if (request.fileAssetId() == null) {
+                    throw new BusinessException(
+                            CourseErrorCode.LESSON_BLOCK_FILE_REQUIRED
+                    );
+                }
+
+                yield new FileContentData(request.fileAssetId());
+            }
+            case VIDEO -> {
+                if (request.fileAssetId() == null) {
+                    throw new BusinessException(
+                            CourseErrorCode.LESSON_BLOCK_VIDEO_REQUIRED
+                    );
+                }
+
+                yield new VideoContentData(request.videoAssetId());
+            }
         };
     }
 
@@ -154,6 +185,12 @@ public class CourseLesson {
         for (LessonBlock block : blocks) {
             block.validateBeforePublication();
         }
+    }
+
+    public boolean isPublishable() {
+        return !(title == null || title.isBlank())
+                && !(blocks == null || blocks.isEmpty())
+                && blocks.stream().allMatch(block -> block.isPublishable());
     }
 
     private Integer resolveSortOrder(Integer requestSortOrder,

@@ -4,7 +4,9 @@ import io.github.mirvmir.common.exception.ErrorCode;
 
 public enum IdentityErrorCode implements ErrorCode {
     USER_NOT_FOUND("USER_NOT_FOUND",
-            "Не удалось определить текущего пользователя");
+            "Не удалось определить текущего пользователя"),
+    UNAUTHORIZED("UNAUTHORIZED",
+            "User is not authenticated");
 
     private final String code;
     private final String message;

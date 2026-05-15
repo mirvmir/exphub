@@ -13,7 +13,10 @@ public class OrderExpirationScheduler {
 
     private final OrderExpirationService orderExpirationService;
 
-    @Scheduled(fixedDelay = 60_000)
+    @Scheduled(
+            cron = "0 0 4 * * *",
+            zone = "Europe/Moscow"
+    )
     public void expireOrders() {
         log.debug("Running order expiration");
         orderExpirationService.deleteExpiredOrders();

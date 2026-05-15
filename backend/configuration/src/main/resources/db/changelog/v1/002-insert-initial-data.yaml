@@ -1,0 +1,621 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-insert-initial-data
+      author: nikitinau
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: email
+                  value: "admin@example.com"
+              - column:
+                  name: password_hash
+                  value: "$2a$10$rCdUYQV7fpk6jIjnFdWByO7GDNj.QEobeB.o0dfF5udRMC8L08P6i"
+              - column:
+                  name: role
+                  value: "ADMIN"
+              - column:
+                  name: profile_completed
+                  valueBoolean: true
+
+        - insert:
+            tableName: profile
+            columns:
+              - column:
+                  name: user_id
+                  valueNumeric: 1
+              - column:
+                  name: given_name
+                  value: Ivan
+              - column:
+                  name: family_name
+                  value: Ivanov
+              - column:
+                  name: email_visibility
+                  valueBoolean: false
+
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: email
+                  value: "user1@example.com"
+              - column:
+                  name: password_hash
+                  value: "$2a$10$dYCSSD0x7E/VrGT8RNHfT.zhs9qj5y9m8QA8g9IhmrI2h967R31e6"
+              - column:
+                  name: role
+                  value: "USER"
+              - column:
+                  name: profile_completed
+                  valueBoolean: true
+
+        - insert:
+            tableName: profile
+            columns:
+              - column:
+                  name: user_id
+                  valueNumeric: 2
+              - column:
+                  name: given_name
+                  value: Oleg
+              - column:
+                  name: family_name
+                  value: Petrov
+              - column:
+                  name: email_visibility
+                  valueBoolean: true
+
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: email
+                  value: "user2@example.com"
+              - column:
+                  name: password_hash
+                  value: "$2a$10$gMrUQzqA6YFfXCpTlY.UFOUona85xZdu.WEYGIEGqKcZkFkbcrc5W"
+              - column:
+                  name: role
+                  value: "USER"
+              - column:
+                  name: profile_completed
+                  valueBoolean: false
+
+
+        - insert:
+            tableName: media_file_asset
+            columns:
+              - column:
+                  name: original_name
+                  value: "img.png"
+              - column:
+                  name: mime_type
+                  value: "image/png"
+              - column:
+                 name: size_bytes
+                 valueNumeric: 432128
+              - column:
+                  name: storage_path
+                  value: "550e8400-e29b-41d4-a716-446655440000.png"
+
+        - insert:
+            tableName: profile
+            columns:
+              - column:
+                  name: user_id
+                  valueNumeric: 3
+              - column:
+                  name: avatar_media_file_asset_id
+                  valueNumeric: 1
+              - column:
+                  name: given_name
+                  value: Alexandr
+              - column:
+                  name: email_visibility
+                  valueBoolean: false
+
+        - insert:
+            tableName: subject
+            columns:
+              - column:
+                  name: name
+                  value: Mathematics
+
+        - insert:
+            tableName: subject
+            columns:
+              - column:
+                  name: name
+                  value: "Computer science"
+
+        - insert:
+            tableName: subject
+            columns:
+              - column:
+                  name: name
+                  value: "Information Technology"
+
+        - insert:
+            tableName: section
+            columns:
+              - column:
+                  name: subject_id
+                  valueNumeric: 3
+              - column:
+                  name: name
+                  value: Networking
+
+        - insert:
+            tableName: section
+            columns:
+              - column:
+                  name: subject_id
+                  valueNumeric: 3
+              - column:
+                  name: name
+                  value: DevOps
+
+        - insert:
+            tableName: section
+            columns:
+              - column:
+                  name: subject_id
+                  valueNumeric: 3
+              - column:
+                  name: name
+                  value: "Cloud Computing"
+
+        - insert:
+            tableName: section
+            columns:
+              - column:
+                  name: subject_id
+                  valueNumeric: 2
+              - column:
+                  name: name
+                  value: Programming
+
+        - insert:
+            tableName: section
+            columns:
+              - column:
+                  name: subject_id
+                  valueNumeric: 2
+              - column:
+                  name: name
+                  value: Algorithms
+
+        - insert:
+            tableName: topic
+            columns:
+              - column:
+                  name: subject_id
+                  valueNumeric: 2
+              - column:
+                  name: section_id
+                  valueNumeric: 5
+              - column:
+                  name: name
+                  value: "Greedy Algorithms"
+              - column:
+                  name: description
+                  value: "Algorithms that make locally optimal decisions to solve optimization problems"
+
+        - insert:
+            tableName: topic
+            columns:
+              - column:
+                  name: subject_id
+                  valueNumeric: 3
+              - column:
+                  name: section_id
+                  valueNumeric: 1
+              - column:
+                  name: name
+                  value: "OSI Model"
+              - column:
+                  name: description
+                  value: "Seven-layer conceptual model describing how network communication works between devices and applications"
+
+        - insert:
+            tableName: topic
+            columns:
+              - column:
+                  name: subject_id
+                  valueNumeric: 3
+              - column:
+                  name: section_id
+                  valueNumeric: 1
+              - column:
+                  name: name
+                  value: "TCP/IP"
+              - column:
+                  name: description
+                  value: "Core networking architecture and protocols used for internet communication and data transfer"
+
+        - insert:
+            tableName: topic
+            columns:
+              - column:
+                  name: subject_id
+                  valueNumeric: 3
+              - column:
+                  name: section_id
+                  valueNumeric: 1
+              - column:
+                  name: name
+                  value: "Kubernetes Networking"
+              - column:
+                  name: description
+                  value: "Communication model for containers, services, ingress and service discovery inside Kubernetes clusters"
+
+        - insert:
+            tableName: topic
+            columns:
+              - column:
+                  name: subject_id
+                  valueNumeric: 2
+              - column:
+                  name: section_id
+                  valueNumeric: 5
+              - column:
+                  name: name
+                  value: "Computational Complexity"
+              - column:
+                  name: description
+                  value: "Analysis of algorithm efficiency using time and memory complexity"
+
+        - insert:
+            tableName: topic
+            columns:
+              - column:
+                  name: subject_id
+                  valueNumeric: 2
+              - column:
+                  name: section_id
+                  valueNumeric: 5
+              - column:
+                  name: name
+                  value: "Divide and Conquer"
+              - column:
+                  name: description
+                  value: "Technique that splits problems into smaller independent subproblems"
+
+        - insert:
+            tableName: topic
+            columns:
+              - column:
+                  name: subject_id
+                  valueNumeric: 3
+              - column:
+                  name: section_id
+                  valueNumeric: 4
+              - column:
+                  name: name
+                  value: "Java"
+              - column:
+                  name: description
+                  value: "Object-oriented programming language widely used for enterprise backend systems"
+
+        - insert:
+            tableName: topic
+            columns:
+              - column:
+                  name: subject_id
+                  valueNumeric: 3
+              - column:
+                  name: section_id
+                  valueNumeric: 4
+              - column:
+                  name: name
+                  value: "Spring Framework"
+              - column:
+                  name: description
+                  value: "Java framework for building enterprise applications and microservices"
+
+        - insert:
+            tableName: topic
+            columns:
+              - column:
+                  name: subject_id
+                  valueNumeric: 3
+              - column:
+                  name: section_id
+                  valueNumeric: 4
+              - column:
+                  name: name
+                  value: "Multithreading"
+              - column:
+                  name: description
+                  value: "Parallel execution of multiple tasks inside a program"
+
+        - insert:
+            tableName: course_version
+            columns:
+              - column:
+                  name: title
+                  value: "Java. Базовый курс"
+              - column:
+                  name: price_amount
+                  valueNumeric: 0.00
+              - column:
+                  name: price_currency
+                  value: "RUB"
+              - column:
+                  name: moderation_status
+                  value: "DRAFT"
+              - column:
+                  name: short_description
+                  value: "Краткий вводный курс по основам Java для начинающих"
+              - column:
+                  name: description_html
+                  value: "<h2>Java. Базовый курс</h2><p>Курс знакомит с основами языка Java: синтаксисом, структурой программы и первыми практическими шагами.</p>"
+
+        - insert:
+            tableName: course
+            columns:
+              - column:
+                  name: author_id
+                  valueNumeric: 2
+              - column:
+                  name: content_status
+                  value: "DRAFT"
+              - column:
+                  name: subject_id
+                  valueNumeric: 3
+              - column:
+                  name: draft_version
+                  valueNumeric: 1
+
+        - insert:
+            tableName: course_topic
+            columns:
+              - column:
+                  name: course_id
+                  valueNumeric: 1
+              - column:
+                  name: topic_id
+                  valueNumeric: 7
+
+        - insert:
+            tableName: course_topic
+            columns:
+              - column:
+                  name: course_id
+                  valueNumeric: 1
+              - column:
+                  name: topic_id
+                  valueNumeric: 8
+
+        - insert:
+            tableName: course_topic
+            columns:
+              - column:
+                  name: course_id
+                  valueNumeric: 1
+              - column:
+                  name: topic_id
+                  valueNumeric: 9
+
+        - insert:
+            tableName: course_module
+            columns:
+              - column:
+                  name: course_version_id
+                  valueNumeric: 1
+              - column:
+                  name: stable_module_id
+                  value: "11111111-1111-1111-1111-111111111111"
+              - column:
+                  name: title
+                  value: "1. Введение в Java"
+              - column:
+                  name: sort_order
+                  valueNumeric: 0
+
+        - insert:
+            tableName: course_lesson
+            columns:
+              - column:
+                   name: course_module_id
+                   valueNumeric: 1
+              - column:
+                  name: stable_lesson_id
+                  value: "22222222-2222-2222-2222-222222222222"
+              - column:
+                  name: sort_order
+                  valueNumeric: 0
+              - column:
+                  name: title
+                  value: "Что такое Java"
+              - column:
+                  name: type
+                  value: "THEORY"
+
+        - insert:
+            tableName: lesson_block
+            columns:
+              - column:
+                  name: course_lesson_id
+                  valueNumeric: 1
+              - column:
+                  name: stable_block_id
+                  value: "33333333-3333-3333-3333-333333333333"
+              - column:
+                  name: sort_order
+                  valueNumeric: 0
+              - column:
+                  name: content_type
+                  value: "HTML"
+              - column:
+                  name: content_hash
+                  value: "9324c5fa27e13e9eac11993e6329ee25811e9890a229aa5bae5adb7f06ad515c"
+
+        - insert:
+            tableName: lesson_html
+            columns:
+              - column:
+                  name: lesson_block_id
+                  valueNumeric: 1
+              - column:
+                  name: content
+                  value: "<h2>Что такое Java</h2><p>Java — это объектно-ориентированный язык программирования, который используется для разработки backend-приложений, веб-сервисов, мобильных приложений и корпоративных систем.</p>"
+
+        - insert:
+            tableName: course_lesson
+            columns:
+              - column:
+                  name: course_module_id
+                  valueNumeric: 1
+              - column:
+                  name: stable_lesson_id
+                  value: "44444444-4444-4444-4444-444444444444"
+              - column:
+                  name: sort_order
+                  valueNumeric: 1
+              - column:
+                  name: title
+                  value: "Первая программа на Java"
+              - column:
+                  name: type
+                  value: "THEORY"
+
+        - insert:
+            tableName: lesson_block
+            columns:
+              - column:
+                  name: course_lesson_id
+                  valueNumeric: 2
+              - column:
+                  name: stable_block_id
+                  value: "55555555-5555-5555-5555-555555555555"
+              - column:
+                  name: sort_order
+                  valueNumeric: 0
+              - column:
+                  name: content_type
+                  value: "HTML"
+              - column:
+                  name: content_hash
+                  value: "0144af62348d4b646573c0936dbc1cbc9090eced01d3b680fb42c02fd5353c89"
+
+        - insert:
+            tableName: lesson_html
+            columns:
+              - column:
+                  name: lesson_block_id
+                  valueNumeric: 2
+              - column:
+                  name: content
+                  value:  |
+                    <h2>Первая программа на Java</h2>
+                    <p>В этом уроке разбирается структура простой Java-программы: класс, метод main и вывод текста в консоль.</p>
+                    <pre><code>public class Main {
+                        public static void main(String[] args) {
+                            System.out.println("Hello, Java!");
+                        }
+                    }</code></pre>
+
+        - insert:
+            tableName: media_file_asset
+            columns:
+              - column:
+                  name: original_name
+                  value: "java.png"
+              - column:
+                  name: mime_type
+                  value: "image/png"
+              - column:
+                  name: size_bytes
+                  valueNumeric: 46059
+              - column:
+                  name: storage_path
+                  value: "8b7b4f5e-7f3e-4e42-9b2d-5f4d8e3c9a11.png"
+
+        - insert:
+            tableName: lesson_block
+            columns:
+              - column:
+                  name: course_lesson_id
+                  valueNumeric: 2
+              - column:
+                  name: stable_block_id
+                  value: "66666666-6666-6666-6666-666666666666"
+              - column:
+                  name: sort_order
+                  valueNumeric: 1
+              - column:
+                  name: content_type
+                  value: "FILE"
+              - column:
+                  name: content_hash
+                  value: "0144af62348d4b646573c0936dbc1cbc9090eced01d3b680fb42c02fd5353c89"
+
+        - insert:
+            tableName: lesson_pdf
+            columns:
+              - column:
+                  name: lesson_block_id
+                  valueNumeric: 3
+              - column:
+                  name: file_asset_id
+                  valueNumeric: 2
+
+      rollback:
+        - delete:
+            tableName: lesson_pdf
+            where: lesson_block_id = 3
+
+        - delete:
+            tableName: lesson_html
+            where: lesson_block_id IN (1, 2)
+
+        - delete:
+            tableName: lesson_block
+            where: id IN (1, 2, 3)
+
+        - delete:
+            tableName: course_lesson
+            where: id IN (1, 2)
+
+        - delete:
+            tableName: course_module
+            where: id = 1
+
+        - delete:
+            tableName: course_topic
+            where: course_id = 1
+
+        - delete:
+            tableName: course
+            where: id = 1
+
+        - delete:
+            tableName: course_version
+            where: id = 1
+
+        - delete:
+            tableName: media_file_asset
+            where: id IN (1, 2)
+
+        - delete:
+            tableName: topic
+            where: name IN ('Greedy Algorithms', 'OSI Model', 'TCP/IP', 'Kubernetes Networking', 'Computational Complexity', 'Divide and Conquer', 'Java', 'Spring Framework', 'Multithreading')
+
+        - delete:
+            tableName: section
+            where: name IN ('Networking', 'DevOps', 'Cloud Computing', 'Programming', 'Algorithms')
+
+        - delete:
+            tableName: subject
+            where: name IN ('Mathematics', 'Computer science', 'Information Technology')
+
+        - delete:
+            tableName: profile
+            where: user_id IN (1, 2, 3)
+
+        - delete:
+            tableName: users
+            where: email IN ('admin@example.com', 'user1@example.com', 'user2@example.com')

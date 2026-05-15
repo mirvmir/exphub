@@ -48,9 +48,7 @@ public class DefaultStudentCourseService implements StudentCourseService {
 
     @Override
     @Transactional(readOnly = true)
-    public CourseInfoResponse getCourseDescription(
-            Long courseId
-    ) {
+    public CourseInfoResponse getCourseDescription(Long courseId) {
         log.info("Getting student course description: courseId={}", courseId);
 
         StudentCourseEnrollmentResponse enrollment =
@@ -59,10 +57,7 @@ public class DefaultStudentCourseService implements StudentCourseService {
         Course course = getExistingCourseWithSettings(courseId);
 
         CourseVersion version =
-                courseVersionRepository.findByIdAndCourseId(
-                        enrollment.courseVersionId(),
-                        courseId
-                );
+                courseVersionRepository.findById(enrollment.courseVersionId());
 
         if (version == null) {
             log.error("Student course description getting failed, course version not found: courseId={}, courseVersionId={}",
@@ -91,9 +86,7 @@ public class DefaultStudentCourseService implements StudentCourseService {
 
     @Override
     @Transactional(readOnly = true)
-    public StudentCourseResponse getCourse(
-            Long courseId
-    ) {
+    public StudentCourseResponse getCourse(Long courseId) {
         log.info("Getting student course: courseId={}", courseId);
 
         StudentCourseEnrollmentResponse enrollment =
@@ -102,10 +95,7 @@ public class DefaultStudentCourseService implements StudentCourseService {
         Course course = getExistingCourseWithSettings(courseId);
 
         CourseVersion version =
-                courseVersionRepository.findByIdAndCourseIdWithModules(
-                        enrollment.courseVersionId(),
-                        courseId
-                );
+                courseVersionRepository.findByIdWithModules(enrollment.courseVersionId());
 
         if (version == null) {
             log.error("Student course getting failed, course version not found: courseId={}, courseVersionId={}",
@@ -130,10 +120,8 @@ public class DefaultStudentCourseService implements StudentCourseService {
 
     @Override
     @Transactional(readOnly = true)
-    public StudentCourseModuleResponse getModule(
-            Long courseId,
-            UUID stableModuleId
-    ) {
+    public StudentCourseModuleResponse getModule(Long courseId,
+                                                 UUID stableModuleId) {
         log.info("Getting student course module: courseId={}, stableModuleId={}",
                 courseId, stableModuleId);
 
@@ -143,9 +131,8 @@ public class DefaultStudentCourseService implements StudentCourseService {
         Course course = getExistingCourseWithSettings(courseId);
 
         CourseVersion version =
-                courseVersionRepository.findByIdAndCourseIdWithModule(
+                courseVersionRepository.findByIdWithModule(
                         enrollment.courseVersionId(),
-                        courseId,
                         stableModuleId
                 );
 
@@ -177,10 +164,8 @@ public class DefaultStudentCourseService implements StudentCourseService {
 
     @Override
     @Transactional(readOnly = true)
-    public StudentCourseLessonResponse getLesson(
-            Long courseId,
-            UUID stableLessonId
-    ) {
+    public StudentCourseLessonResponse getLesson(Long courseId,
+                                                 UUID stableLessonId) {
         log.info("Getting student course lesson: courseId={}, stableLessonId={}",
                 courseId, stableLessonId);
 
@@ -190,9 +175,8 @@ public class DefaultStudentCourseService implements StudentCourseService {
         Course course = getExistingCourseWithSettings(courseId);
 
         CourseVersion version =
-                courseVersionRepository.findByIdAndCourseIdWithLesson(
+                courseVersionRepository.findByIdWithLesson(
                         enrollment.courseVersionId(),
-                        courseId,
                         stableLessonId
                 );
 
@@ -228,9 +212,7 @@ public class DefaultStudentCourseService implements StudentCourseService {
         return response;
     }
 
-    private StudentCourseEnrollmentResponse getCurrentStudentEnrollment(
-            Long courseId
-    ) {
+    private StudentCourseEnrollmentResponse getCurrentStudentEnrollment(Long courseId) {
         Long studentId = identityApi.getCurrentUserId();
 
         StudentCourseEnrollmentResponse enrollment =
@@ -259,9 +241,7 @@ public class DefaultStudentCourseService implements StudentCourseService {
         return enrollment;
     }
 
-    private Course getExistingCourseWithSettings(
-            Long courseId
-    ) {
+    private Course getExistingCourseWithSettings(Long courseId) {
         Course course =
                 courseRepository.findByIdWithSettings(courseId);
 

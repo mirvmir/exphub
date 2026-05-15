@@ -23,11 +23,11 @@ public interface AuthorCourseService {
     AuthorCourseResponse saveDraftModules(Long courseId,
                                           SaveDraftModulesRequest request);
     AuthorCourseModuleResponse saveDraftModuleLessons(Long courseId,
-                                                Long moduleId,
-                                                SaveDraftModuleLessonsRequest request);
+                                                      Long moduleId,
+                                                      SaveDraftModuleLessonsRequest request);
     AuthorCourseLessonResponse saveDraftLessonBlocks(Long courseId,
-                                               Long lessonId,
-                                               SaveDraftLessonBlocksRequest request);
+                                                     Long lessonId,
+                                                     SaveDraftLessonBlocksRequest request);
     void requestPublication(Long courseId);
     void archive(Long courseId);
     void unarchive(Long courseId);

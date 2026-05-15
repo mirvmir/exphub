@@ -31,8 +31,8 @@ public class HibernateCourseCatalogRepository implements CourseCatalogRepository
                        or lower(c.title) like :search
                        or lower(c.author_name) like :search
                        or lower(c.short_description) like :search)
-                  and (:minPrice is null or c.amount >= :minPrice)
-                  and (:maxPrice is null or c.amount <= :maxPrice)
+                  and (:minPrice is null or c.price_amount >= :minPrice)
+                  and (:maxPrice is null or c.price_amount <= :maxPrice)
                   and (:minRating is null or c.rating_avg >= :minRating)
                   and (:topicId is null or exists (
                        select 1

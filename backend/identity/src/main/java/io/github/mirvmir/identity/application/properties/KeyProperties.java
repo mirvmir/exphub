@@ -26,10 +26,14 @@ public class KeyProperties {
     }
 
     public String getPrivateKeyPath() {
-        return "web".equals(appProperties.getAppMode()) ? webPrivateKeyPath : dockerPrivateKeyPath;
+        return "web".equals(appProperties.getAppMode())
+                ? webPrivateKeyPath
+                : dockerPrivateKeyPath;
     }
 
     public String getPublicKeyPath() {
-        return "web".equals(appProperties.getAppMode()) ? webPublicKeyPath : dockerPublicKeyPath;
+        return "web".equals(appProperties.getAppMode())
+                ? webPublicKeyPath
+                : dockerPublicKeyPath;
     }
 }

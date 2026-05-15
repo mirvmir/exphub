@@ -32,7 +32,7 @@ public class CourseCatalogEntity {
     @Column(name = "author_name", nullable = false)
     private String authorName;
 
-    @Column(nullable = false)
+    @Column(name = "short_description", nullable = false)
     private String shortDescription;
 
     @Embedded

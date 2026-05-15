@@ -6,6 +6,7 @@ import io.github.mirvmir.course.api.event.CoursePublishedEvent;
 import io.github.mirvmir.course.application.service.port.event.CourseEventPublisher;
 import io.github.mirvmir.course.application.service.port.repository.CourseRepository;
 import io.github.mirvmir.course.application.service.interfaces.ModerationCourseService;
+import io.github.mirvmir.course.application.service.port.repository.CourseVersionRepository;
 import io.github.mirvmir.course.domain.Course;
 import io.github.mirvmir.course.exception.CourseErrorCode;
 import io.github.mirvmir.course.web.request.RejectCourseRequest;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class DefaultModerationCourseService implements ModerationCourseService {
 
     private final CourseRepository courseRepository;
+    private final CourseVersionRepository courseVersionRepository;
     private final EnrollmentApi enrollmentApi;
     private final CourseEventPublisher eventPublisher;
 
@@ -31,17 +33,15 @@ public class DefaultModerationCourseService implements ModerationCourseService {
 
         Course course = getExistingCourseWithDraft(courseId);
 
-        if (course.isActive()) {
-            eventPublisher.delete(
-                    new CourseDeleteEvent(
-                            course.getId()
-                    )
-            );
-        }
+        boolean wasActive = course.isActive();
 
         course.approveModeration();
 
-        courseRepository.saveOrUpdate(course);
+        courseRepository.approveDraft(course);
+
+        if (wasActive) {
+            eventPublisher.delete(new CourseDeleteEvent(course.getId()));
+        }
 
         eventPublisher.publish(
                 new CoursePublishedEvent(
@@ -60,16 +60,15 @@ public class DefaultModerationCourseService implements ModerationCourseService {
 
     @Override
     @Transactional
-    public void reject(
-            Long courseId,
-            RejectCourseRequest request
-    ) {
+    public void reject(Long courseId,
+                       RejectCourseRequest request) {
         log.info("Course moderation rejection requested: courseId={}", courseId);
 
         Course course = getExistingCourseWithDraft(courseId);
+
         course.rejectModeration(request.moderationComment());
 
-        courseRepository.saveOrUpdate(course);
+        courseVersionRepository.updateModerationState(course.getDraftVersion());
 
         log.info("Course moderation rejection completed successfully: courseId={}", courseId);
     }
@@ -79,7 +78,7 @@ public class DefaultModerationCourseService implements ModerationCourseService {
     public void block(Long courseId) {
         log.info("Course blocking requested: courseId={}", courseId);
 
-        Course course = courseRepository.findByIdWithPublishedContent(courseId);
+        Course course = courseRepository.findByIdWithPublishedInfo(courseId);
 
         if (course == null) {
             log.error("Course blocking failed, course not found: courseId={}", courseId);
@@ -91,7 +90,7 @@ public class DefaultModerationCourseService implements ModerationCourseService {
 
         course.block();
 
-        courseRepository.saveOrUpdate(course);
+        courseRepository.updateStatus(course);
 
         enrollmentApi.refundPayedCourseEnrollments(
                 courseId,

@@ -92,44 +92,34 @@ class DefaultAuthorActivityServiceTest {
     }
 
     @Test
-    void getActivityByAuthor_shouldReturnGroupActivityDescription() {
+    void getDescriptionForAuthor_shouldReturnActivityDescription() {
         Activity activity = groupActivity(ContentStatus.ACTIVE, ModerationStatus.APPROVED);
-        ActivitySlot slot = slot(10L, activity.getId());
         ProfileNameDto author = mock(ProfileNameDto.class);
-        Set<GroupActivitySlotResponse> groupSlots = Set.of(
-                new GroupActivitySlotResponse(10L, activity.getId(), slot.getStartAt(), slot.getEndAt(), 2, 5)
-        );
         AuthorActivityDescriptionResponse expected = mock(AuthorActivityDescriptionResponse.class);
 
         when(activityRepository.findById(activity.getId())).thenReturn(activity);
         when(identityApi.getCurrentUserId()).thenReturn(activity.getAuthorId());
         when(profileApi.getProfileName(activity.getAuthorId())).thenReturn(author);
-        when(activitySlotRepository.findPlannedByActivityId(activity.getId())).thenReturn(List.of(slot));
-        when(enrollmentApi.countBookedByActivitySlotIds(Set.of(10L), Instant.now(clock)))
-                .thenReturn(Map.of(10L, 2));
-        when(activitySlotResponseMapper.toGroupResponseSet(List.of(slot), Map.of(10L, 2), 5))
-                .thenReturn(groupSlots);
         when(activitySlotRepository.existsPlannedByActivityId(activity.getId())).thenReturn(true);
         when(activityResponseMapper.toAuthorActivityDescriptionResponse(
-                eq(activity), eq(author), eq(Set.of()), eq(Set.of()), eq(groupSlots),
+                eq(activity), eq(author), eq(Set.of()), eq(Set.of()), eq(Set.of()),
                 eq(false), eq(false), eq(false)
         )).thenReturn(expected);
 
-        AuthorActivityDescriptionResponse result = service.getActivityByAuthor(activity.getId());
+        AuthorActivityDescriptionResponse result = service.getDescriptionForAuthor(activity.getId());
 
         assertSame(expected, result);
-        verify(enrollmentApi).countBookedByActivitySlotIds(Set.of(10L), Instant.now(clock));
     }
 
     @Test
-    void getActivityByAuthor_shouldThrowForbidden_whenCurrentUserIsNotAuthor() {
+    void getDescriptionForAuthor_shouldThrowForbidden_whenCurrentUserIsNotAuthor() {
         Activity activity = groupActivity(ContentStatus.ACTIVE, ModerationStatus.APPROVED);
 
         when(activityRepository.findById(activity.getId())).thenReturn(activity);
         when(identityApi.getCurrentUserId()).thenReturn(99L);
 
         ForbiddenException exception = assertThrows(ForbiddenException.class,
-                () -> service.getActivityByAuthor(activity.getId()));
+                () -> service.getDescriptionForAuthor(activity.getId()));
         verifyNoInteractions(profileApi, enrollmentApi);
     }
 
@@ -175,9 +165,7 @@ class DefaultAuthorActivityServiceTest {
                 4,
                 new BigDecimal("2000"),
                 Currency.getInstance("RUB"),
-                90,
-                8L,
-                Set.of(21L)
+                90
         );
         ActivityResponse expected = mock(ActivityResponse.class);
 
@@ -228,8 +216,7 @@ class DefaultAuthorActivityServiceTest {
         when(identityApi.getCurrentUserId()).thenReturn(activity.getAuthorId());
         when(activitySlotRepository.existsPlannedByActivityId(activity.getId())).thenReturn(true);
 
-        BusinessException exception = assertThrows(BusinessException.class,
-                () -> service.deleteActivity(activity.getId()));
+        assertThrows(BusinessException.class, () -> service.deleteActivity(activity.getId()));
         verify(activityRepository, never()).saveOrUpdate(any());
     }
 
@@ -283,7 +270,12 @@ class DefaultAuthorActivityServiceTest {
                 moderationStatus,
                 null,
                 Set.of(11L, 12L),
-                Set.of(ActivityTime.load(100L, Instant.parse("2026-05-13T10:00:00Z"), Instant.parse("2026-05-13T11:00:00Z")))
+                Set.of(ActivityTime.load(
+                        100L,
+                        Instant.parse("2026-05-13T10:00:00Z"),
+                        Instant.parse("2026-05-13T11:00:00Z")
+                )
+                )
         );
     }
 

@@ -31,8 +31,8 @@ public class HibernateActivityCatalogRepository implements ActivityCatalogReposi
                        or lower(a.title) like :search
                        or lower(a.author_name) like :search
                        or lower(a.short_description) like :search)
-                  and (:minPrice is null or a.amount >= :minPrice)
-                  and (:maxPrice is null or a.amount <= :maxPrice)
+                  and (:minPrice is null or a.price_amount >= :minPrice)
+                  and (:maxPrice is null or a.price_amount <= :maxPrice)
                   and (:minRating is null or a.rating_avg >= :minRating)
                   and (:format is null or a.format = :format)
                   and (:topicId is null or exists (

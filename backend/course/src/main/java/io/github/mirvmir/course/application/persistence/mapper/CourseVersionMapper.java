@@ -53,8 +53,8 @@ public class CourseVersionMapper {
                 entity.getTitle(),
                 entity.getShortDescription(),
                 entity.getDescriptionHtml(),
-                entity.getPrice().getAmount(),
-                entity.getPrice().getCurrency(),
+                entity.getPrice() == null ? null : entity.getPrice().getAmount(),
+                entity.getPrice() == null ? null : entity.getPrice().getCurrency(),
                 entity.getModerationComment(),
                 entity.getModules()
                         .stream()

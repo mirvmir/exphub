@@ -5,16 +5,9 @@ import io.github.mirvmir.course.domain.CourseVersion;
 import java.util.UUID;
 
 public interface CourseVersionRepository {
-    CourseVersion findByIdAndCourseId(
-            Long versionId,
-            Long courseId);
-    CourseVersion findByIdAndCourseIdWithModules(Long versionId,
-                                                 Long courseId);
-
-    CourseVersion findByIdAndCourseIdWithModule(Long versionId,
-                                                Long courseId,
-                                                UUID stableModuleId);
-    CourseVersion findByIdAndCourseIdWithLesson(Long versionId,
-                                                Long courseId,
-                                                UUID stableLessonId);
+    CourseVersion findById(Long versionId);
+    CourseVersion findByIdWithModules(Long versionId);
+    CourseVersion findByIdWithModule(Long versionId, UUID stableModuleId);
+    CourseVersion findByIdWithLesson(Long versionId, UUID stableLessonId);
+    void updateModerationState(CourseVersion version);
 }

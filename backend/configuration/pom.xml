@@ -104,12 +104,6 @@
             <artifactId>wallet</artifactId>
             <version>${project.version}</version>
         </dependency>
-
-        <dependency>
-            <groupId>org.liquibase</groupId>
-            <artifactId>liquibase-core</artifactId>
-            <version>5.0.2</version>
-        </dependency>
     </dependencies>
 
     <build>

@@ -1,5 +1,6 @@
 package io.github.mirvmir.common.exception;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.hibernate.exception.JDBCConnectionException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.sql.SQLTransientConnectionException;
+import java.time.Instant;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -64,6 +66,19 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(
                         "DATABASE_ERROR",
                         "Ошибка при обращении к базе данных"
+                ));
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalStateException(
+            IllegalStateException ex,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse(
+                        "INTERNAL_SERVER_ERROR",
+                        ex.getMessage()
                 ));
     }
 }

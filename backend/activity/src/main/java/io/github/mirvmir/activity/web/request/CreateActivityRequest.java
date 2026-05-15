@@ -13,35 +13,26 @@ import java.util.Set;
 public record CreateActivityRequest(
         @NotBlank
         String title,
-
         @Size(max = 500)
         String shortDescription,
-
         String descriptionHtml,
-
+        @NotNull
         @Positive
         Integer maxBookableSeats,
-
         @NotNull
         @Positive
         BigDecimal priceAmount,
-
         @NotNull
         Currency priceCurrency,
-
         @NotNull
         @Positive
         Integer durationMinutes,
-
         @NotNull
         Long subjectId,
-
         @NotNull
         ActivityType type,
-
         @Positive
         Integer bookingStepMinutes,
-
         Set<Long> topicIds
 ) {
 }

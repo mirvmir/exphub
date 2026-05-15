@@ -80,7 +80,7 @@ public class CourseVersion {
                 status,
                 title,
                 shortDescription,
-                descriptionHtml,
+                HtmlSanitizer.sanitize(descriptionHtml),
                 price,
                 moderationComment,
                 modules == null
@@ -105,7 +105,7 @@ public class CourseVersion {
 
         this.title = title;
         this.shortDescription = shortDescription;
-        this.descriptionHtml = descriptionHtml;
+        this.descriptionHtml = HtmlSanitizer.sanitize(descriptionHtml);
         this.price = new Money(priceAmount, priceCurrency);
     }
 
@@ -224,6 +224,14 @@ public class CourseVersion {
             module.validateBeforePublication();
         }
     }
+
+    public boolean isPublishable() {
+        return !(title == null || title.isBlank())
+                && !(descriptionHtml == null || descriptionHtml.isBlank())
+                && !(modules == null || modules.isEmpty())
+                && modules.stream().allMatch(module -> module.isPublishable());
+    }
+
 
     public CourseModule findModule(Long moduleId) {
         return modules.stream()

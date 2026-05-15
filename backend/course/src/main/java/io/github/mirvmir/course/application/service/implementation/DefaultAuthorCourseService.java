@@ -22,6 +22,7 @@ import io.github.mirvmir.course.web.response.AuthorCourseModuleResponse;
 import io.github.mirvmir.course.web.response.AuthorCourseResponse;
 import io.github.mirvmir.course.web.response.IdResponse;
 import io.github.mirvmir.identity.api.IdentityApi;
+import io.github.mirvmir.media.api.MediaApi;
 import io.github.mirvmir.profile.api.ProfileApi;
 import io.github.mirvmir.profile.api.dto.ProfileNameDto;
 import io.github.mirvmir.taxonomy.api.TaxonomyApi;
@@ -31,8 +32,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Slf4j
@@ -42,6 +43,7 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
     private final IdentityApi identityApi;
     private final ProfileApi profileApi;
     private final TaxonomyApi taxonomyApi;
+    private final MediaApi mediaApi;
 
     private final CourseRepository courseRepository;
     private final CourseVersionRepository courseVersionRepository;
@@ -60,12 +62,8 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
         ensureAuthor(course);
 
         Long draftVersionId = getDraftVersionId(course);
-
         CourseVersion draftVersion =
-                courseVersionRepository.findByIdAndCourseIdWithModules(
-                        draftVersionId,
-                        courseId
-                );
+                courseVersionRepository.findById(draftVersionId);
 
 
         if (draftVersion == null) {
@@ -79,18 +77,16 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
 
         ProfileNameDto author =
                 profileApi.getProfileName(course.getAuthorId());
-
         AuthorCourseResponse response = courseResponseMapper.toAuthorCourseResponse(
                 course,
                 draftVersion,
                 author,
                 course.isEditable(),
-                course.isEditable()
+                course.isPublishable()
         );
 
         log.info("Author course successfully received: courseId={}, draftVersionId={}",
                 courseId, draftVersionId);
-
         return response;
     }
 
@@ -105,11 +101,9 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
         ensureAuthor(course);
 
         Long draftVersionId = getDraftVersionId(course);
-
         CourseVersion draftVersion =
-                courseVersionRepository.findByIdAndCourseIdWithModule(
+                courseVersionRepository.findByIdWithModule(
                         draftVersionId,
-                        courseId,
                         stableModuleId
                 );
 
@@ -124,7 +118,6 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
 
         CourseModule module =
                 draftVersion.findModuleByStableId(stableModuleId);
-
         AuthorCourseModuleResponse response = courseResponseMapper.toAuthorCourseModuleResponse(
                 module,
                 course.isEditable()
@@ -132,7 +125,6 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
 
         log.info("Author course module successfully received: courseId={}, draftVersionId={}, stableModuleId={}",
                 courseId, draftVersionId, stableModuleId);
-
         return response;
     }
 
@@ -147,11 +139,9 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
         ensureAuthor(course);
 
         Long draftVersionId = getDraftVersionId(course);
-
         CourseVersion draftVersion =
-                courseVersionRepository.findByIdAndCourseIdWithLesson(
+                courseVersionRepository.findByIdWithLesson(
                         draftVersionId,
-                        courseId,
                         stableLessonId
                 );
 
@@ -166,7 +156,6 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
 
         CourseLesson lesson =
                 draftVersion.findLessonByStableId(stableLessonId);
-
         AuthorCourseLessonResponse response = courseResponseMapper.toAuthorCourseLessonResponse(
                 lesson,
                 course.isEditable()
@@ -174,7 +163,6 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
 
         log.info("Author course lesson successfully received: courseId={}, draftVersionId={}, stableLessonId={}",
                 courseId, draftVersionId, stableLessonId);
-
         return response;
     }
 
@@ -195,7 +183,6 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
 
         log.info("Course successfully created: courseId={}, authorId={}",
                 savedCourse.getId(), authorId);
-
         return new IdResponse(savedCourse.getId());
     }
 
@@ -262,7 +249,15 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
                                                   UpdateCourseDraftRequest request) {
         log.info("Course draft update requested: courseId={}", courseId);
 
-        Course course = getExistingCourseWithDraft(courseId);
+        Course course = courseRepository.findByIdWithDraftInfo(courseId);
+
+        if (course == null) {
+            log.error("Course loading with draft info failed, course not found: courseId={}", courseId);
+            throw new NotFoundException(
+                    CourseErrorCode.COURSE_NOT_FOUND,
+                    "Course with id=" + courseId + " not found"
+            );
+        }
 
         ensureAuthor(course);
 
@@ -274,13 +269,22 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
                 request.priceCurrency()
         );
 
-        Course savedCourse = courseRepository.saveOrUpdate(course);
+        courseRepository.updateDraftInfo(course);
 
-        AuthorCourseResponse response = toAuthorCourseResponse(savedCourse);
+        Course savedCourse = courseRepository.findByIdWithDraftModules(courseId);
+
+        ProfileNameDto author =
+                profileApi.getProfileName(savedCourse.getAuthorId());
+        AuthorCourseResponse response = courseResponseMapper.toAuthorCourseResponse(
+                savedCourse,
+                savedCourse.getDraftVersion(),
+                author,
+                savedCourse.isEditable(),
+                savedCourse.isPublishable()
+        );
 
         log.info("Course draft successfully updated: courseId={}, draftVersionId={}",
                 savedCourse.getId(), savedCourse.getDraftVersion().getId());
-
         return response;
     }
 
@@ -290,34 +294,35 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
                                                  SaveDraftModulesRequest request) {
         log.info("Course draft modules saving requested: courseId={}", courseId);
 
-        Course course = getExistingCourseWithDraft(courseId);
+        Course course = courseRepository.findByIdWithDraftModules(courseId);
+
+        if (course == null) {
+            log.error("Course loading with draft modules failed, course not found: courseId={}", courseId);
+            throw new NotFoundException(
+                    CourseErrorCode.COURSE_NOT_FOUND,
+                    "Course with id=" + courseId + " not found"
+            );
+        }
 
         ensureAuthor(course);
 
         course.saveDraftModules(request.modules());
 
         Course savedCourse = courseRepository.saveOrUpdate(course);
-
         CourseVersion draftVersion =
-                courseVersionRepository.findByIdAndCourseIdWithModules(
-                        savedCourse.getDraftVersion().getId(),
-                        courseId
-                );
-
+                courseVersionRepository.findByIdWithModules(savedCourse.getDraftVersion().getId());
         ProfileNameDto author =
                 profileApi.getProfileName(savedCourse.getAuthorId());
-
         AuthorCourseResponse response = courseResponseMapper.toAuthorCourseResponse(
                 savedCourse,
                 draftVersion,
                 author,
                 savedCourse.isEditable(),
-                savedCourse.isEditable()
+                savedCourse.isPublishable()
         );
 
         log.info("Course draft modules successfully saved: courseId={}, draftVersionId={}",
                 courseId, savedCourse.getDraftVersion().getId());
-
         return response;
     }
 
@@ -329,7 +334,19 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
         log.info("Course draft module lessons saving requested: courseId={}, moduleId={}, stableModuleId={}",
                 courseId, moduleId, request.stableModuleId());
 
-        Course course = getExistingCourseWithDraft(courseId);
+        Course course = courseRepository.findByIdWithDraftModuleLessons(
+                courseId,
+                request.stableModuleId()
+        );
+
+        if (course == null) {
+            log.error("Course loading with draft module lessons failed, course not found: courseId={}, stableModuleId={}",
+                    courseId, request.stableModuleId());
+            throw new NotFoundException(
+                    CourseErrorCode.COURSE_NOT_FOUND,
+                    "Course with id=" + courseId + " not found"
+            );
+        }
 
         ensureAuthor(course);
 
@@ -341,17 +358,14 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
         Course savedCourse = courseRepository.saveOrUpdate(course);
 
         CourseVersion draftVersion =
-                courseVersionRepository.findByIdAndCourseIdWithModule(
+                courseVersionRepository.findByIdWithModule(
                         savedCourse.getDraftVersion().getId(),
-                        courseId,
                         request.stableModuleId()
                 );
-
         CourseModule module =
                 draftVersion.findModuleByStableId(
                         request.stableModuleId()
                 );
-
         AuthorCourseModuleResponse response = courseResponseMapper.toAuthorCourseModuleResponse(
                 module,
                 savedCourse.isEditable()
@@ -359,7 +373,6 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
 
         log.info("Course draft module lessons successfully saved: courseId={}, moduleId={}, stableModuleId={}",
                 courseId, moduleId, request.stableModuleId());
-
         return response;
     }
 
@@ -371,9 +384,22 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
         log.info("Course draft lesson blocks saving requested: courseId={}, lessonId={}, stableLessonId={}",
                 courseId, lessonId, request.stableLessonId());
 
-        Course course = getExistingCourseWithDraft(courseId);
+        Course course = courseRepository.findByIdWithDraftLessonBlocks(
+                courseId,
+                request.stableLessonId()
+        );
+
+        if (course == null) {
+            log.error("Course loading with draft lesson blocks failed, course not found: courseId={}, stableLessonId={}",
+                    courseId, request.stableLessonId());
+            throw new NotFoundException(
+                    CourseErrorCode.COURSE_NOT_FOUND,
+                    "Course with id=" + courseId + " not found"
+            );
+        }
 
         ensureAuthor(course);
+        ensureLessonBlockAssetsExist(request.blocks());
 
         course.saveDraftLessonBlocks(
                 lessonId,
@@ -381,19 +407,15 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
         );
 
         Course savedCourse = courseRepository.saveOrUpdate(course);
-
         CourseVersion draftVersion =
-                courseVersionRepository.findByIdAndCourseIdWithLesson(
+                courseVersionRepository.findByIdWithLesson(
                         savedCourse.getDraftVersion().getId(),
-                        courseId,
                         request.stableLessonId()
                 );
-
         CourseLesson lesson =
                 draftVersion.findLessonByStableId(
                         request.stableLessonId()
                 );
-
         AuthorCourseLessonResponse response = courseResponseMapper.toAuthorCourseLessonResponse(
                 lesson,
                 savedCourse.isEditable()
@@ -401,7 +423,6 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
 
         log.info("Course draft lesson blocks successfully saved: courseId={}, lessonId={}, stableLessonId={}",
                 courseId, lessonId, request.stableLessonId());
-
         return response;
     }
 
@@ -410,15 +431,24 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
     public void requestPublication(Long courseId) {
         log.info("Course publication requested: courseId={}", courseId);
 
-        Course course = getExistingCourseWithDraft(courseId);
+        Course course = courseRepository.findByIdWithDraftContent(courseId);
+
+        if (course == null) {
+            log.error("Course loading with full draft content failed, course not found: courseId={}", courseId);
+            throw new NotFoundException(
+                    CourseErrorCode.COURSE_NOT_FOUND,
+                    "Course with id=" + courseId + " not found"
+            );
+        }
 
         ensureAuthor(course);
 
         course.requestPublication();
 
-        courseRepository.saveOrUpdate(course);
+        courseVersionRepository.updateModerationState(course.getDraftVersion());
 
-        log.info("Course publication successfully requested: courseId={}", courseId);
+        log.info("Course publication successfully requested: courseId={}, draftVersionId={}",
+                courseId, course.getDraftVersion().getId());
     }
 
     @Override
@@ -514,20 +544,6 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
         return course.getDraftVersion().getId();
     }
 
-    private Course getExistingCourseWithDraft(Long courseId) {
-        Course course = courseRepository.findByIdWithDraftContent(courseId);
-
-        if (course == null) {
-            log.error("Course loading with draft failed, course not found: courseId={}", courseId);
-            throw new NotFoundException(
-                    CourseErrorCode.COURSE_NOT_FOUND,
-                    "Course with id=" + courseId + " not found"
-            );
-        }
-
-        return course;
-    }
-
     private void ensureAuthor(Course course) {
         Long currentUserId = identityApi.getCurrentUserId();
 
@@ -535,6 +551,36 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
             log.error("Course access denied: courseId={}, currentUserId={}, authorId={}",
                     course.getId(), currentUserId, course.getAuthorId());
             throw new ForbiddenException(CourseErrorCode.COURSE_FORBIDDEN);
+        }
+    }
+
+    private void ensureLessonBlockAssetsExist(List<SaveDraftLessonBlockItemRequest> blocks) {
+        if (blocks == null || blocks.isEmpty()) {
+            return;
+        }
+
+        Set<Long> fileIds = new HashSet<>();
+        Set<Long> videoIds = new HashSet<>();
+
+        for (SaveDraftLessonBlockItemRequest block : blocks) {
+            if (block == null) {
+                continue;
+            }
+
+            if (block.fileAssetId() != null) {
+                fileIds.add(block.fileAssetId());
+            }
+
+            if (block.videoAssetId() != null) {
+                videoIds.add(block.videoAssetId());
+            }
+        }
+
+        if (!mediaApi.existsFileByIds(fileIds)) {
+            throw new NotFoundException(CourseErrorCode.LESSON_BLOCK_FILE_REQUIRED);
+        }
+        if (!mediaApi.existsVideoByIds(videoIds)) {
+            throw new NotFoundException(CourseErrorCode.LESSON_BLOCK_VIDEO_REQUIRED);
         }
     }
 

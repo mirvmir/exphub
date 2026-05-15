@@ -73,6 +73,7 @@ public class DefaultAuthService implements AuthService {
     }
 
     @Override
+    @Transactional
     public void logoutCurrentSession(String rawToken) {
         log.info("User logout started");
 

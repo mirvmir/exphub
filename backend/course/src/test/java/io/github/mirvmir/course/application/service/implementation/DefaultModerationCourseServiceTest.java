@@ -7,6 +7,7 @@ import io.github.mirvmir.course.api.event.CourseDeleteEvent;
 import io.github.mirvmir.course.api.event.CoursePublishedEvent;
 import io.github.mirvmir.course.application.service.port.event.CourseEventPublisher;
 import io.github.mirvmir.course.application.service.port.repository.CourseRepository;
+import io.github.mirvmir.course.application.service.port.repository.CourseVersionRepository;
 import io.github.mirvmir.course.domain.Course;
 import io.github.mirvmir.course.domain.CourseVersion;
 import io.github.mirvmir.course.web.request.RejectCourseRequest;
@@ -24,6 +25,7 @@ import static org.mockito.Mockito.*;
 class DefaultModerationCourseServiceTest {
 
     private CourseRepository courseRepository;
+    private CourseVersionRepository courseVersionRepository;
     private EnrollmentApi enrollmentApi;
     private CourseEventPublisher eventPublisher;
 
@@ -32,11 +34,13 @@ class DefaultModerationCourseServiceTest {
     @BeforeEach
     void setUp() {
         courseRepository = mock(CourseRepository.class);
+        courseVersionRepository = mock(CourseVersionRepository.class);
         enrollmentApi = mock(EnrollmentApi.class);
         eventPublisher = mock(CourseEventPublisher.class);
 
         service = new DefaultModerationCourseService(
                 courseRepository,
+                courseVersionRepository,
                 enrollmentApi,
                 eventPublisher
         );
@@ -88,23 +92,30 @@ class DefaultModerationCourseServiceTest {
     void block_shouldBlockRefundAndDeleteEvent() {
         Course course = activeCourse();
 
-        when(courseRepository.findByIdWithPublishedContent(1L)).thenReturn(course);
+        when(courseRepository.findByIdWithPublishedInfo(1L)).thenReturn(course);
 
         service.block(1L);
 
         assertEquals(ContentStatus.BLOCKED, course.getStatus());
-        verify(courseRepository).saveOrUpdate(course);
+
+        verify(courseRepository).findByIdWithPublishedInfo(1L);
+        verify(courseRepository).updateStatus(course);
+        verify(courseRepository, never()).saveOrUpdate(course);
+
         verify(enrollmentApi).refundPayedCourseEnrollments(1L, "Курс заблокирован");
         verify(eventPublisher).delete(any(CourseDeleteEvent.class));
     }
 
     @Test
     void block_shouldThrowNotFound_whenCourseNotFound() {
-        when(courseRepository.findByIdWithPublishedContent(1L)).thenReturn(null);
+        when(courseRepository.findByIdWithPublishedInfo(1L)).thenReturn(null);
 
         assertThrows(NotFoundException.class,
                 () -> service.block(1L));
 
+        verify(courseRepository).findByIdWithPublishedInfo(1L);
+        verify(courseRepository, never()).updateStatus(any());
+        verify(courseRepository, never()).saveOrUpdate(any());
         verifyNoInteractions(enrollmentApi, eventPublisher);
     }
 
@@ -125,6 +136,7 @@ class DefaultModerationCourseServiceTest {
                 1L,
                 2L,
                 ContentStatus.DRAFT,
+                3L,
                 Set.of(11L),
                 Set.of(),
                 null,
@@ -149,6 +161,7 @@ class DefaultModerationCourseServiceTest {
                 1L,
                 2L,
                 ContentStatus.ACTIVE,
+                3L,
                 Set.of(11L),
                 Set.of(),
                 publishedVersion,
@@ -185,6 +198,7 @@ class DefaultModerationCourseServiceTest {
                 1L,
                 2L,
                 ContentStatus.ACTIVE,
+                3L,
                 Set.of(11L),
                 Set.of(),
                 publishedVersion,

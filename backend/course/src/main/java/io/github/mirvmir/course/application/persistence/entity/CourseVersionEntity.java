@@ -36,7 +36,7 @@ public class CourseVersionEntity {
     @Column(name = "moderation_comment")
     private String moderationComment;
 
-    @Column(name = "short_description", nullable = false)
+    @Column(name = "short_description")
     private String shortDescription;
 
     @Column(name = "description_html")

@@ -91,8 +91,7 @@ class EnrollmentControllerTest {
 
     @Test
     void bookIndividualActivity_shouldReturnCreated() throws Exception {
-        Instant startAt = Instant.parse("2026-05-13T10:00:00Z");
-
+        Instant startAt = Instant.now().plusSeconds(3600);
         BookIndividualActivityRequest request =
                 new BookIndividualActivityRequest(300L, startAt);
 

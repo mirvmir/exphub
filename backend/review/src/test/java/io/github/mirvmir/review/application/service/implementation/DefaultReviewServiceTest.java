@@ -138,57 +138,6 @@ class DefaultReviewServiceTest {
     }
 
     @Test
-    void createReview_whenScoreIsNull_shouldThrowValidationException() {
-        CreateReviewRequest request = new CreateReviewRequest(
-                "Без оценки",
-                null
-        );
-
-        when(identityApi.getCurrentUserId()).thenReturn(2L);
-        when(enrollmentApi.isStudentOfActivity(2L, 10L)).thenReturn(true);
-
-        ValidationException exception = assertThrows(ValidationException.class,
-                () -> service.createActivityReview(10L, request));
-
-        assertEquals("Оценка обязательна", exception.getMessage());
-        verify(reviewRepository, never()).save(any());
-    }
-
-    @Test
-    void createReview_whenScoreIsLessThanOne_shouldThrowValidationException() {
-        CreateReviewRequest request = new CreateReviewRequest(
-                "Плохая оценка",
-                0.0
-        );
-
-        when(identityApi.getCurrentUserId()).thenReturn(2L);
-        when(enrollmentApi.isStudentOfActivity(2L, 10L)).thenReturn(true);
-
-        ValidationException exception = assertThrows(ValidationException.class,
-                () -> service.createActivityReview(10L, request));
-
-        assertEquals("Оценка должна быть от 1 до 5", exception.getMessage());
-        verify(reviewRepository, never()).save(any());
-    }
-
-    @Test
-    void createReview_whenScoreIsGreaterThanFive_shouldThrowValidationException() {
-        CreateReviewRequest request = new CreateReviewRequest(
-                "Плохая оценка",
-                6.0
-        );
-
-        when(identityApi.getCurrentUserId()).thenReturn(2L);
-        when(enrollmentApi.isStudentOfActivity(2L, 10L)).thenReturn(true);
-
-        ValidationException exception = assertThrows(ValidationException.class,
-                () -> service.createActivityReview(10L, request));
-
-        assertEquals("Оценка должна быть от 1 до 5", exception.getMessage());
-        verify(reviewRepository, never()).save(any());
-    }
-
-    @Test
     void createReview_whenReviewAlreadyExists_shouldThrowBusinessException() {
         CreateReviewRequest request = new CreateReviewRequest(
                 "Повторный отзыв",

@@ -1,14 +1,17 @@
 package io.github.mirvmir.profile.application.service.implementation;
 
+import io.github.mirvmir.common.exception.NotFoundException;
 import io.github.mirvmir.identity.api.IdentityApi;
 import io.github.mirvmir.identity.dto.TokenDto;
 import io.github.mirvmir.identity.dto.UserInfoDto;
+import io.github.mirvmir.media.api.MediaApi;
 import io.github.mirvmir.profile.api.event.ProfileCompletedEvent;
 import io.github.mirvmir.profile.application.service.port.repository.ProfileRepository;
 import io.github.mirvmir.profile.application.service.dto.EditProfileRqDto;
 import io.github.mirvmir.profile.application.service.interfaces.ProfileService;
 import io.github.mirvmir.profile.domain.Profile;
 import io.github.mirvmir.profile.application.service.dto.EditProfileRsDto;
+import io.github.mirvmir.profile.exception.ProfileErrorCode;
 import io.github.mirvmir.profile.web.response.MyProfileResponse;
 import io.github.mirvmir.profile.web.response.PublicProfileResponse;
 import lombok.AllArgsConstructor;
@@ -21,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class DefaultProfileService implements ProfileService {
 
     private final IdentityApi identityApi;
+    private final MediaApi mediaApi;
 
     private final ProfileRepository profileRepository;
 
@@ -33,6 +37,10 @@ public class DefaultProfileService implements ProfileService {
         Profile profile = profileRepository.findByUserId(currentUserId);
 
         boolean wasCompleted  = profile.isCompleted();
+
+        if (dto.avatarFileId() != null && !mediaApi.existsFileById(dto.avatarFileId())) {
+            throw new NotFoundException(ProfileErrorCode.MEDIA_FILE_NOT_FOUND);
+        }
 
         profile.change(
                 dto.givenName(),
@@ -66,9 +74,15 @@ public class DefaultProfileService implements ProfileService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public MyProfileResponse getMyProfile() {
         UserInfoDto currentUserInfo = identityApi.getCurrentUserInfo();
         Profile profile = profileRepository.findByUserId(currentUserInfo.userId());
+
+        if (profile == null) {
+            profile = Profile.createNew(currentUserInfo.userId());
+            profile = profileRepository.save(profile);
+        }
 
         return new MyProfileResponse(
                 profile.getId(),
@@ -83,8 +97,14 @@ public class DefaultProfileService implements ProfileService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PublicProfileResponse getPublicProfile(Long id) {
         Profile profile = profileRepository.findByUserId(id);
+
+        if (profile == null) {
+            throw new NotFoundException(ProfileErrorCode.PROFILE_NOT_FOUND);
+        }
+
         UserInfoDto user = identityApi.getUserInfoById(id);
 
         String email = profile.isEmailVisibility()

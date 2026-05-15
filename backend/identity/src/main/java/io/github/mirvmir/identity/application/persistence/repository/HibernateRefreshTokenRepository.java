@@ -44,14 +44,14 @@ public class HibernateRefreshTokenRepository implements RefreshTokenRepository {
         Session session = sessionFactory.getCurrentSession();
 
         return session.createNativeQuery("""
-            delete from refresh_token
-            where ctid in (
-                select ctid
-                from refresh_token
-                where expires_at < :now
-                limit :batchSize
-            )
-            """)
+                        delete from refresh_token
+                        where ctid in (
+                            select ctid
+                            from refresh_token
+                            where expires_at < :now
+                            limit :batchSize
+                        )
+                        """, Void.class)
                 .setParameter("now", now)
                 .setParameter("batchSize", batchSize)
                 .executeUpdate();

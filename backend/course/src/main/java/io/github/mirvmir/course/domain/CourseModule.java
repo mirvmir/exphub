@@ -135,6 +135,12 @@ public class CourseModule {
         }
     }
 
+    public boolean isPublishable() {
+        return !(title == null || title.isBlank())
+                && !(lessons == null || lessons.isEmpty())
+                && lessons.stream().allMatch(lesson -> lesson.isPublishable());
+    }
+
     public List<CourseLesson> getLessons() {
         if (lessons == null) {
             return new ArrayList<>();

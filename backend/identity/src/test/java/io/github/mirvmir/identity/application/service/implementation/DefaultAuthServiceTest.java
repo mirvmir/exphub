@@ -122,9 +122,16 @@ class DefaultAuthServiceTest {
     @Test
     void logoutCurrentSession_shouldDeleteRefreshToken() {
         RefreshToken refreshToken = mock(RefreshToken.class);
+        User user = new User(
+                Role.USER,
+                "hash",
+                "user@example.com",
+                true
+        );
 
         when(refreshTokenHasher.hash("raw-token")).thenReturn("hash");
         when(tokenRepo.findByTokenHash("hash")).thenReturn(refreshToken);
+        when( refreshToken.getUser()).thenReturn(user);
 
         service.logoutCurrentSession("raw-token");
 

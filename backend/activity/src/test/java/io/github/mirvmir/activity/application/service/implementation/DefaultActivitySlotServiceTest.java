@@ -19,6 +19,7 @@ import io.github.mirvmir.common.exception.NotFoundException;
 import io.github.mirvmir.enrollment.api.EnrollmentApi;
 import io.github.mirvmir.identity.api.IdentityApi;
 import io.github.mirvmir.payment.api.PaymentApi;
+import io.github.mirvmir.taxonomy.api.TaxonomyApi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -37,7 +38,7 @@ class DefaultActivitySlotServiceTest {
 
     private IdentityApi identityApi;
     private EnrollmentApi enrollmentApi;
-    private PaymentApi paymentApi;
+    private TaxonomyApi taxonomyApi;
     private ActivityRepository activityRepository;
     private ActivitySlotRepository activitySlotRepository;
     private ActivityCancellationProperties cancellationProperties;
@@ -51,7 +52,7 @@ class DefaultActivitySlotServiceTest {
     void setUp() {
         identityApi = mock(IdentityApi.class);
         enrollmentApi = mock(EnrollmentApi.class);
-        paymentApi = mock(PaymentApi.class);
+        taxonomyApi = mock(TaxonomyApi.class);
         activityRepository = mock(ActivityRepository.class);
         activitySlotRepository = mock(ActivitySlotRepository.class);
         cancellationProperties = mock(ActivityCancellationProperties.class);
@@ -60,6 +61,7 @@ class DefaultActivitySlotServiceTest {
         service = new DefaultActivitySlotService(
                 identityApi,
                 enrollmentApi,
+                taxonomyApi,
                 activityRepository,
                 activitySlotRepository,
                 cancellationProperties,
@@ -96,7 +98,7 @@ class DefaultActivitySlotServiceTest {
         when(activitySlotRepository.findById(slot.getId())).thenReturn(slot);
         when(activityRepository.findById(activity.getId())).thenReturn(activity);
 
-        ForbiddenException exception = assertThrows(ForbiddenException.class,
+        assertThrows(ForbiddenException.class,
                 () -> service.cancelByAuthor(slot.getId(), new CancelActivitySlotRequest("Причина")));
         verify(activitySlotRepository, never()).saveOrUpdate(any());
         verifyNoInteractions(enrollmentApi, activityEventPublisher);
@@ -174,30 +176,62 @@ class DefaultActivitySlotServiceTest {
     void updateRoomJoinUrl_shouldThrowNotFound_whenSlotDoesNotExist() {
         when(activitySlotRepository.findById(10L)).thenReturn(null);
 
-        NotFoundException exception = assertThrows(NotFoundException.class,
-                () -> service.updateRoomJoinUrl(10L, new UpdateActivitySlotRoomJoinUrlRequest("https://meet.test/room")));
+        assertThrows(NotFoundException.class,
+                () -> service.updateRoomJoinUrl(
+                        10L,
+                        new UpdateActivitySlotRoomJoinUrlRequest("https://meet.test/room")
+                )
+        );
         verifyNoInteractions(activityRepository);
     }
 
     private Activity individualActivity() {
         return Activity.load(
-                1L, 2L, "Индивидуальное", "Кратко", "<p>Описание</p>", 1,
-                new BigDecimal("1500"), Currency.getInstance("RUB"), 60, 7L,
-                ActivityType.INDIVIDUAL, 30, ContentStatus.ACTIVE, ModerationStatus.APPROVED,
-                null, Set.of(), Set.of()
+                1L,
+                2L,
+                "Индивидуальное",
+                "Кратко",
+                "<p>Описание</p>",
+                1,
+                new BigDecimal("1500"),
+                Currency.getInstance("RUB"),
+                60,
+                7L,
+                ActivityType.INDIVIDUAL,
+                30,
+                ContentStatus.ACTIVE,
+                ModerationStatus.APPROVED,
+                null,
+                Set.of(),
+                Set.of()
         );
     }
 
     private Activity groupActivity() {
         return Activity.load(
-                1L, 2L, "Групповое", "Кратко", "<p>Описание</p>", 5,
-                new BigDecimal("1500"), Currency.getInstance("RUB"), 60, 7L,
-                ActivityType.GROUP, null, ContentStatus.ACTIVE, ModerationStatus.APPROVED,
-                null, Set.of(), Set.of()
+                1L,
+                2L,
+                "Групповое",
+                "Кратко",
+                "<p>Описание</p>",
+                5,
+                new BigDecimal("1500"),
+                Currency.getInstance("RUB"),
+                60,
+                7L,
+                ActivityType.GROUP,
+                null,
+                ContentStatus.ACTIVE,
+                ModerationStatus.APPROVED,
+                null,
+                Set.of(), Set.of()
         );
     }
 
-    private ActivitySlot slot(Long id, Long activityId, Long teacherId, Long createdByUserId) {
+    private ActivitySlot slot(Long id,
+                              Long activityId,
+                              Long teacherId,
+                              Long createdByUserId) {
         return ActivitySlot.load(
                 id,
                 activityId,

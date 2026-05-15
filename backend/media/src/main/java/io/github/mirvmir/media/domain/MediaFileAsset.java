@@ -45,7 +45,7 @@ public class MediaFileAsset {
         return new MediaFileAsset(
                 id,
                 originalName,
-                originalName,
+                mimeType,
                 sizeBytes,
                 storagePath
         );

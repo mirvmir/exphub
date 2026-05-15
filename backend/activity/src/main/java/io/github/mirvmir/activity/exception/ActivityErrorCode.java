@@ -48,7 +48,9 @@ public enum ActivityErrorCode implements ErrorCode {
     ACTIVITY_BLOCKED("ACTIVITY_BLOCKED",
             "Activity was blocked"),
     TOPIC_SUBJECT_MISMATCH("TOPIC_SUBJECT_MISMATCH",
-            "One or more topics do not belong to the specified subject");
+            "One or more topics do not belong to the specified subject"),
+    ACTIVITY_DESCRIPTION_REQUIRED("ACTIVITY_DESCRIPTION_REQUIRED",
+            "Activity description is required");
 
     private final String code;
     private final String message;
