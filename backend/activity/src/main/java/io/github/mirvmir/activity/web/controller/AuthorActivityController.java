@@ -27,28 +27,32 @@ public class AuthorActivityController {
 
     @GetMapping("/{activityId}/description")
     public AuthorActivityDescriptionResponse getDescriptionForAuthor(
-            @PathVariable Long activityId
+            @PathVariable("activityId")
+            Long activityId
     ) {
         return authorActivityService.getDescriptionForAuthor(activityId);
     }
 
     @GetMapping("/{activityId}/availability-times")
     public Set<ActivityTimeResponse> getAvailabilityTimesForAuthor(
-            @PathVariable Long activityId
+            @PathVariable("activityId")
+            Long activityId
     ) {
         return authorActivityTimeService.getAvailabilityTimesForAuthor(activityId);
     }
 
     @GetMapping("/{activityId}/individual-slots")
     public Set<IndividualActivitySlotResponse> getIndividualSlotsForAuthor(
-            @PathVariable Long activityId
+            @PathVariable("activityId")
+            Long activityId
     ) {
         return authorActivityService.getIndividualSlotsForAuthor(activityId);
     }
 
     @GetMapping("/{activityId}/group-slots")
     public Set<GroupActivitySlotResponse> getGroupSlotsForAuthor(
-            @PathVariable Long activityId
+            @PathVariable("activityId")
+            Long activityId
     ) {
         return authorActivityService.getGroupSlotsForAuthor(activityId);
     }
@@ -136,8 +140,10 @@ public class AuthorActivityController {
     @DeleteMapping("/{activityId}/availability-times/{activityTimeId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteAvailabilityTime(
-            @PathVariable Long activityId,
-            @PathVariable Long activityTimeId
+            @PathVariable("activityId")
+            Long activityId,
+            @PathVariable("activityTimeId")
+            Long activityTimeId
     ) {
         authorActivityTimeService.deleteAvailabilityTime(activityId, activityTimeId);
     }

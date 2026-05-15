@@ -16,6 +16,7 @@ import io.github.mirvmir.activity.web.request.UpdateActivityTopicsRequest;
 import io.github.mirvmir.common.exception.BusinessException;
 import io.github.mirvmir.common.exception.ForbiddenException;
 import io.github.mirvmir.common.exception.NotFoundException;
+import io.github.mirvmir.common.exception.UnauthorizedException;
 import io.github.mirvmir.enrollment.api.EnrollmentApi;
 import io.github.mirvmir.identity.api.IdentityApi;
 import io.github.mirvmir.taxonomy.api.TaxonomyApi;
@@ -53,6 +54,16 @@ public class DefaultActivitySlotService implements ActivitySlotService {
     public void cancelByAuthor(Long activitySlotId,
                                CancelActivitySlotRequest request) {
         Long currentUserId = identityApi.getCurrentUserId();
+
+        if (currentUserId == null) {
+            log.info("Unauthorized author cancellation request: activitySlotId={}, reason={}",
+                    activitySlotId,
+                    request.reason()
+            );
+
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
+
         log.info("Author cancellation requested: activitySlotId={}, userId={}", activitySlotId, currentUserId);
         Instant now = Instant.now(clock);
 
@@ -63,7 +74,8 @@ public class DefaultActivitySlotService implements ActivitySlotService {
             log.warn("Forbidden author action: activityId={}, userId={}, authorId={}",
                     activity.getId(),
                     currentUserId,
-                    activity.getAuthorId());
+                    activity.getAuthorId()
+            );
             throw new ForbiddenException(ActivityErrorCode.ACTIVITY_FORBIDDEN);
         }
 
@@ -85,13 +97,24 @@ public class DefaultActivitySlotService implements ActivitySlotService {
         log.info("Activity slot cancelled by author: activityId={}, activitySlotId={}, userId={}",
                 activity.getId(),
                 slot.getId(),
-                currentUserId);
+                currentUserId
+        );
     }
 
     @Override
     public void cancelByStudent(Long activitySlotId,
                                 CancelActivitySlotRequest request) {
         Long currentUserId = identityApi.getCurrentUserId();
+
+        if (currentUserId == null) {
+            log.info("Unauthorized student cancellation request: activitySlotId={}, reason={}",
+                    activitySlotId,
+                    request.reason()
+            );
+
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
+
         log.info("Student cancellation requested: activitySlotId={}, userId={}", activitySlotId, currentUserId);
         Instant now = Instant.now(clock);
 
@@ -139,6 +162,15 @@ public class DefaultActivitySlotService implements ActivitySlotService {
     @Transactional
     public void complete(Long activitySlotId) {
         Long currentUserId = identityApi.getCurrentUserId();
+
+        if (currentUserId == null) {
+            log.info("Unauthorized activity slot completion request: activitySlotId={}",
+                    activitySlotId
+            );
+
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
+
         log.info("Activity slot completion requested: activitySlotId={}, userId={}", activitySlotId, currentUserId);
 
         ActivitySlot slot = getExistingSlot(activitySlotId);
@@ -167,6 +199,15 @@ public class DefaultActivitySlotService implements ActivitySlotService {
     public void updateRoomJoinUrl(Long activitySlotId,
                                   UpdateActivitySlotRoomJoinUrlRequest request) {
         Long currentUserId = identityApi.getCurrentUserId();
+
+        if (currentUserId == null) {
+            log.info("Unauthorized room join URL update request: activitySlotId={}",
+                    activitySlotId
+            );
+
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
+
         Instant now = Instant.now(clock);
         log.info("Room join URL update requested: activitySlotId={}, userId={}", activitySlotId, currentUserId);
 
@@ -197,6 +238,15 @@ public class DefaultActivitySlotService implements ActivitySlotService {
     @Override
     public void updateTopics(Long activityId, UpdateActivityTopicsRequest request) {
         Long currentUserId = identityApi.getCurrentUserId();
+
+        if (currentUserId == null) {
+            log.info("Unauthorized topics update request: activityId={}",
+                    activityId
+            );
+
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
+
         log.info("Activity topics update requested: activityId={}, userId={}", activityId, currentUserId);
 
         Activity activity = getExistingActivity(activityId);

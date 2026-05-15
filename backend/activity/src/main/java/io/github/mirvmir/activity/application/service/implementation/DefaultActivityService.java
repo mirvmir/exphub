@@ -67,17 +67,26 @@ public class DefaultActivityService implements ActivityService {
         Long currentUserId = identityApi.getCurrentUserId();
         Long authorId = activity.getAuthorId();
 
-        boolean isStudent = enrollmentApi.isStudentOfActivity(
-                currentUserId,
-                id
-        );
-
-        if (!activity.isActive() && !isStudent) {
-            log.warn("Inactive activity requested by non-student: activityId={}, userId={}", id, currentUserId);
-            throw new NotFoundException(
-                    ActivityErrorCode.ACTIVITY_NOT_FOUND,
-                    "Activity with id=" + id + " not found"
+        boolean isStudent = false;
+        if (currentUserId != null) {
+            isStudent = enrollmentApi.isStudentOfActivity(
+                    currentUserId,
+                    id
             );
+
+            if (!activity.isActive() && !isStudent) {
+                log.debug("Inactive activity requested by non-student: activityId={}, userId={}",
+                        id,
+                        currentUserId
+                );
+                throw new NotFoundException(
+                        ActivityErrorCode.ACTIVITY_NOT_FOUND,
+                        "Activity with id=" + id + " not found"
+                );
+            }
+        }
+        else {
+            log.debug("Inactive activity requested by unauthorized user: activityId={}", id);
         }
 
         ProfileNameDto author = profileApi.getProfileName(authorId);

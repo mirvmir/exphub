@@ -21,6 +21,7 @@ public interface ActivityCatalogMapper {
                 entity.getId(),
                 entity.getActivityId(),
                 entity.getTitle(),
+                entity.getAuthorId(),
                 entity.getAuthorName(),
                 entity.getShortDescription(),
                 price.getAmount(),

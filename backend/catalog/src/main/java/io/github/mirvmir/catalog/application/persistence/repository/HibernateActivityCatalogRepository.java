@@ -98,6 +98,38 @@ public class HibernateActivityCatalogRepository implements ActivityCatalogReposi
     }
 
     @Override
+    public void saveAll(List<ActivityCatalog> activityCatalogs) {
+        if (activityCatalogs == null || activityCatalogs.isEmpty()) {
+            return;
+        }
+
+        Session session = sessionFactory.getCurrentSession();
+
+        List<Long> activityIds = activityCatalogs.stream()
+                .map(ActivityCatalog::getActivityId)
+                .toList();
+
+        Set<Long> existingCourseIds = session.createQuery("""
+                select c.activityId
+                from ActivityCatalogEntity c
+                where c.activityId in :activityIds
+                """, Long.class)
+                .setParameter("activityIds", activityIds)
+                .getResultStream()
+                .collect(java.util.stream.Collectors.toSet());
+
+        for (ActivityCatalog activityCatalog : activityCatalogs) {
+            ActivityCatalogEntity entity = activityCatalogMapper.toEntity(activityCatalog);
+
+            if (existingCourseIds.contains(activityCatalog.getActivityId())) {
+                session.merge(entity);
+            } else {
+                session.persist(entity);
+            }
+        }
+    }
+
+    @Override
     public void deleteByActivityId(Long activityId) {
         Session session = sessionFactory.getCurrentSession();
 
@@ -123,6 +155,22 @@ public class HibernateActivityCatalogRepository implements ActivityCatalogReposi
                 .uniqueResult();
 
         return activityCatalogMapper.toDomain(entity);
+    }
+
+    @Override
+    public List<ActivityCatalog> findByAuthorId(Long authorId) {
+        Session session = sessionFactory.getCurrentSession();
+
+        return session.createQuery("""
+                select a
+                from ActivityCatalogEntity a
+                where a.authorId = :authorId
+                """, ActivityCatalogEntity.class)
+                .setParameter("authorId", authorId)
+                .getResultList()
+                .stream()
+                .map(activityCatalogMapper::toDomain)
+                .toList();
     }
 
     @Override

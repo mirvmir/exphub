@@ -54,11 +54,11 @@ class DefaultOrderExpirationServiceTest {
 
     @Test
     void expireOrders_shouldDoNothing_whenNoExpiredOrdersFound() {
-        when(orderRepository.findExpiredForUpdate(now, 100)).thenReturn(List.of());
+        when(orderRepository.findExpiredForUpdate(now)).thenReturn(List.of());
 
         service.deleteExpiredOrders();
 
-        verify(orderRepository).findExpiredForUpdate(now, 100);
+        verify(orderRepository).findExpiredForUpdate(now);
         verify(orderRepository, never()).saveOrUpdate(any());
         verifyNoInteractions(activityEnrollmentRepository, courseEnrollmentRepository);
     }
@@ -68,7 +68,7 @@ class DefaultOrderExpirationServiceTest {
         Order order = expiredCourseOrder();
         CourseEnrollment enrollment = bookedExpiredCourseEnrollment();
 
-        when(orderRepository.findExpiredForUpdate(now, 100)).thenReturn(List.of(order));
+        when(orderRepository.findExpiredForUpdate(now)).thenReturn(List.of(order));
         when(courseEnrollmentRepository.findById(10L)).thenReturn(enrollment);
         when(bookingProperties.getBookingExpiresMinutes()).thenReturn(15L);
 
@@ -87,7 +87,7 @@ class DefaultOrderExpirationServiceTest {
         Order order = expiredActivityOrder();
         ActivityEnrollment enrollment = bookedExpiredActivityEnrollment();
 
-        when(orderRepository.findExpiredForUpdate(now, 100)).thenReturn(List.of(order));
+        when(orderRepository.findExpiredForUpdate(now)).thenReturn(List.of(order));
         when(activityEnrollmentRepository.findById(10L)).thenReturn(enrollment);
         when(bookingProperties.getBookingExpiresMinutes()).thenReturn(15L);
 
@@ -105,7 +105,7 @@ class DefaultOrderExpirationServiceTest {
     void expireOrders_shouldKeepOrderExpired_whenCourseEnrollmentIsMissing() {
         Order order = expiredCourseOrder();
 
-        when(orderRepository.findExpiredForUpdate(now, 100)).thenReturn(List.of(order));
+        when(orderRepository.findExpiredForUpdate(now)).thenReturn(List.of(order));
         when(courseEnrollmentRepository.findById(10L)).thenReturn(null);
 
         service.deleteExpiredOrders();

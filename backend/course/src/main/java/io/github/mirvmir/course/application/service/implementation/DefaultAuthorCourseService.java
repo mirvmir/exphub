@@ -3,6 +3,7 @@ package io.github.mirvmir.course.application.service.implementation;
 import io.github.mirvmir.common.exception.BusinessException;
 import io.github.mirvmir.common.exception.ForbiddenException;
 import io.github.mirvmir.common.exception.NotFoundException;
+import io.github.mirvmir.common.exception.UnauthorizedException;
 import io.github.mirvmir.course.api.event.CourseChangeTopicIds;
 import io.github.mirvmir.course.api.event.CourseDeleteEvent;
 import io.github.mirvmir.course.api.event.CoursePublishedEvent;
@@ -173,6 +174,12 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
                 request.title());
 
         Long authorId = identityApi.getCurrentUserId();
+
+        if (authorId == null) {
+            log.info("Unauthorized create course request");
+
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
 
         Course course = Course.create(
                 authorId,
@@ -546,6 +553,12 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
 
     private void ensureAuthor(Course course) {
         Long currentUserId = identityApi.getCurrentUserId();
+
+        if (currentUserId == null) {
+            log.info("Unauthorized author request");
+
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
 
         if (!currentUserId.equals(course.getAuthorId())) {
             log.error("Course access denied: courseId={}, currentUserId={}, authorId={}",

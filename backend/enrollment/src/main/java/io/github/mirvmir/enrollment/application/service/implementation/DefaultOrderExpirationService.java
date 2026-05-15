@@ -36,15 +36,13 @@ public class DefaultOrderExpirationService
     @Transactional
     public void deleteExpiredOrders() {
         Instant now = Instant.now(clock);
-
         log.info("Start expiring overdue orders: now={}",
                 now);
 
-        List<Order> orders = orderRepository.findExpiredForUpdate(now, 100);
+        List<Order> orders = orderRepository.findExpiredForUpdate(now);
 
         if (orders.isEmpty()) {
-            log.info("No overdue orders found for expiration: now={}",
-                    now);
+            log.info("No overdue orders found for expiration: now={}", now);
             return;
         }
 

@@ -21,6 +21,7 @@ public interface CourseCatalogMapper {
                 entity.getId(),
                 entity.getCourseId(),
                 entity.getTitle(),
+                entity.getAuthorId(),
                 entity.getAuthorName(),
                 entity.getShortDescription(),
                 price.getAmount(),

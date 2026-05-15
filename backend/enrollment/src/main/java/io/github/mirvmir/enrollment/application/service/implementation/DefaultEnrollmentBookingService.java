@@ -7,6 +7,7 @@ import io.github.mirvmir.activity.api.dto.CreateIndividualActivitySlotRequest;
 import io.github.mirvmir.activity.api.dto.CreatedActivitySlotResponse;
 import io.github.mirvmir.common.exception.BusinessException;
 import io.github.mirvmir.common.exception.NotFoundException;
+import io.github.mirvmir.common.exception.UnauthorizedException;
 import io.github.mirvmir.course.api.CourseApi;
 import io.github.mirvmir.course.api.dto.CoursePurchaseInfoResponse;
 import io.github.mirvmir.enrollment.application.properties.BookingProperties;
@@ -57,6 +58,12 @@ public class DefaultEnrollmentBookingService implements EnrollmentBookingService
     public BookingResponse bookCourse(Long courseId) {
         Long userId = identityApi.getCurrentUserId();
         Instant now = Instant.now(clock);
+
+        if (userId == null) {
+            log.info("Unauthorized book course request");
+
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
 
         log.info("Start booking course: userId={}, courseId={}",
                 userId,
@@ -154,6 +161,12 @@ public class DefaultEnrollmentBookingService implements EnrollmentBookingService
     public BookingResponse bookGroupActivitySlot(Long activitySlotId) {
         Long userId = identityApi.getCurrentUserId();
         Instant now = Instant.now(clock);
+
+        if (userId == null) {
+            log.info("Unauthorized book group activity request");
+
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
 
         log.info("Start booking group activity slot: userId={}, activitySlotId={}",
                 userId,
@@ -261,6 +274,12 @@ public class DefaultEnrollmentBookingService implements EnrollmentBookingService
                                                   BookIndividualActivityRequest request) {
         Long userId = identityApi.getCurrentUserId();
         Instant now = Instant.now(clock);
+
+        if (userId == null) {
+            log.info("Unauthorized book individual activity request");
+
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
 
         log.info("Start booking individual activity: userId={}, activityId={}, activityTimeId={}, startAt={}",
                 userId,

@@ -1,7 +1,9 @@
 package io.github.mirvmir.catalog.application.persistence.repository;
 
+import io.github.mirvmir.catalog.application.persistence.entity.ActivityCatalogEntity;
 import io.github.mirvmir.catalog.application.service.port.repository.CourseCatalogRepository;
 import io.github.mirvmir.catalog.application.service.dto.CatalogFilterDto;
+import io.github.mirvmir.catalog.domain.ActivityCatalog;
 import io.github.mirvmir.catalog.domain.CourseCatalog;
 import io.github.mirvmir.catalog.application.persistence.entity.CourseCatalogEntity;
 import io.github.mirvmir.catalog.application.persistence.mapper.CourseCatalogMapper;
@@ -96,6 +98,38 @@ public class HibernateCourseCatalogRepository implements CourseCatalogRepository
     }
 
     @Override
+    public void saveAll(List<CourseCatalog> courseCatalogs) {
+        if (courseCatalogs == null || courseCatalogs.isEmpty()) {
+            return;
+        }
+
+        Session session = sessionFactory.getCurrentSession();
+
+        List<Long> courseIds = courseCatalogs.stream()
+                .map(CourseCatalog::getCourseId)
+                .toList();
+
+        Set<Long> existingCourseIds = session.createQuery("""
+                select c.courseId
+                from CourseCatalogEntity c
+                where c.courseId in :courseIds
+                """, Long.class)
+                .setParameter("courseIds", courseIds)
+                .getResultStream()
+                .collect(java.util.stream.Collectors.toSet());
+
+        for (CourseCatalog courseCatalog : courseCatalogs) {
+            CourseCatalogEntity entity = courseCatalogMapper.toEntity(courseCatalog);
+
+            if (existingCourseIds.contains(courseCatalog.getCourseId())) {
+                session.merge(entity);
+            } else {
+                session.persist(entity);
+            }
+        }
+    }
+
+    @Override
     public void deleteByCourseId(Long courseId) {
         Session session = sessionFactory.getCurrentSession();
 
@@ -121,6 +155,22 @@ public class HibernateCourseCatalogRepository implements CourseCatalogRepository
                 .uniqueResult();
 
         return courseCatalogMapper.toDomain(entity);
+    }
+
+    @Override
+    public List<CourseCatalog> findByAuthorId(Long authorId) {
+        Session session = sessionFactory.getCurrentSession();
+
+        return session.createQuery("""
+                select a
+                from CourseCatalogEntity c
+                where c.authorId = :authorId
+                """, CourseCatalogEntity.class)
+                .setParameter("authorId", authorId)
+                .getResultList()
+                .stream()
+                .map(courseCatalogMapper::toDomain)
+                .toList();
     }
 
     @Override

@@ -21,6 +21,8 @@ public class CourseCatalog {
     @NonNull
     private String title;
     @NonNull
+    private Long authorId;
+    @NonNull
     private String authorName;
     @NonNull
     private String shortDescription;
@@ -39,6 +41,7 @@ public class CourseCatalog {
 
     public static CourseCatalog create(Long courseId,
                                        String title,
+                                       Long authorId,
                                        String authorName,
                                        String shortDescription,
                                        BigDecimal amount,
@@ -54,6 +57,7 @@ public class CourseCatalog {
                 null,
                 courseId,
                 title,
+                authorId,
                 authorName,
                 shortDescription,
                 price,
@@ -68,6 +72,7 @@ public class CourseCatalog {
     public static CourseCatalog load(Long id,
                                      Long courseId,
                                      String title,
+                                     Long authorId,
                                      String authorName,
                                      String shortDescription,
                                      BigDecimal amount,
@@ -83,6 +88,7 @@ public class CourseCatalog {
                 id,
                 courseId,
                 title,
+                authorId,
                 authorName,
                 shortDescription,
                 price,

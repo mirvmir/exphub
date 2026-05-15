@@ -1,11 +1,13 @@
 package io.github.mirvmir.profile.application.service.implementation;
 
 import io.github.mirvmir.common.exception.NotFoundException;
+import io.github.mirvmir.common.exception.UnauthorizedException;
 import io.github.mirvmir.identity.api.IdentityApi;
 import io.github.mirvmir.identity.dto.TokenDto;
 import io.github.mirvmir.identity.dto.UserInfoDto;
 import io.github.mirvmir.media.api.MediaApi;
 import io.github.mirvmir.profile.api.event.ProfileCompletedEvent;
+import io.github.mirvmir.profile.api.event.ProfileUpdated;
 import io.github.mirvmir.profile.application.service.port.repository.ProfileRepository;
 import io.github.mirvmir.profile.application.service.dto.EditProfileRqDto;
 import io.github.mirvmir.profile.application.service.interfaces.ProfileService;
@@ -34,6 +36,11 @@ public class DefaultProfileService implements ProfileService {
     @Transactional
     public EditProfileRsDto editProfile(EditProfileRqDto dto) {
         Long currentUserId = identityApi.getCurrentUserId();
+
+        if (currentUserId == null) {
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
+
         Profile profile = profileRepository.findByUserId(currentUserId);
 
         boolean wasCompleted  = profile.isCompleted();
@@ -51,6 +58,12 @@ public class DefaultProfileService implements ProfileService {
         );
 
         profileRepository.save(profile);
+
+        eventPublisher.publishEvent(new ProfileUpdated(
+                currentUserId,
+                profile.getGivenName(),
+                profile.getFamilyName()
+        ));
 
         if (!wasCompleted && profile.isCompleted()) {
             eventPublisher.publishEvent(

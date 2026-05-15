@@ -1,5 +1,6 @@
 package io.github.mirvmir.media.application.service.implementation;
 
+import io.github.mirvmir.common.exception.UnauthorizedException;
 import io.github.mirvmir.identity.api.IdentityApi;
 import io.github.mirvmir.media.application.service.interfaces.VideoPlaybackTokenService;
 import io.github.mirvmir.media.application.properties.MediaProperties;
@@ -29,6 +30,10 @@ public class DefaultVideoPlaybackTokenService implements VideoPlaybackTokenServi
 
         try {
             Long userId = identityApi.getCurrentUserId();
+
+            if (userId == null) {
+                throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+            }
 
             long expiresAt = Instant.now()
                     .plusSeconds(mediaProperties.getPlaybackTokenTtlSeconds())

@@ -8,7 +8,7 @@ import io.github.mirvmir.identity.application.service.port.repository.RefreshTok
 import io.github.mirvmir.identity.application.service.port.repository.UserRepository;
 import io.github.mirvmir.identity.domain.RefreshToken;
 import io.github.mirvmir.identity.domain.User;
-import io.github.mirvmir.identity.exception.UnauthorizedException;
+import io.github.mirvmir.common.exception.UnauthorizedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

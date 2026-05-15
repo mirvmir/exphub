@@ -3,6 +3,7 @@ package io.github.mirvmir.practice.application.service.implementation;
 import io.github.mirvmir.common.exception.BusinessException;
 import io.github.mirvmir.common.exception.ForbiddenException;
 import io.github.mirvmir.common.exception.NotFoundException;
+import io.github.mirvmir.common.exception.UnauthorizedException;
 import io.github.mirvmir.course.api.CourseApi;
 import io.github.mirvmir.enrollment.api.EnrollmentApi;
 import io.github.mirvmir.enrollment.api.dto.StudentCourseEnrollmentResponse;
@@ -54,6 +55,10 @@ public class DefaultPracticeService implements PracticeService {
     ) {
         Long studentId = identityApi.getCurrentUserId();
         Instant now = Instant.now(clock);
+
+        if (studentId == null) {
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
 
         boolean isPractice = courseApi.isPractice(courseLessonId);
 
@@ -139,9 +144,15 @@ public class DefaultPracticeService implements PracticeService {
             );
         }
 
+        Long currentUserId = identityApi.getCurrentUserId();
+
+        if (currentUserId == null) {
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
+
         boolean teacherCanComment =
                 enrollmentApi.isTeacherOfCourseEnrollment(
-                        identityApi.getCurrentUserId(),
+                        currentUserId,
                         submission.getCourseEnrollmentId()
                 );
 
@@ -176,6 +187,10 @@ public class DefaultPracticeService implements PracticeService {
     public PracticeSubmissionResponse checkSubmissionByTeacher(Long practiceSubmissionId) {
         Long teacherId = identityApi.getCurrentUserId();
         Instant now = Instant.now(clock);
+
+        if (teacherId == null) {
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
 
         PracticeSubmission submission =
                 practiceSubmissionRepository.findById(practiceSubmissionId);
@@ -218,6 +233,10 @@ public class DefaultPracticeService implements PracticeService {
     @Transactional(readOnly = true)
     public PracticeSubmissionDetailsResponse getMySubmission(Long courseLessonId) {
         Long studentId = identityApi.getCurrentUserId();
+
+        if (studentId == null) {
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
 
         StudentCourseEnrollmentResponse enrollment =
                 enrollmentApi.getStudentCourseEnrollment(
@@ -288,6 +307,10 @@ public class DefaultPracticeService implements PracticeService {
             Long courseLessonId
     ) {
         Long teacherId = identityApi.getCurrentUserId();
+
+        if (teacherId == null) {
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
 
         boolean isPractice = courseApi.isPractice(courseLessonId);
 

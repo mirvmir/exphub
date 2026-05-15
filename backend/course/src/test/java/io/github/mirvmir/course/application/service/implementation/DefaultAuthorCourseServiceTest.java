@@ -238,7 +238,11 @@ class DefaultAuthorCourseServiceTest {
         service.requestPublication(1L);
 
         assertEquals(ModerationStatus.PENDING, course.getDraftVersion().getStatus());
-        verify(courseRepository).saveOrUpdate(course);
+
+        verify(courseRepository).findByIdWithDraftContent(1L);
+        verify(courseVersionRepository).updateModerationState(course.getDraftVersion());
+
+        verify(courseRepository, never()).saveOrUpdate(any());
     }
 
     @Test

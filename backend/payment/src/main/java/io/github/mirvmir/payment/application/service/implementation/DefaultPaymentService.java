@@ -2,6 +2,7 @@ package io.github.mirvmir.payment.application.service.implementation;
 
 import io.github.mirvmir.common.exception.ForbiddenException;
 import io.github.mirvmir.common.exception.NotFoundException;
+import io.github.mirvmir.common.exception.UnauthorizedException;
 import io.github.mirvmir.enrollment.api.EnrollmentApi;
 import io.github.mirvmir.identity.api.IdentityApi;
 import io.github.mirvmir.payment.api.event.PaymentRefundedEvent;
@@ -29,7 +30,6 @@ import io.github.mirvmir.payment.web.request.BindCardRequest;
 import io.github.mirvmir.payment.web.response.BindCardResponse;
 import io.github.mirvmir.payment.web.response.ConfirmPaymentResponse;
 import lombok.AllArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,6 +83,10 @@ public class DefaultPaymentService implements PaymentService {
 
         Long currentUserId = identityApi.getCurrentUserId();
 
+        if (currentUserId == null) {
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
+
         if (userCardRepository.existsByUserIdAndCardToken(
                 currentUserId,
                 bankResponse.cardToken()
@@ -119,6 +123,10 @@ public class DefaultPaymentService implements PaymentService {
     public List<BindCardResponse> getMyCard() {
         Long currentUserId = identityApi.getCurrentUserId();
 
+        if (currentUserId == null) {
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
+
         List<UserCard> cards = userCardRepository.findByUserId(currentUserId);
 
         return cards.stream()
@@ -135,6 +143,10 @@ public class DefaultPaymentService implements PaymentService {
     @Transactional
     public void setDefaultCard(Long cardId) {
         Long currentUserId = identityApi.getCurrentUserId();
+
+        if (currentUserId == null) {
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
 
         UserCard newDefaultCard = userCardRepository.findById(cardId);
 

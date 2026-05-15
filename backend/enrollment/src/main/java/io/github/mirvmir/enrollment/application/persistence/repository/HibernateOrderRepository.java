@@ -72,8 +72,7 @@ public class HibernateOrderRepository implements OrderRepository {
     }
 
     @Override
-    public List<Order> findExpiredForUpdate(Instant now,
-                                            int limit) {
+    public List<Order> findExpiredForUpdate(Instant now) {
         Session session = sessionFactory.getCurrentSession();
 
         return session.createQuery("""
@@ -88,7 +87,6 @@ public class HibernateOrderRepository implements OrderRepository {
                         OrderStatus.CREATED,
                         OrderStatus.PAYMENT_PROCESSING
                 ))
-                .setMaxResults(limit)
                 .setLockMode(LockModeType.PESSIMISTIC_WRITE)
                 .getResultList()
                 .stream()

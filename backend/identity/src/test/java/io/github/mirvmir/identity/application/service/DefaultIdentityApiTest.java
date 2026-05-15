@@ -6,7 +6,7 @@ import io.github.mirvmir.identity.application.service.port.repository.UserReposi
 import io.github.mirvmir.identity.domain.User;
 import io.github.mirvmir.identity.dto.TokenDto;
 import io.github.mirvmir.identity.dto.UserInfoDto;
-import io.github.mirvmir.identity.exception.UnauthorizedException;
+import io.github.mirvmir.common.exception.UnauthorizedException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,21 +40,6 @@ class DefaultIdentityApiTest {
         );
 
         SecurityContextHolder.clearContext();
-    }
-
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
-    }
-    @Test
-    void getCurrentUserId_shouldThrowException_whenNotAuthenticated() {
-        UnauthorizedException exception = assertThrows(
-                UnauthorizedException.class,
-                () -> api.getCurrentUserId()
-        );
-
-        assertEquals("UNAUTHORIZED", exception.getCode());
-        assertEquals("User not authorized", exception.getMessage());
     }
 
     @Test

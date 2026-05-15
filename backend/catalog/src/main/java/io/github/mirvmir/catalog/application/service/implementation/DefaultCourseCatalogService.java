@@ -50,6 +50,7 @@ public class DefaultCourseCatalogService implements CourseCatalogService {
         CourseCatalog courseCatalog = CourseCatalog.create(
                 event.courseId(),
                 event.title(),
+                event.authorId(),
                 resolveAuthorName(event.authorId()),
                 event.shortDescription(),
                 event.priceAmount(),

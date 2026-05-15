@@ -20,6 +20,7 @@ import io.github.mirvmir.activity.web.response.*;
 import io.github.mirvmir.common.exception.BusinessException;
 import io.github.mirvmir.common.exception.ForbiddenException;
 import io.github.mirvmir.common.exception.NotFoundException;
+import io.github.mirvmir.common.exception.UnauthorizedException;
 import io.github.mirvmir.enrollment.api.EnrollmentApi;
 import io.github.mirvmir.identity.api.IdentityApi;
 import io.github.mirvmir.profile.api.ProfileApi;
@@ -126,6 +127,13 @@ public class DefaultAuthorActivityService implements AuthorActivityService {
     @Transactional
     public IdResponse createActivity(CreateActivityRequest request) {
         Long currentUserId = identityApi.getCurrentUserId();
+
+        if (currentUserId == null) {
+            log.info("Unauthorized create activity request");
+
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
+
         log.info("Activity creation requested: authorId={}, type={}", currentUserId, request.type());
 
         Activity activity = null;
@@ -345,6 +353,13 @@ public class DefaultAuthorActivityService implements AuthorActivityService {
 
     private void ensureAuthor(Long authorId) {
         Long currentUserId = identityApi.getCurrentUserId();
+
+        if (currentUserId == null) {
+            log.info("Unauthorized author action request");
+
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
+
         boolean isAuthor = authorId.equals(currentUserId);
         if (!isAuthor) {
             log.warn("Forbidden author activity action: expectedAuthorId={}, currentUserId={}",

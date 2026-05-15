@@ -2,6 +2,7 @@ package io.github.mirvmir.taxonomy.application.service.implementation;
 
 import io.github.mirvmir.common.exception.BusinessException;
 import io.github.mirvmir.common.exception.NotFoundException;
+import io.github.mirvmir.common.exception.UnauthorizedException;
 import io.github.mirvmir.identity.api.IdentityApi;
 import io.github.mirvmir.taxonomy.application.service.mapper.TaxonomyResponseMapper;
 import io.github.mirvmir.taxonomy.application.service.port.repository.SectionRepository;
@@ -50,6 +51,11 @@ public class DefaultTaxonomyService implements TaxonomyService {
         }
 
         Long currentUserId = identityApi.getCurrentUserId();
+
+        if (currentUserId == null) {
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
+
         TopicSuggestion suggestion = TopicSuggestion.create(
                 currentUserId,
                 subjectId,
@@ -68,6 +74,10 @@ public class DefaultTaxonomyService implements TaxonomyService {
     @Transactional(readOnly = true)
     public List<TopicSuggestionResponse> getMyTopicSuggestions() {
         Long currentUserId = identityApi.getCurrentUserId();
+
+        if (currentUserId == null) {
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
 
         return topicSuggestionRepository.findAllByCreatedByUserId(currentUserId)
                 .stream()

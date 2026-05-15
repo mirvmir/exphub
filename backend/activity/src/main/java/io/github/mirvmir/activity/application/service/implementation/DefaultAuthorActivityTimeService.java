@@ -12,6 +12,7 @@ import io.github.mirvmir.activity.web.request.CreateAvailabilityTimeRequest;
 import io.github.mirvmir.common.exception.BusinessException;
 import io.github.mirvmir.common.exception.ForbiddenException;
 import io.github.mirvmir.common.exception.NotFoundException;
+import io.github.mirvmir.common.exception.UnauthorizedException;
 import io.github.mirvmir.identity.api.IdentityApi;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,6 +56,12 @@ public class DefaultAuthorActivityTimeService implements AuthorActivityTimeServi
         }
 
         Long currentUserId = identityApi.getCurrentUserId();
+
+        if (currentUserId == null) {
+            log.info("Unauthorized create availability time request");
+
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
 
         if (!activity.getAuthorId().equals(currentUserId)) {
             log.warn("Forbidden availability time creation: activityId={}, userId={}, authorId={}",
@@ -117,6 +124,12 @@ public class DefaultAuthorActivityTimeService implements AuthorActivityTimeServi
         }
 
         Long currentUserId = identityApi.getCurrentUserId();
+
+        if (currentUserId == null) {
+            log.info("Unauthorized get activity for author");
+
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
 
         if (!activity.getAuthorId().equals(currentUserId)) {
             throw new ForbiddenException(ActivityErrorCode.ACTIVITY_FORBIDDEN);

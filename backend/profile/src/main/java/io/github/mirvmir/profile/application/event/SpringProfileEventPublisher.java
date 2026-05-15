@@ -1,6 +1,7 @@
 package io.github.mirvmir.profile.application.event;
 
 import io.github.mirvmir.profile.api.event.ProfileCompletedEvent;
+import io.github.mirvmir.profile.api.event.ProfileUpdated;
 import io.github.mirvmir.profile.application.service.port.event.ProfileEventPublisher;
 import lombok.AllArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -14,6 +15,11 @@ public class SpringProfileEventPublisher implements ProfileEventPublisher {
 
     @Override
     public void complete(ProfileCompletedEvent event) {
+        applicationEventPublisher.publishEvent(event);
+    }
+
+    @Override
+    public void update(ProfileUpdated event) {
         applicationEventPublisher.publishEvent(event);
     }
 }

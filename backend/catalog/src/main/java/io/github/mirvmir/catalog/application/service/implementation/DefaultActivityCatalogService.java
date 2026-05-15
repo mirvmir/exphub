@@ -52,6 +52,7 @@ public class DefaultActivityCatalogService implements ActivityCatalogService {
         ActivityCatalog activityCatalog = ActivityCatalog.create(
                 event.activityId(),
                 event.title(),
+                event.authorId(),
                 resolveAuthorName(event.authorId()),
                 event.shortDescription(),
                 event.priceAmount(),

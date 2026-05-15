@@ -29,6 +29,9 @@ public class CourseCatalogEntity {
     @Column(nullable = false)
     private String title;
 
+    @Column(name = "author_id", nullable = false)
+    private Long authorId;
+
     @Column(name = "author_name", nullable = false)
     private String authorName;
 

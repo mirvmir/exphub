@@ -1,6 +1,7 @@
 package io.github.mirvmir.identity.application.service;
 
 import io.github.mirvmir.common.exception.NotFoundException;
+import io.github.mirvmir.common.exception.UnauthorizedException;
 import io.github.mirvmir.identity.api.IdentityApi;
 import io.github.mirvmir.identity.application.CustomUserDetails;
 import io.github.mirvmir.identity.application.service.port.repository.UserRepository;
@@ -9,7 +10,6 @@ import io.github.mirvmir.identity.domain.User;
 import io.github.mirvmir.identity.dto.TokenDto;
 import io.github.mirvmir.identity.dto.UserInfoDto;
 import io.github.mirvmir.identity.exception.IdentityErrorCode;
-import io.github.mirvmir.identity.exception.UnauthorizedException;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -38,7 +38,7 @@ public class DefaultIdentityApi implements IdentityApi {
         if (authentication == null
                 || !authentication.isAuthenticated()
                 || authentication instanceof AnonymousAuthenticationToken) {
-            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+            return null;
         }
 
         Object principal = authentication.getPrincipal();
@@ -64,6 +64,10 @@ public class DefaultIdentityApi implements IdentityApi {
     @Transactional(readOnly = true)
     public UserInfoDto getCurrentUserInfo() {
         Long currentUserId = getCurrentUserId();
+
+        if (currentUserId == null) {
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
 
         User user = userRepository.findById(currentUserId);
 

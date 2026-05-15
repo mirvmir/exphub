@@ -13,13 +13,14 @@ import io.github.mirvmir.review.api.ReviewApi;
 import io.github.mirvmir.review.api.dto.ReviewRatingInfoResponse;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @AllArgsConstructor
 @Slf4j
@@ -125,5 +126,22 @@ public class DefaultCatalogService implements CatalogService {
         log.error("Catalog score update failed: activityId and courseId are null");
 
         throw new IllegalStateException("Не добавлен id занятия или курса");
+    }
+
+    @Override
+    public void updateProfile(Long userId, String newGivenName, String newFamilyName) {
+        List<ActivityCatalog> activities = activityCatalogRepository.findByAuthorId(userId);
+        List<CourseCatalog> courses = courseCatalogRepository.findByAuthorId(userId);
+
+        String authorName = Stream.of(newGivenName, newFamilyName)
+                .filter(Objects::nonNull)
+                .filter(s -> !s.isBlank())
+                .collect(Collectors.joining(" "));
+
+        activities.forEach(activity -> activity.updateAuthorName(authorName));
+        courses.forEach(course -> course.updateAuthorName(authorName));
+
+        activityCatalogRepository.saveAll(activities);
+        courseCatalogRepository.saveAll(courses);
     }
 }

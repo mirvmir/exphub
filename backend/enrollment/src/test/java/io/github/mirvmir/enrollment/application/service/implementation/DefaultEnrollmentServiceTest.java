@@ -12,7 +12,6 @@ import io.github.mirvmir.enrollment.domain.CourseEnrollmentStatus;
 import io.github.mirvmir.enrollment.domain.order.Order;
 import io.github.mirvmir.enrollment.domain.order.OrderStatus;
 import io.github.mirvmir.enrollment.domain.order.OrderTargetType;
-import io.github.mirvmir.payment.api.PaymentApi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -30,7 +29,7 @@ class DefaultEnrollmentServiceTest {
     private ActivityEnrollmentRepository activityEnrollmentRepository;
     private CourseEnrollmentRepository courseEnrollmentRepository;
     private OrderRepository orderRepository;
-    private PaymentApi paymentApi;
+    private RefundOrderService refundOrderService;
     private BookingProperties bookingProperties;
 
     private DefaultEnrollmentService service;
@@ -42,7 +41,7 @@ class DefaultEnrollmentServiceTest {
         activityEnrollmentRepository = mock(ActivityEnrollmentRepository.class);
         courseEnrollmentRepository = mock(CourseEnrollmentRepository.class);
         orderRepository = mock(OrderRepository.class);
-        paymentApi = mock(PaymentApi.class);
+        refundOrderService = mock(RefundOrderService.class);
         bookingProperties = mock(BookingProperties.class);
 
         service = new DefaultEnrollmentService(
@@ -50,7 +49,7 @@ class DefaultEnrollmentServiceTest {
                 courseEnrollmentRepository,
                 orderRepository,
                 bookingProperties,
-                paymentApi
+                refundOrderService
         );
     }
 
@@ -72,7 +71,7 @@ class DefaultEnrollmentServiceTest {
         verify(orderRepository, never()).findById(20L);
         verify(courseEnrollmentRepository).saveOrUpdate(enrollment);
         verify(orderRepository).saveOrUpdate(order);
-        verifyNoInteractions(paymentApi);
+        verifyNoInteractions(refundOrderService);
     }
 
     @Test
@@ -92,7 +91,7 @@ class DefaultEnrollmentServiceTest {
         verify(orderRepository).findByIdForUpdate(20L);
         verify(activityEnrollmentRepository).saveOrUpdate(enrollment);
         verify(orderRepository).saveOrUpdate(order);
-        verifyNoInteractions(paymentApi);
+        verifyNoInteractions(refundOrderService);
     }
 
     @Test
@@ -103,38 +102,16 @@ class DefaultEnrollmentServiceTest {
 
         service.markPayed(20L, now);
 
-        assertEquals(OrderStatus.REFUND_REQUIRED, order.getStatus());
+        verify(refundOrderService).markRefundRequired(20L);
+        verify(refundOrderService).requestRefund(
+                eq(20L),
+                eq(new BigDecimal("3000")),
+                eq(Currency.getInstance("RUB")),
+                eq("Заказ был отменен")
+        );
 
-        verify(paymentApi).refundPayment(argThat(actual ->
-                actual.orderId().equals(20L)
-                        && actual.amount().equals(new BigDecimal("3000"))
-                        && actual.currency().equals(Currency.getInstance("RUB"))
-                        && actual.reason().equals("Заказ был отменен")
-        ));
-        verify(orderRepository).saveOrUpdate(order);
+        verify(orderRepository, never()).saveOrUpdate(order);
         verifyNoInteractions(courseEnrollmentRepository, activityEnrollmentRepository);
-    }
-
-    @Test
-    void markPayed_shouldRequestRefund_whenPaymentSucceededAfterCourseBookingExpired() {
-        Order order = expiredCourseOrder(OrderStatus.CREATED);
-        CourseEnrollment enrollment = bookedExpiredCourseEnrollment();
-
-        when(orderRepository.findByIdForUpdate(20L)).thenReturn(order);
-        when(courseEnrollmentRepository.findById(10L)).thenReturn(enrollment);
-        when(bookingProperties.getBookingExpiresMinutes()).thenReturn(15L);
-
-        service.markPayed(20L, now);
-
-        assertEquals(OrderStatus.REFUND_REQUIRED, order.getStatus());
-        assertEquals(CourseEnrollmentStatus.EXPIRED, enrollment.getStatus());
-
-        verify(paymentApi).refundPayment(argThat(actual ->
-                actual.orderId().equals(20L)
-                        && actual.reason().equals("Бронирование истекло до подтверждения оплаты")
-        ));
-        verify(courseEnrollmentRepository).saveOrUpdate(enrollment);
-        verify(orderRepository).saveOrUpdate(order);
     }
 
     @Test
@@ -155,14 +132,44 @@ class DefaultEnrollmentServiceTest {
 
         service.markPayed(20L, now);
 
-        assertEquals(OrderStatus.REFUND_REQUIRED, order.getStatus());
+        verify(refundOrderService).markRefundRequired(20L);
+        verify(refundOrderService).requestRefund(
+                eq(20L),
+                eq(new BigDecimal("3000")),
+                eq(Currency.getInstance("RUB")),
+                eq("Курс был отменен")
+        );
 
-        verify(paymentApi).refundPayment(argThat(actual ->
-                actual.orderId().equals(20L)
-                        && actual.reason().equals("Заказ был отменен")
-        ));
         verify(courseEnrollmentRepository, never()).saveOrUpdate(any());
-        verify(orderRepository).saveOrUpdate(order);
+        verify(orderRepository, never()).saveOrUpdate(order);
+    }
+
+    @Test
+    void markPayed_shouldRequestRefund_whenPaymentSucceededForCancelledActivityEnrollment() {
+        Order order = activityOrder(OrderStatus.CREATED);
+        ActivityEnrollment enrollment = ActivityEnrollment.load(
+                10L,
+                200L,
+                1L,
+                ActivityEnrollmentStatus.CANCELLED,
+                now.minusSeconds(60)
+        );
+
+        when(orderRepository.findByIdForUpdate(20L)).thenReturn(order);
+        when(activityEnrollmentRepository.findById(10L)).thenReturn(enrollment);
+
+        service.markPayed(20L, now);
+
+        verify(refundOrderService).markRefundRequired(20L);
+        verify(refundOrderService).requestRefund(
+                eq(20L),
+                eq(new BigDecimal("1500")),
+                eq(Currency.getInstance("RUB")),
+                eq("Занятие было отменено")
+        );
+
+        verify(activityEnrollmentRepository, never()).saveOrUpdate(any());
+        verify(orderRepository, never()).saveOrUpdate(order);
     }
 
     @Test
@@ -175,7 +182,7 @@ class DefaultEnrollmentServiceTest {
 
         assertEquals(OrderStatus.PAYED, order.getStatus());
         verify(orderRepository, never()).saveOrUpdate(any());
-        verifyNoInteractions(courseEnrollmentRepository, activityEnrollmentRepository, paymentApi);
+        verifyNoInteractions(courseEnrollmentRepository, activityEnrollmentRepository, refundOrderService);
     }
 
     @Test
@@ -188,7 +195,7 @@ class DefaultEnrollmentServiceTest {
 
         assertEquals(OrderStatus.REFUND_REQUIRED, order.getStatus());
         verify(orderRepository, never()).saveOrUpdate(any());
-        verifyNoInteractions(courseEnrollmentRepository, activityEnrollmentRepository, paymentApi);
+        verifyNoInteractions(courseEnrollmentRepository, activityEnrollmentRepository, refundOrderService);
     }
 
     @Test
@@ -199,7 +206,7 @@ class DefaultEnrollmentServiceTest {
                 () -> service.markPayed(20L, now));
 
         verify(orderRepository).findByIdForUpdate(20L);
-        verifyNoInteractions(paymentApi);
+        verifyNoInteractions(refundOrderService);
     }
 
     @Test
@@ -213,7 +220,7 @@ class DefaultEnrollmentServiceTest {
                 () -> service.markPayed(20L, now));
 
         verify(orderRepository, never()).saveOrUpdate(any());
-        verifyNoInteractions(paymentApi);
+        verifyNoInteractions(refundOrderService);
     }
 
     @Test

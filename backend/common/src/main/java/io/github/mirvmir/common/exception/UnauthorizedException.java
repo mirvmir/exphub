@@ -1,4 +1,4 @@
-package io.github.mirvmir.identity.exception;
+package io.github.mirvmir.common.exception;
 
 import lombok.Getter;
 

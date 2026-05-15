@@ -1,6 +1,7 @@
 package io.github.mirvmir.wallet.application.service.implementation;
 
 import io.github.mirvmir.common.exception.NotFoundException;
+import io.github.mirvmir.common.exception.UnauthorizedException;
 import io.github.mirvmir.enrollment.api.EnrollmentApi;
 import io.github.mirvmir.identity.api.IdentityApi;
 import io.github.mirvmir.payment.api.PaymentApi;
@@ -86,6 +87,10 @@ public class DefaultWalletService implements WalletService {
     public void withdrawToCard(WithdrawWalletRequest request) {
         Long teacherId = identityApi.getCurrentUserId();
         Instant now = Instant.now(clock);
+
+        if (teacherId == null) {
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
 
         Wallet wallet = walletRepository.findByUserId(teacherId);
 
