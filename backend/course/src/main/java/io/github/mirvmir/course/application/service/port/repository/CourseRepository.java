@@ -8,6 +8,7 @@ import java.util.UUID;
 public interface CourseRepository {
     Course saveOrUpdate(Course course);
     Course findById(Long id);
+    Course findActiveById(Long id);
     Course findByIdWithDraftInfo(Long id);
     Course findByIdWithDraftContent(Long id);
     Course findByIdWithDraftModules(Long id);

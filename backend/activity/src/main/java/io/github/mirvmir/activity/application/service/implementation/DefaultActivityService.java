@@ -53,7 +53,7 @@ public class DefaultActivityService implements ActivityService {
     public ActivityDescriptionResponse getActivity(Long id) {
         log.debug("Getting activity description: activityId={}", id);
 
-        Activity activity = activityRepository.findById(id);
+        Activity activity = activityRepository.findActiveById(id);
 
         if (activity == null
                 || (!activity.isActive() && !activity.isArchive())) {

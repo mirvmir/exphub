@@ -162,7 +162,7 @@ public class HibernateCourseCatalogRepository implements CourseCatalogRepository
         Session session = sessionFactory.getCurrentSession();
 
         return session.createQuery("""
-                select a
+                select c
                 from CourseCatalogEntity c
                 where c.authorId = :authorId
                 """, CourseCatalogEntity.class)

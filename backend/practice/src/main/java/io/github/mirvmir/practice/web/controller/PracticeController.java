@@ -35,7 +35,7 @@ public class PracticeController {
         return practiceService.addAnswer(courseLessonId, request);
     }
 
-    @PostMapping("/teacher/practice/answers/{answerId}/comments")
+    @PostMapping("/author/practice/answers/{answerId}/comments")
     public PracticeCommentResponse addCommentByTeacher(
             @PathVariable("answerId")
             Long answerId,
@@ -49,7 +49,7 @@ public class PracticeController {
         );
     }
 
-    @PostMapping("/teacher/practice/submissions/{practiceSubmissionId}/check")
+    @PostMapping("/author/practice/submissions/{practiceSubmissionId}/check")
     public PracticeSubmissionResponse checkSubmissionByTeacher(
             @PathVariable("practiceSubmissionId")
             Long practiceSubmissionId

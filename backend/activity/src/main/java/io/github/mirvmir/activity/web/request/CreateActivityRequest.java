@@ -13,7 +13,8 @@ import java.util.Set;
 public record CreateActivityRequest(
         @NotBlank
         String title,
-        @Size(max = 500)
+        @NotBlank
+        @Size(max = 250)
         String shortDescription,
         String descriptionHtml,
         @NotNull

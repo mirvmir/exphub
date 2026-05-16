@@ -1,5 +1,6 @@
 package io.github.mirvmir.course.application.persistence.repository;
 
+import io.github.mirvmir.common.domain.ContentStatus;
 import io.github.mirvmir.course.application.persistence.entity.CourseVersionEntity;
 import io.github.mirvmir.course.application.service.port.repository.CourseRepository;
 import io.github.mirvmir.course.domain.Course;
@@ -59,6 +60,31 @@ public class HibernateCourseRepository implements CourseRepository {
                  where c.id = :id
                  """, CourseEntity.class)
                 .setParameter("id", id)
+                .uniqueResult();
+
+        if (entity == null) {
+            return null;
+        }
+
+        return courseMapper.toDomain(entity);
+    }
+
+    @Override
+    public Course findActiveById(Long id) {
+        Session session = sessionFactory.getCurrentSession();
+
+        CourseEntity entity = session.createQuery("""
+                 select distinct c
+                 from CourseEntity c
+                 left join fetch c.draftVersion
+                 left join fetch c.publishedVersion
+                 left join fetch c.topicEntities
+                 left join fetch c.lessonOpeningEntities
+                 where c.id = :id
+                   and c.status = :status
+                 """, CourseEntity.class)
+                .setParameter("id", id)
+                .setParameter("status", ContentStatus.ACTIVE)
                 .uniqueResult();
 
         if (entity == null) {

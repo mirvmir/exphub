@@ -140,7 +140,7 @@ databaseChangeLog:
                   author_id BIGINT NOT NULL,
                   title VARCHAR(255) NOT NULL,
                   short_description VARCHAR(255),
-                  description_html VARCHAR(255),
+                  description_html TEXT,
                   max_bookable_seats INTEGER NOT NULL,
                   price_amount NUMERIC(38, 2) NOT NULL,
                   price_currency VARCHAR(3) NOT NULL,
@@ -218,7 +218,7 @@ databaseChangeLog:
                   moderation_status VARCHAR(255),
                   moderation_comment VARCHAR(255),
                   short_description VARCHAR(255),
-                  description_html VARCHAR(255)
+                  description_html TEXT
               );
 
               CREATE TABLE IF NOT EXISTS course (

@@ -35,7 +35,7 @@ public class DefaultCourseService implements CourseService {
     public CourseInfoResponse getCourse(Long courseId) {
         log.info("Getting course info: courseId={}", courseId);
 
-        Course course = courseRepository.findById(courseId);
+        Course course = courseRepository.findActiveById(courseId);
 
         if (course == null) {
             log.error("Course info getting failed, course not found: courseId={}", courseId);

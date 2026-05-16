@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 @AllArgsConstructor
 @RestController
-@RequestMapping("/admin/courses")
+@RequestMapping("/moderation/courses")
 @PreAuthorize("hasAuthority('ROLE_ADMIN')")
 public class ModerationCourseController {
 

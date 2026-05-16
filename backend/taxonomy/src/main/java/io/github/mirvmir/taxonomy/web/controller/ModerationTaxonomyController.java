@@ -14,10 +14,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/admin/taxonomy")
+@RequestMapping("/moderation/taxonomy")
 @AllArgsConstructor
 @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-public class TaxonomyModerationController {
+public class ModerationTaxonomyController {
 
     private final TaxonomyModerationService taxonomyModerationService;
 

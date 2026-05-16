@@ -4,6 +4,7 @@ import io.github.mirvmir.activity.application.service.port.repository.ActivityRe
 import io.github.mirvmir.activity.domain.Activity;
 import io.github.mirvmir.activity.application.persistence.entity.ActivityEntity;
 import io.github.mirvmir.activity.application.persistence.mapper.ActivityMapper;
+import io.github.mirvmir.common.domain.ContentStatus;
 import lombok.AllArgsConstructor;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -45,6 +46,25 @@ public class HibernateActivityRepository implements ActivityRepository {
                 where a.id = :id
                 """, ActivityEntity.class)
                 .setParameter("id", id)
+                .uniqueResult();
+
+        return activityMapper.toDomain(entity);
+    }
+
+    @Override
+    public Activity findActiveById(Long id) {
+        Session session = sessionFactory.getCurrentSession();
+
+        ActivityEntity entity = session.createQuery("""
+                select distinct a
+                from ActivityEntity a
+                left join fetch a.topicEntities
+                left join fetch a.activityTimeEntities
+                where a.id = :id
+                  and a.contentStatus = :contentStatus
+                """, ActivityEntity.class)
+                .setParameter("id", id)
+                .setParameter("contentStatus", ContentStatus.ACTIVE)
                 .uniqueResult();
 
         return activityMapper.toDomain(entity);
