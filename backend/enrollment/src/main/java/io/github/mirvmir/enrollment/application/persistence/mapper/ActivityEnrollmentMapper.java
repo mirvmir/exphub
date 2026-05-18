@@ -16,6 +16,7 @@ public interface ActivityEnrollmentMapper {
 
         return ActivityEnrollment.load(
                 entity.getId(),
+                entity.getActivityId(),
                 entity.getActivitySlotId(),
                 entity.getUserId(),
                 entity.getStatus(),

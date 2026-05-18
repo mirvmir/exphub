@@ -6,6 +6,7 @@ public record BankPayoutWebhookRequest(
         @NotBlank
         String externalPayoutId,
         @NotBlank
-        String status
+        String status,
+        String failureReason
 ) {
 }

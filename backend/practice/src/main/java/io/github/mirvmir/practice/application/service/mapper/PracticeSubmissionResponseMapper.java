@@ -26,7 +26,7 @@ public interface PracticeSubmissionResponseMapper {
         return new PracticeAnswerDetailsResponse(
                 answer.getId(),
                 answer.getPracticeSubmissionId(),
-                answer.getHtml(),
+                answer.getText(),
                 answer.getFileId(),
                 answer.getCreatedAt(),
                 comments.stream()
@@ -41,7 +41,7 @@ public interface PracticeSubmissionResponseMapper {
         return new PracticeCommentResponse(
                 comment.getId(),
                 comment.getPracticeSubmissionAnswerId(),
-                comment.getHtml(),
+                comment.getText(),
                 comment.getFileId(),
                 comment.getCreatedAt()
         );

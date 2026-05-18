@@ -16,6 +16,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+    networks:
+      - exphub-network
 
   backend:
     build:
@@ -28,6 +30,8 @@ services:
         condition: service_healthy
     environment:
       APP_MODE: docker
+      BANK_BASE_URL: http://exphub-mock-bank:8000
+      BANK_PUBLIC_BASE_URL: http://exphub-backend:8080
       DB_DOCKER_URL: jdbc:postgresql://db:5432/exphub
       DB_USER: postgres
       DB_PASSWORD: password
@@ -42,6 +46,8 @@ services:
     secrets:
       - jwt_public_key
       - jwt_private_key
+    networks:
+      - exphub-network
 
 secrets:
   jwt_public_key:
@@ -51,3 +57,7 @@ secrets:
 
 volumes:
   postgres-data:
+
+networks:
+  exphub-network:
+    driver: bridge

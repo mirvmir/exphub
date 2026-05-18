@@ -149,6 +149,7 @@ class DefaultEnrollmentServiceTest {
         Order order = activityOrder(OrderStatus.CREATED);
         ActivityEnrollment enrollment = ActivityEnrollment.load(
                 10L,
+                100L,
                 200L,
                 1L,
                 ActivityEnrollmentStatus.CANCELLED,
@@ -275,6 +276,7 @@ class DefaultEnrollmentServiceTest {
     private ActivityEnrollment bookedActivityEnrollment() {
         return ActivityEnrollment.load(
                 10L,
+                100L,
                 200L,
                 1L,
                 ActivityEnrollmentStatus.BOOKED,

@@ -26,11 +26,6 @@ public record AuthorActivityDescriptionResponse(
         ActivityType type,
         Long subjectId,
         Set<Long> topicIds,
-
-        Set<ActivityTimeResponse> activityTimes,
-        Set<IndividualActivitySlotResponse> individualActivities,
-        Set<GroupActivitySlotResponse> groupActivities,
-
         Boolean canEdit,
         Boolean canDelete,
         Boolean canRequestPublication

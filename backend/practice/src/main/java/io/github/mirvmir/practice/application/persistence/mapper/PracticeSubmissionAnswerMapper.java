@@ -17,7 +17,7 @@ public interface PracticeSubmissionAnswerMapper {
         return PracticeSubmissionAnswer.load(
                 entity.getId(),
                 entity.getPracticeSubmissionId(),
-                entity.getHtml(),
+                entity.getText(),
                 entity.getFileId(),
                 entity.getCreatedAt()
         );

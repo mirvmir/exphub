@@ -8,6 +8,9 @@ import java.time.Instant;
 public record CreateAvailabilityTimeRequest(
         @NotNull
         @Future
-        Instant startAt
+        Instant startAt,
+        @NotNull
+        @Future
+        Instant endAt
 ) {
 }

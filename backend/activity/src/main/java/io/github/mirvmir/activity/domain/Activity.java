@@ -36,7 +36,6 @@ public class Activity {
     private Money price;
     @NonNull
     private Integer durationMinutes;
-    @NonNull
     private Long subjectId;
     @NonNull
     private ActivityType type;
@@ -56,9 +55,7 @@ public class Activity {
                                             BigDecimal amount,
                                             Currency currency,
                                             Integer durationMinutes,
-                                            Long subjectId,
-                                            Integer bookingStepMinutes,
-                                            Set<Long> topicIds) {
+                                            Integer bookingStepMinutes) {
         Money price = new Money(amount, currency);
         return new Activity(
                 null,
@@ -69,13 +66,13 @@ public class Activity {
                 1,
                 price,
                 durationMinutes,
-                subjectId,
+                null,
                 ActivityType.INDIVIDUAL,
                 bookingStepMinutes,
                 ContentStatus.DRAFT,
                 ModerationStatus.DRAFT,
                 null,
-                topicIds,
+                null,
                 new HashSet<>()
         );
     }
@@ -87,9 +84,7 @@ public class Activity {
                                        Integer maxBookableSeats,
                                        BigDecimal amount,
                                        Currency currency,
-                                       Integer durationMinutes,
-                                       Long subjectId,
-                                       Set<Long> topicIds) {
+                                       Integer durationMinutes) {
         if (maxBookableSeats == null || maxBookableSeats < 2) {
             throw new BusinessException(ActivityErrorCode.GROUP_CAPACITY_INVALID);
         }
@@ -104,13 +99,13 @@ public class Activity {
                 maxBookableSeats,
                 price,
                 durationMinutes,
-                subjectId,
+                null,
                 ActivityType.GROUP,
                 null,
                 ContentStatus.DRAFT,
                 ModerationStatus.DRAFT,
                 null,
-                topicIds,
+                null,
                 new HashSet<>()
         );
     }
@@ -254,13 +249,14 @@ public class Activity {
 
     public void delete() {
         ensureNotDeleted();
+        ensureNotBlocked();
 
         this.contentStatus = ContentStatus.DELETED;
     }
 
     public void updateTopics(Set<Long> topicIds, Long subjectId) {
-        ensureNotBlocked();
         ensureNotDeleted();
+        ensureNotBlocked();
 
         this.subjectId = subjectId;
         this.topicIds = topicIds == null
@@ -327,7 +323,8 @@ public class Activity {
     }
 
     public ActivityTime createAvailabilityTime(Instant now,
-                                               Instant startAt) {
+                                               Instant startAt,
+                                               Instant endAt) {
         ensureActive();
         ensureIndividual();
 
@@ -335,7 +332,10 @@ public class Activity {
             throw new BusinessException(ActivityErrorCode.ACTIVITY_TIME_IN_PAST);
         }
 
-        Instant endAt = startAt.plus(durationMinutes, ChronoUnit.MINUTES);
+        if (!endAt.isAfter(startAt)) {
+            throw new BusinessException(ActivityErrorCode.ACTIVITY_TIME_INVALID);
+        }
+
         ActivityTime availableTime = ActivityTime.create(
                 startAt,
                 endAt
@@ -421,7 +421,7 @@ public class Activity {
     }
 
     private void ensureNotBlocked() {
-        if (ContentStatus.BLOCKED != this.contentStatus) {
+        if (ContentStatus.BLOCKED == this.contentStatus) {
             throw new BusinessException(ActivityErrorCode.ACTIVITY_BLOCKED);
         }
     }

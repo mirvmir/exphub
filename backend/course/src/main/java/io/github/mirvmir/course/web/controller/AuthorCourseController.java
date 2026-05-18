@@ -9,9 +9,11 @@ import io.github.mirvmir.course.web.response.AuthorCourseResponse;
 import io.github.mirvmir.course.web.response.IdResponse;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @AllArgsConstructor
@@ -22,6 +24,12 @@ import java.util.UUID;
 public class AuthorCourseController {
 
     private final AuthorCourseService authorCourseService;
+
+    @GetMapping
+    public List<AuthorCourseResponse> getAllCourse() {
+        return authorCourseService.getAllCourse();
+    }
+
 
     @GetMapping("/{courseId}")
     public AuthorCourseResponse getCourse(
@@ -67,6 +75,7 @@ public class AuthorCourseController {
     }
 
     @PatchMapping("/{courseId}/topics")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateTopics(
             @PathVariable("courseId")
             Long courseId,
@@ -78,6 +87,7 @@ public class AuthorCourseController {
     }
 
     @PatchMapping("/{courseId}/lessons/{stableLessonId}/opens-at")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateLessonOpensAt(
             @PathVariable("courseId")
             Long courseId,
@@ -139,6 +149,7 @@ public class AuthorCourseController {
     }
 
     @PostMapping("/{courseId}/publication-request")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void requestPublication(
             @PathVariable("courseId")
             Long courseId
@@ -147,6 +158,7 @@ public class AuthorCourseController {
     }
 
     @PostMapping("/{courseId}/archive")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void archive(
             @PathVariable("courseId")
             Long courseId
@@ -155,6 +167,7 @@ public class AuthorCourseController {
     }
 
     @PostMapping("/{courseId}/unarchive")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void unarchive(
             @PathVariable("courseId")
             Long courseId
@@ -163,6 +176,7 @@ public class AuthorCourseController {
     }
 
     @DeleteMapping("/{courseId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteCourse(
             @PathVariable("courseId")
             Long courseId

@@ -148,10 +148,8 @@ class ActivityControllersTest {
                 new BigDecimal("1500"),
                 Currency.getInstance("RUB"),
                 60,
-                7L,
                 ActivityType.GROUP,
-                null,
-                Set.of(11L, 12L)
+                null
         );
 
         when(authorActivityService.createActivity(any())).thenReturn(new IdResponse(1L));
@@ -166,9 +164,7 @@ class ActivityControllersTest {
                 actual != null
                         && actual.title().equals("Занятие")
                         && actual.type() == ActivityType.GROUP
-                        && actual.maxBookableSeats().equals(5)
-                        && actual.topicIds().equals(Set.of(11L, 12L))
-        ));
+                        && actual.maxBookableSeats().equals(5)));
     }
 
     @Test
@@ -303,7 +299,8 @@ class ActivityControllersTest {
     @Test
     void createAvailabilityTime_shouldReturn200() throws Exception {
         Instant startAt = Instant.now().plusSeconds(3600);
-        CreateAvailabilityTimeRequest request = new CreateAvailabilityTimeRequest(startAt);
+        Instant endAt = Instant.now().plusSeconds(10800);
+        CreateAvailabilityTimeRequest request = new CreateAvailabilityTimeRequest(startAt, endAt);
         ActivityTimeResponse response = new ActivityTimeResponse(
                 1L,
                 startAt,

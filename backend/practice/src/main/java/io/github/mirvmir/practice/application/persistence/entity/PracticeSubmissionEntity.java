@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.UUID;
 
 import static lombok.AccessLevel.PROTECTED;
 
@@ -20,8 +21,8 @@ public class PracticeSubmissionEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "lesson_id", nullable = false)
-    private Long lessonId;
+    @Column(name = "stable_lesson_id", nullable = false)
+    private UUID stableLessonId;
 
     @Column(name = "course_enrollment_id", nullable = false)
     private Long courseEnrollmentId;

@@ -104,9 +104,8 @@ public class HibernateActivityEnrollmentRepository implements ActivityEnrollment
         Boolean exists = session.createQuery("""
                 select count(e.id) > 0
                 from ActivityEnrollmentEntity e
-                join ActivitySlotEntity s on s.id = e.activitySlotId
                 where e.userId = :userId
-                  and s.activityId = :activityId
+                  and e.activityId = :activityId
                   and e.status = :status
                 """, Boolean.class)
                 .setParameter("userId", userId)
@@ -167,7 +166,8 @@ public class HibernateActivityEnrollmentRepository implements ActivityEnrollment
     }
 
     @Override
-    public ActivityEnrollment tryEnroll(Long activitySlotId,
+    public ActivityEnrollment tryEnroll(Long activityId,
+                                        Long activitySlotId,
                                         Long userId,
                                         Instant now) {
         Session session = sessionFactory.getCurrentSession();
@@ -179,18 +179,21 @@ public class HibernateActivityEnrollmentRepository implements ActivityEnrollment
 
         Number result = (Number) session.createNativeQuery("""
                 insert into activity_enrollment (
+                    activity_id,
                     activity_slot_id,
                     user_id,
                     status,
                     subscribed_at
                 )
                 select
+                    s.activity_id,
                     s.id,
                     :userId,
                     :status,
                     :subscribedAt
                 from activity_slot s
                 where s.id = :activitySlotId
+                  and s.activity_id = :activityId
                   and (
                       select count(ae.id)
                       from activity_enrollment ae
@@ -220,6 +223,7 @@ public class HibernateActivityEnrollmentRepository implements ActivityEnrollment
                 returning id
                 """)
                 .setParameter("activitySlotId", activitySlotId)
+                .setParameter("activityId", activityId)
                 .setParameter("userId", userId)
                 .setParameter("status", ActivityEnrollmentStatus.BOOKED.name())
                 .setParameter("subscribedAt", now)
@@ -236,6 +240,7 @@ public class HibernateActivityEnrollmentRepository implements ActivityEnrollment
 
         return ActivityEnrollment.load(
                 enrollmentId,
+                activityId,
                 activitySlotId,
                 userId,
                 ActivityEnrollmentStatus.BOOKED,

@@ -60,12 +60,12 @@ public class DefaultEnrollmentBookingService implements EnrollmentBookingService
         Instant now = Instant.now(clock);
 
         if (userId == null) {
-            log.info("Unauthorized book course request");
+            log.error("Unauthorized book course request");
 
             throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
         }
 
-        log.info("Start booking course: userId={}, courseId={}",
+        log.debug("Course booking requested: userId={}, courseId={}",
                 userId,
                 courseId);
 
@@ -143,6 +143,9 @@ public class DefaultEnrollmentBookingService implements EnrollmentBookingService
                 course.courseId()
         );
 
+        log.info("Course booking completed: userId={}, courseId={}",
+                userId,
+                courseId);
         return new BookingResponse(
                 savedOrder.getId(),
                 payment.paymentId(),
@@ -163,12 +166,11 @@ public class DefaultEnrollmentBookingService implements EnrollmentBookingService
         Instant now = Instant.now(clock);
 
         if (userId == null) {
-            log.info("Unauthorized book group activity request");
-
+            log.error("Unauthorized book group activity request");
             throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
         }
 
-        log.info("Start booking group activity slot: userId={}, activitySlotId={}",
+        log.debug("Group activity slot booking requested: userId={}, activitySlotId={}",
                 userId,
                 activitySlotId);
 
@@ -199,6 +201,7 @@ public class DefaultEnrollmentBookingService implements EnrollmentBookingService
 
         ActivityEnrollment enrollment =
                 activityEnrollmentRepository.tryEnroll(
+                        slot.activityId(),
                         activitySlotId,
                         userId,
                         now
@@ -277,11 +280,10 @@ public class DefaultEnrollmentBookingService implements EnrollmentBookingService
 
         if (userId == null) {
             log.info("Unauthorized book individual activity request");
-
             throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
         }
 
-        log.info("Start booking individual activity: userId={}, activityId={}, activityTimeId={}, startAt={}",
+        log.info("Individual activity booking requested: userId={}, activityId={}, activityTimeId={}, startAt={}",
                 userId,
                 activityId,
                 request.activityTimeId(),
@@ -328,6 +330,7 @@ public class DefaultEnrollmentBookingService implements EnrollmentBookingService
 
         ActivityEnrollment enrollment = ActivityEnrollment.create(
                 now,
+                activityId,
                 createdSlot.activitySlotId(),
                 userId
         );
@@ -397,6 +400,13 @@ public class DefaultEnrollmentBookingService implements EnrollmentBookingService
                                                 Long orderId,
                                                 String targetName,
                                                 Long targetId) {
+        log.debug("Payment creation requested: orderId={}, targetName={}, targetId={}, userId={}, amount={}, currency={}",
+                orderId,
+                targetName,
+                targetId,
+                userId,
+                amount,
+                currency);
         try {
             CreatePaymentResponse payment = paymentApi.createPayment(
                     new CreatePaymentRequest(
@@ -417,6 +427,13 @@ public class DefaultEnrollmentBookingService implements EnrollmentBookingService
                 throw new IllegalStateException("Payment response is null");
             }
 
+            log.info("Payment creation completed for booking: orderId={}, targetName={}, targetId={}, userId={}, amount={}, currency={}",
+                    orderId,
+                    targetName,
+                    targetId,
+                    userId,
+                    amount,
+                    currency);
             return payment;
         } catch (RuntimeException exception) {
             log.error("Payment creation failed for booking: orderId={}, targetName={}, targetId={}, userId={}, amount={}, currency={}",

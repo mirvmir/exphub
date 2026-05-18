@@ -7,7 +7,7 @@ public record BankPayRequest(
         String cardToken,
         BigDecimal amount,
         Currency currency,
-        Long orderId,
+        String orderId,
         String description,
         String callbackUrl
 ) {

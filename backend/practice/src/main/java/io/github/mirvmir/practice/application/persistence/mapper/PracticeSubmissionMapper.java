@@ -16,7 +16,7 @@ public interface PracticeSubmissionMapper {
 
         return PracticeSubmission.load(
                 entity.getId(),
-                entity.getLessonId(),
+                entity.getStableLessonId(),
                 entity.getCourseEnrollmentId(),
                 entity.getStudentId(),
                 entity.getCreatedAt(),

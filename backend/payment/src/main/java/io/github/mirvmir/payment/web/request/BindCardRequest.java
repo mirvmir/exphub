@@ -13,7 +13,7 @@ public record BindCardRequest(
         @Pattern(regexp = "^(0[1-9]|1[0-2])$")
         String expiryMonth,
         @NotBlank
-        @Pattern(regexp = "^\\d{2}$")
+        @Pattern(regexp = "^\\d{4}$")
         String expiryYear,
         @NotBlank
         @Pattern(regexp = "^\\d{3}$")

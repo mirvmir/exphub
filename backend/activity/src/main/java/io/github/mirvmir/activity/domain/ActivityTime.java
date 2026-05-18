@@ -35,4 +35,8 @@ public class ActivityTime {
                 endAt
         );
     }
+
+    public void assignId(Long id) {
+        this.id = id;
+    }
 }

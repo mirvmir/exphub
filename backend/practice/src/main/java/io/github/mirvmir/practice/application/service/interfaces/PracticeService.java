@@ -8,11 +8,12 @@ import io.github.mirvmir.practice.web.response.PracticeSubmissionDetailsResponse
 import io.github.mirvmir.practice.web.response.PracticeSubmissionResponse;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface PracticeService {
-    PracticeAnswerResponse addAnswer(Long courseLessonId, CreatePracticeAnswerRequest request);
+    PracticeAnswerResponse addAnswer(UUID stableLessonId, CreatePracticeAnswerRequest request);
     PracticeCommentResponse addComment(Long answerId, CreatePracticeCommentRequest request);
-    PracticeSubmissionResponse checkSubmissionByTeacher(Long courseLessonId);
-    PracticeSubmissionDetailsResponse getMySubmission(Long courseLessonId);
-    List<PracticeSubmissionDetailsResponse> getLessonSubmissionsForTeacher(Long courseLessonId);
+    PracticeSubmissionResponse checkSubmissionByTeacher(Long practiceSubmissionId);
+    PracticeSubmissionDetailsResponse getMySubmission(UUID stableLessonId);
+    List<PracticeSubmissionDetailsResponse> getLessonSubmissionsForTeacher(UUID stableLessonId);
 }

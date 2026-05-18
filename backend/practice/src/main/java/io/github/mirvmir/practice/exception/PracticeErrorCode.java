@@ -14,7 +14,9 @@ public enum PracticeErrorCode implements ErrorCode {
     PRACTICE_SUBMISSION_CHECK_FORBIDDEN("PRACTICE_SUBMISSION_CHECK_FORBIDDEN",
             "PRACTICE_SUBMISSION_CHECK_FORBIDDEN"),
     IS_NOT_PRACTICE("IS_NOT_PRACTICE",
-            "Lesson is not practice");
+            "Lesson is not practice"),
+    COURSE_ID("COURSE_ID",
+            "Course not found");
 
     private final String code;
     private final String message;

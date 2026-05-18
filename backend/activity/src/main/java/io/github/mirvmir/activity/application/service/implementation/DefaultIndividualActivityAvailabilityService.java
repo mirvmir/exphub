@@ -23,7 +23,7 @@ public class DefaultIndividualActivityAvailabilityService
                                                                        List<ActivitySlot> plannedSlots) {
         if (activity.getActivityTimes() == null
                 || activity.getActivityTimes().isEmpty()) {
-            log.debug("No availability times for individual activity: activityId={}", activity.getId());
+            log.warn("No availability times for individual activity: activityId={}", activity.getId());
             return Set.of();
         }
 
@@ -46,7 +46,7 @@ public class DefaultIndividualActivityAvailabilityService
                 ).stream())
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        log.debug("Calculated available individual activity times: activityId={}, availableTimesCount={}",
+        log.info("Calculated available individual activity times: activityId={}, availableTimesCount={}",
                 activity.getId(),
                 result.size());
         return result;

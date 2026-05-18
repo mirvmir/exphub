@@ -58,6 +58,7 @@ class DefaultAuthorActivityTimeServiceTest {
     void createAvailabilityTime_shouldCreateTimeAndReturnResponse() {
         Activity activity = individualActivity();
         Instant startAt = Instant.parse("2026-05-13T10:00:00Z");
+        Instant endAt = Instant.parse("2026-05-13T15:00:00Z");
         ActivityTimeResponse expected = new ActivityTimeResponse(null, startAt, startAt.plusSeconds(3600));
 
         when(activityRepository.findById(activity.getId())).thenReturn(activity);
@@ -66,7 +67,7 @@ class DefaultAuthorActivityTimeServiceTest {
 
         ActivityTimeResponse result = service.createAvailabilityTime(
                 activity.getId(),
-                new CreateAvailabilityTimeRequest(startAt)
+                new CreateAvailabilityTimeRequest(startAt, endAt)
         );
 
         assertEquals(expected, result);
@@ -85,7 +86,10 @@ class DefaultAuthorActivityTimeServiceTest {
         ForbiddenException exception = assertThrows(ForbiddenException.class,
                 () -> service.createAvailabilityTime(
                         activity.getId(),
-                        new CreateAvailabilityTimeRequest(Instant.parse("2026-05-13T10:00:00Z"))
+                        new CreateAvailabilityTimeRequest(
+                                Instant.parse("2026-05-13T10:00:00Z"),
+                                Instant.parse("2026-05-13T15:00:00Z")
+                        )
                 ));
         verify(activityRepository, never()).saveOrUpdate(any());
     }
@@ -97,7 +101,10 @@ class DefaultAuthorActivityTimeServiceTest {
         NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> service.createAvailabilityTime(
                         1L,
-                        new CreateAvailabilityTimeRequest(Instant.parse("2026-05-13T10:00:00Z"))
+                        new CreateAvailabilityTimeRequest(
+                                Instant.parse("2026-05-13T10:00:00Z"),
+                                Instant.parse("2026-05-13T15:00:00Z")
+                        )
                 ));
         verifyNoInteractions(identityApi, activityTimeResponseMapper);
     }

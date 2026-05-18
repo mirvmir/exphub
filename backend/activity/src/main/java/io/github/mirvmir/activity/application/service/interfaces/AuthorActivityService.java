@@ -5,12 +5,14 @@ import io.github.mirvmir.activity.web.request.CreateActivityRequest;
 import io.github.mirvmir.activity.web.request.CreateGroupActivitySlotRequest;
 import io.github.mirvmir.activity.web.request.UpdateActivityRequest;
 
+import java.util.List;
 import java.util.Set;
 
 public interface AuthorActivityService {
-    AuthorActivityDescriptionResponse getDescriptionForAuthor(Long activityId);
-    Set<IndividualActivitySlotResponse> getIndividualSlotsForAuthor(Long activityId);
-    Set<GroupActivitySlotResponse> getGroupSlotsForAuthor(Long activityId);
+    List<AuthorActivityDescriptionResponse> getAllActivity();
+    AuthorActivityDescriptionResponse getDescription(Long activityId);
+    Set<IndividualActivitySlotResponse> getIndividualSlots(Long activityId);
+    Set<GroupActivitySlotResponse> getGroupSlots(Long activityId);
     IdResponse createActivity(CreateActivityRequest request);
     ActivityResponse updateActivity(Long activityId,
                                     UpdateActivityRequest request);

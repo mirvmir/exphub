@@ -3,6 +3,7 @@ package io.github.mirvmir.payment.application.service;
 import io.github.mirvmir.common.exception.NotFoundException;
 import io.github.mirvmir.payment.api.PaymentApi;
 import io.github.mirvmir.payment.api.dto.*;
+import io.github.mirvmir.payment.application.properties.BankProperties;
 import io.github.mirvmir.payment.application.service.port.repository.PaymentRepository;
 import io.github.mirvmir.payment.application.service.port.repository.PayoutRepository;
 import io.github.mirvmir.payment.application.service.port.repository.RefundRepository;
@@ -35,6 +36,8 @@ public class DefaultPaymentApi implements PaymentApi {
 
     private final BankPaymentGatewayClient bankPaymentGatewayClient;
 
+    private final BankProperties bankProperties;
+
     private final Clock clock;
 
     @Override
@@ -63,13 +66,9 @@ public class DefaultPaymentApi implements PaymentApi {
     public CreatePayoutResponse createPayout(CreatePayoutRequest request) {
         Instant now = Instant.now(clock);
 
-        UserCard card = null;
-        if (request.cardId() != null) {
-            card = userCardRepository.findById(request.cardId());
-        }
-        else {
-            card = userCardRepository.findDefaultByUserId(request.userId());
-        }
+        UserCard card = request.cardId() != null
+                ? userCardRepository.findById(request.cardId())
+                : userCardRepository.findDefaultByUserId(request.userId());
 
         if (card == null
                 || !card.getUserId().equals(request.userId())
@@ -87,26 +86,33 @@ public class DefaultPaymentApi implements PaymentApi {
                 now
         );
 
-        payoutRepository.saveOrUpdate(payout);
+        Payout savedPayout = payoutRepository.saveOrUpdate(payout);
 
         BankPayoutResponse bankResponse = bankPaymentGatewayClient.payout(
                 new BankPayoutRequest(
                         card.getCardToken(),
-                        request.amount(),
-                        request.currency(),
-                        payout.getId(),
-                        request.description(),
-                        "http://localhost:8080/webhook/bank/payout"
+                        savedPayout.getPrice().getAmount(),
+                        savedPayout.getPrice().getCurrency(),
+                        String.valueOf(savedPayout.getId()),
+                        savedPayout.getDescription(),
+                        bankProperties.getPayoutWebhookUrl()
                 )
         );
 
-        payout.markProcessing(bankResponse.externalPayoutId());
+        if ("PROCESSING".equals(bankResponse.status())) {
+            savedPayout.markProcessing(bankResponse.externalPayoutId());
+        } else if ("FAILED".equals(bankResponse.status())) {
+            savedPayout.markProcessing(bankResponse.externalPayoutId());
+            savedPayout.markFailedFromWebhook();
+        } else {
+            throw new PaymentException("Некорректный статус вывода от банка");
+        }
 
-        payoutRepository.saveOrUpdate(payout);
+        savedPayout = payoutRepository.saveOrUpdate(savedPayout);
 
         return new CreatePayoutResponse(
-                payout.getId(),
-                payout.getStatus().name()
+                savedPayout.getId(),
+                savedPayout.getStatus().name()
         );
     }
 
@@ -168,17 +174,22 @@ public class DefaultPaymentApi implements PaymentApi {
         BankRefundResponse bankResponse = bankPaymentGatewayClient.refund(
                 new BankRefundRequest(
                         payment.getExternalPaymentId(),
-                        savedRefund.getId(),
-                        request.amount(),
-                        request.currency(),
-                        request.reason(),
-                        "http://localhost:8080/payments/webhook/bank/refund"
+                        String.valueOf(savedRefund.getId()),
+                        savedRefund.getPrice().getAmount(),
+                        savedRefund.getPrice().getCurrency(),
+                        savedRefund.getReason(),
+                        bankProperties.getRefundWebhookUrl()
                 )
         );
 
-        savedRefund.markProcessing(
-                bankResponse.externalRefundId()
-        );
+        if ("PROCESSING".equals(bankResponse.status())) {
+            savedRefund.markProcessing(bankResponse.externalRefundId());
+        } else if ("FAILED".equals(bankResponse.status())) {
+            savedRefund.markProcessing(bankResponse.externalRefundId());
+            savedRefund.markFailedFromWebhook();
+        } else {
+            throw new PaymentException("Некорректный статус возврата от банка");
+        }
 
         savedRefund = refundRepository.saveOrUpdate(savedRefund);
 

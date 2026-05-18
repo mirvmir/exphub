@@ -2,6 +2,7 @@ package io.github.mirvmir.activity.web.request;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 
 import java.math.BigDecimal;
 import java.util.Currency;
@@ -15,7 +16,7 @@ public record UpdateActivityRequest(
         @Positive
         Integer maxBookableSeats,
         @NotNull
-        @Positive
+        @PositiveOrZero
         BigDecimal priceAmount,
         @NotNull
         Currency priceCurrency,

@@ -33,9 +33,6 @@ public interface ActivityResponseMapper {
     AuthorActivityDescriptionResponse toAuthorActivityDescriptionResponse(
             Activity activity,
             ProfileNameDto author,
-            Set<ActivityTimeResponse> activityTimes,
-            Set<IndividualActivitySlotResponse> individualActivities,
-            Set<GroupActivitySlotResponse> groupActivities,
             boolean canEdit,
             boolean canDelete,
             boolean canRequestPublication

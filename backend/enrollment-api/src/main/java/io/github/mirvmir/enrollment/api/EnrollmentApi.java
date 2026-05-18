@@ -1,6 +1,5 @@
 package io.github.mirvmir.enrollment.api;
 
-import io.github.mirvmir.enrollment.api.dto.OrderPaymentInfoResponse;
 import io.github.mirvmir.enrollment.api.dto.StudentCourseEnrollmentResponse;
 
 import java.time.Instant;
@@ -10,7 +9,6 @@ import java.util.Set;
 public interface EnrollmentApi {
     boolean isStudentOfActivity(Long userId, Long activityId);
     boolean isStudentOfCourse(Long userId, Long courseId);
-    boolean isStudentOfCourseEnrollment(Long userId, Long courseEnrollmentId);
     boolean isTeacherOfCourseEnrollment(Long teacherId, Long courseEnrollmentId);
     Map<Long, Integer> countBookedByActivitySlotIds(Set<Long> activitySlotIds,
                                                     Instant now);
@@ -28,14 +26,12 @@ public interface EnrollmentApi {
     void refundPayedActivityEnrollments(Long activitySlotId,
                                         String reason);
 
-    OrderPaymentInfoResponse getPaymentInfo(Long orderId, Instant now);
     boolean isOrderExpired(Long orderId, Instant now);
     void markPaymentProcessing(Long orderId, Instant now);
     boolean isOrderCancelled(Long orderId);
+    Long getTeacherIdByOrderId(Long orderId);
 
     void expireOrder(Long orderId, Instant now);
-
-    Long getTeacherIdByOrderId(Long orderId);
 
     boolean canUserAccessFile(Long userId,
                               Long fileId);

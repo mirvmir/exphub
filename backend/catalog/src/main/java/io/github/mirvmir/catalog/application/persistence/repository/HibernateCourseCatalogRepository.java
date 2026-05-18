@@ -1,18 +1,19 @@
 package io.github.mirvmir.catalog.application.persistence.repository;
 
-import io.github.mirvmir.catalog.application.persistence.entity.ActivityCatalogEntity;
 import io.github.mirvmir.catalog.application.service.port.repository.CourseCatalogRepository;
 import io.github.mirvmir.catalog.application.service.dto.CatalogFilterDto;
-import io.github.mirvmir.catalog.domain.ActivityCatalog;
 import io.github.mirvmir.catalog.domain.CourseCatalog;
 import io.github.mirvmir.catalog.application.persistence.entity.CourseCatalogEntity;
 import io.github.mirvmir.catalog.application.persistence.mapper.CourseCatalogMapper;
 import lombok.AllArgsConstructor;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.query.NativeQuery;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @AllArgsConstructor
@@ -26,47 +27,94 @@ public class HibernateCourseCatalogRepository implements CourseCatalogRepository
     public List<CourseCatalog> search(CatalogFilterDto filter) {
         Session session = sessionFactory.getCurrentSession();
 
-        String sql = """
+        StringBuilder sql = new StringBuilder("""
                 select distinct c.*
                 from course_catalog c
-                where (:search is null
-                       or lower(c.title) like :search
-                       or lower(c.author_name) like :search
-                       or lower(c.short_description) like :search)
-                  and (:minPrice is null or c.price_amount >= :minPrice)
-                  and (:maxPrice is null or c.price_amount <= :maxPrice)
-                  and (:minRating is null or c.rating_avg >= :minRating)
-                  and (:topicId is null or exists (
-                       select 1
-                       from course_catalog_topic ct
-                       where ct.course_catalog_id = c.id
-                         and ct.topic_id = :topicId
-                  ))
-                  and (:sectionId is null or exists (
-                       select 1
-                       from course_catalog_section cs
-                       where cs.course_catalog_id = c.id
-                         and cs.section_id = :sectionId
-                ))
-                  and (:subjectId is null or exists (
-                       select 1
-                       from course_catalog_subject csu
-                       where csu.course_catalog_id = c.id
-                         and csu.subject_id = :subjectId
-                ))
-                order by c.rating_avg desc nulls last
-                """;
+                where 1 = 1
+                """);
 
-        List<CourseCatalogEntity> entities = session
-                .createNativeQuery(sql, CourseCatalogEntity.class)
-                .setParameter("search", prepareSearch(filter.search()))
-                .setParameter("minPrice", filter.minPrice())
-                .setParameter("maxPrice", filter.maxPrice())
-                .setParameter("minRating", filter.minRating())
-                .setParameter("topicId", filter.topicId())
-                .setParameter("sectionId", filter.sectionId())
-                .setParameter("subjectId", filter.subjectId())
-                .getResultList();
+        Map<String, Object> params = new HashMap<>();
+
+        if (filter != null) {
+            String search = prepareSearch(filter.search());
+
+            if (search != null) {
+                sql.append("""
+                        and (
+                        lower(c.title) like :search
+                          or lower(c.author_name) like :search
+                          or lower(c.short_description) like :search
+                        )
+                        """);
+                params.put("search", search);
+            }
+
+            if (filter.minPrice() != null) {
+                sql.append("""
+                and c.price_amount >= :minPrice
+                """);
+                params.put("minPrice", filter.minPrice());
+            }
+
+            if (filter.maxPrice() != null) {
+                sql.append("""
+                and c.price_amount <= :maxPrice
+                """);
+                params.put("maxPrice", filter.maxPrice());
+            }
+
+            if (filter.minRating() != null) {
+                sql.append("""
+                and c.rating_avg >= :minRating
+                """);
+                params.put("minRating", filter.minRating());
+            }
+
+            if (filter.topicId() != null) {
+                sql.append("""
+                        and exists (
+                        select 1
+                        from course_catalog_topic ct
+                        where ct.course_catalog_id = c.id
+                          and ct.topic_id = :topicId
+                        )
+                        """);
+                params.put("topicId", filter.topicId());
+            }
+
+            if (filter.sectionId() != null) {
+                sql.append("""
+                        and exists (
+                        select 1
+                        from course_catalog_section cs
+                        where cs.course_catalog_id = c.id
+                          and cs.section_id = :sectionId
+                        )
+                        """);
+                params.put("sectionId", filter.sectionId());
+            }
+
+            if (filter.subjectId() != null) {
+                sql.append("""
+                        and exists (
+                        select 1
+                        from course_catalog_subject csu
+                        where csu.course_catalog_id = c.id
+                          and csu.subject_id = :subjectId
+                        )
+                        """);
+                params.put("subjectId", filter.subjectId());
+            }
+        }
+
+        sql.append("order by c.rating_avg desc nulls last");
+
+        NativeQuery<CourseCatalogEntity> query =
+                session.createNativeQuery(sql.toString(), CourseCatalogEntity.class);
+
+        params.forEach(query::setParameter);
+
+        List<CourseCatalogEntity> entities = query.getResultList();
 
         return entities.stream()
                 .map(courseCatalogMapper::toDomain)

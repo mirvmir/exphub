@@ -10,6 +10,7 @@ import org.hibernate.SessionFactory;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @AllArgsConstructor
 @Repository
@@ -19,16 +20,16 @@ public class HibernatePracticeSubmissionRepository implements PracticeSubmission
     private final PracticeSubmissionMapper practiceSubmissionMapper;
 
     @Override
-    public PracticeSubmission findByLessonIdAndStudentId(Long lessonId,
-                                                         Long studentId) {
+    public PracticeSubmission findByStableLessonIdAndStudentId(UUID stableLessonId,
+                                                               Long studentId) {
         PracticeSubmissionEntity entity = sessionFactory.getCurrentSession()
                 .createQuery("""
                 select ps
                 from PracticeSubmissionEntity ps
-                where ps.lessonId = :lessonId
+                where ps.stableLessonId = :stableLessonId
                   and ps.studentId = :studentId
                 """, PracticeSubmissionEntity.class)
-                .setParameter("lessonId", lessonId)
+                .setParameter("stableLessonId", stableLessonId)
                 .setParameter("studentId", studentId)
                 .uniqueResult();
 
@@ -36,15 +37,15 @@ public class HibernatePracticeSubmissionRepository implements PracticeSubmission
     }
 
     @Override
-    public List<PracticeSubmission> findByLessonId(Long lessonId) {
+    public List<PracticeSubmission> findByLessonId(UUID stableLessonId) {
         Session session = sessionFactory.getCurrentSession();
 
         return session.createQuery("""
                 from PracticeSubmissionEntity ps
-                where ps.lessonId = :lessonId
+                where ps.stableLessonId = :stableLessonId
                 order by ps.createdAt asc
                 """, PracticeSubmissionEntity.class)
-                .setParameter("lessonId", lessonId)
+                .setParameter("stableLessonId", stableLessonId)
                 .getResultList()
                 .stream()
                 .map(practiceSubmissionMapper::toDomain)
@@ -62,8 +63,6 @@ public class HibernatePracticeSubmissionRepository implements PracticeSubmission
 
         return practiceSubmissionMapper.toDomain(entity);
     }
-
-
 
     @Override
     public PracticeSubmission saveOrUpdate(PracticeSubmission submission) {
@@ -84,16 +83,17 @@ public class HibernatePracticeSubmissionRepository implements PracticeSubmission
     }
 
     @Override
-    public boolean existsCheckedByLessonIdAndStudentId(Long lessonId, Long studentId) {
+    public boolean existsCheckedByStableLessonIdAndStudentId(UUID stableLessonId,
+                                                             Long studentId) {
         Boolean exists = sessionFactory.getCurrentSession()
                 .createQuery("""
                 select count(ps.id) > 0
                 from PracticeSubmissionEntity ps
-                where ps.lessonId = :lessonId
+                where ps.stableLessonId = :stableLessonId
                   and ps.studentId = :studentId
                   and ps.checkedAt is not null
                 """, Boolean.class)
-                .setParameter("lessonId", lessonId)
+                .setParameter("stableLessonId", stableLessonId)
                 .setParameter("studentId", studentId)
                 .uniqueResult();
 

@@ -1,5 +1,6 @@
 package io.github.mirvmir;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.mirvmir.activity.application.ActivityModuleConfig;
 import io.github.mirvmir.config.InfraConfig;
 import io.github.mirvmir.config.SchedulerConfig;
@@ -45,5 +46,10 @@ public class AppConfig {
     @Bean
     public static PropertySourcesPlaceholderConfigurer configurer() {
         return new PropertySourcesPlaceholderConfigurer();
+    }
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
     }
 }

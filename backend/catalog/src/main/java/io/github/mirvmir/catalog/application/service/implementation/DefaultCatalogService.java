@@ -34,14 +34,15 @@ public class DefaultCatalogService implements CatalogService {
 
     private final CatalogMapper catalogMapper;
 
-    @Transactional(readOnly = true)
     @Override
+    @Transactional(readOnly = true)
     public List<CatalogItemResponse> getCatalog(CatalogFilterDto filter) {
         log.debug("Getting catalog with filter={}", filter);
 
         List<CatalogItemResponse> result = new ArrayList<>();
 
-        if (filter.type() == null || filter.type() == CatalogType.COURSE) {
+        if ((filter.type() == null || filter.type() == CatalogType.COURSE)
+                && filter.format() == null) {
             result.addAll(courseCatalogRepository.search(filter)
                     .stream()
                     .map(catalogMapper::fromCourse)
@@ -55,22 +56,20 @@ public class DefaultCatalogService implements CatalogService {
                     .toList());
         }
 
-        log.debug("Catalog received: filter={}, resultSize={}", filter, result.size());
-
+        log.info("Catalog received: filter={}, resultSize={}", filter, result.size());
         return result;
     }
 
     @Override
     @Transactional
     public void addScore(Long activityId, Long courseId, Double score) {
-        log.info("Updating catalog score: activityId={}, courseId={}, score={}", activityId, courseId, score);
+        log.debug("Updating catalog score: activityId={}, courseId={}, score={}", activityId, courseId, score);
 
         if (courseId != null) {
             CourseCatalog course = courseCatalogRepository.findByCourseId(courseId);
 
             if (course == null) {
                 log.warn("Course catalog item not found for score update: courseId={}", courseId);
-
                 return;
             }
 
@@ -84,13 +83,10 @@ public class DefaultCatalogService implements CatalogService {
 
             courseCatalogRepository.saveOrUpdate(course);
 
-            log.info(
-                    "Course catalog score updated: courseId={}, ratingAvg={}, reviewCount={}",
+            log.info("Course catalog score updated: courseId={}, ratingAvg={}, reviewCount={}",
                     courseId,
                     ratingInfo.ratingAvg(),
-                    ratingInfo.reviewCount()
-            );
-
+                    ratingInfo.reviewCount());
             return;
         }
 
@@ -99,7 +95,6 @@ public class DefaultCatalogService implements CatalogService {
 
             if (activity == null) {
                 log.warn("Activity catalog item not found for score update: activityId={}", activityId);
-
                 return;
             }
 
@@ -113,22 +108,19 @@ public class DefaultCatalogService implements CatalogService {
 
             activityCatalogRepository.saveOrUpdate(activity);
 
-            log.info(
-                    "Activity catalog score updated: activityId={}, ratingAvg={}, reviewCount={}",
+            log.info("Activity catalog score updated: activityId={}, ratingAvg={}, reviewCount={}",
                     activityId,
                     ratingInfo.ratingAvg(),
-                    ratingInfo.reviewCount()
-            );
-
+                    ratingInfo.reviewCount());
             return;
         }
 
         log.error("Catalog score update failed: activityId and courseId are null");
-
         throw new IllegalStateException("Не добавлен id занятия или курса");
     }
 
     @Override
+    @Transactional
     public void updateProfile(Long userId, String newGivenName, String newFamilyName) {
         List<ActivityCatalog> activities = activityCatalogRepository.findByAuthorId(userId);
         List<CourseCatalog> courses = courseCatalogRepository.findByAuthorId(userId);

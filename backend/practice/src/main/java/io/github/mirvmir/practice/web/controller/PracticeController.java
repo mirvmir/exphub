@@ -14,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @AllArgsConstructor
 @RequiresCompletedProfile
@@ -24,15 +25,15 @@ public class PracticeController {
 
     private final PracticeService practiceService;
 
-    @PostMapping("/student/practice/lessons/{courseLessonId}/answers")
+    @PostMapping("/student/practice/lessons/{stableLessonId}/answers")
     public PracticeAnswerResponse addAnswerByStudent(
-            @PathVariable("courseLessonId")
-            Long courseLessonId,
+            @PathVariable("stableLessonId")
+            UUID stableLessonId,
             @Valid
             @RequestBody
             CreatePracticeAnswerRequest request
     ) {
-        return practiceService.addAnswer(courseLessonId, request);
+        return practiceService.addAnswer(stableLessonId, request);
     }
 
     @PostMapping("/author/practice/answers/{answerId}/comments")
@@ -57,19 +58,19 @@ public class PracticeController {
         return practiceService.checkSubmissionByTeacher(practiceSubmissionId);
     }
 
-    @GetMapping("/student/practice/lessons/{courseLessonId}/submission")
+    @GetMapping("/student/practice/lessons/{stableLessonId}/submission")
     public PracticeSubmissionDetailsResponse getMySubmission(
-            @PathVariable("courseLessonId")
-            Long courseLessonId
+            @PathVariable("stableLessonId")
+            UUID stableLessonId
     ) {
-        return practiceService.getMySubmission(courseLessonId);
+        return practiceService.getMySubmission(stableLessonId);
     }
 
-    @GetMapping("/teacher/practice/lessons/{courseLessonId}/submissions")
+    @GetMapping("/teacher/practice/lessons/{stableLessonId}/submissions")
     public List<PracticeSubmissionDetailsResponse> getLessonSubmissionsForTeacher(
-            @PathVariable ("courseLessonId")
-            Long courseLessonId
+            @PathVariable("stableLessonId")
+            UUID stableLessonId
     ) {
-        return practiceService.getLessonSubmissionsForTeacher(courseLessonId);
+        return practiceService.getLessonSubmissionsForTeacher(stableLessonId);
     }
 }

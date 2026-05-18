@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -56,7 +57,8 @@ class PracticeControllerTest {
                 createdAt
         );
 
-        when(practiceService.addAnswer(eq(100L), any()))
+        when(practiceService.addAnswer(eq(UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6")),
+                any()))
                 .thenReturn(response);
 
         mockMvc.perform(post("/student/practice/lessons/100/answers")
@@ -68,10 +70,12 @@ class PracticeControllerTest {
                 .andExpect(jsonPath("$.html").value("<p>Ответ студента</p>"))
                 .andExpect(jsonPath("$.fileId").value(50L));
 
-        verify(practiceService).addAnswer(eq(100L), argThat(actual ->
-                actual.html().equals("<p>Ответ студента</p>")
-                && actual.fileId().equals(50L)
-        ));
+        verify(practiceService).addAnswer(eq(UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6")),
+                argThat(actual ->
+                        actual.html().equals("<p>Ответ студента</p>")
+                                && actual.fileId().equals(50L)
+                )
+        );
     }
 
     @Test
@@ -106,7 +110,7 @@ class PracticeControllerTest {
     void checkSubmissionByTeacher_shouldReturnSubmission() throws Exception {
         PracticeSubmissionResponse response = new PracticeSubmissionResponse(
                 10L,
-                100L,
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
                 200L,
                 1L,
                 Instant.parse("2026-05-13T09:00:00Z"),
@@ -129,7 +133,8 @@ class PracticeControllerTest {
         PracticeSubmissionDetailsResponse response =
                 submissionDetailsResponse();
 
-        when(practiceService.getMySubmission(100L))
+        when(practiceService.getMySubmission(
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6")))
                 .thenReturn(response);
 
         mockMvc.perform(get("/student/practice/lessons/100/submission"))
@@ -141,7 +146,9 @@ class PracticeControllerTest {
                 .andExpect(jsonPath("$.answers[0].id").value(1000L))
                 .andExpect(jsonPath("$.answers[0].comments[0].id").value(5000L));
 
-        verify(practiceService).getMySubmission(100L);
+        verify(practiceService).getMySubmission(
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6")
+        );
     }
 
     @Test
@@ -149,7 +156,8 @@ class PracticeControllerTest {
         PracticeSubmissionDetailsResponse response =
                 submissionDetailsResponse();
 
-        when(practiceService.getLessonSubmissionsForTeacher(100L))
+        when(practiceService.getLessonSubmissionsForTeacher(
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6")))
                 .thenReturn(List.of(response));
 
         mockMvc.perform(get("/teacher/practice/lessons/100/submissions"))
@@ -160,13 +168,15 @@ class PracticeControllerTest {
                 .andExpect(jsonPath("$[0].answers[0].id").value(1000L))
                 .andExpect(jsonPath("$[0].answers[0].comments[0].id").value(5000L));
 
-        verify(practiceService).getLessonSubmissionsForTeacher(100L);
+        verify(practiceService).getLessonSubmissionsForTeacher(
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6")
+        );
     }
 
     private PracticeSubmissionDetailsResponse submissionDetailsResponse() {
         return new PracticeSubmissionDetailsResponse(
                 10L,
-                100L,
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
                 200L,
                 1L,
                 Instant.parse("2026-05-13T09:00:00Z"),

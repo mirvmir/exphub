@@ -7,6 +7,7 @@ import io.github.mirvmir.activity.application.persistence.entity.ActivityTimeEnt
 import io.github.mirvmir.activity.application.persistence.entity.ActivityTopicEntity;
 import io.github.mirvmir.common.domain.Money;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -18,6 +19,8 @@ import java.util.stream.Collectors;
 )
 public interface ActivityMapper {
 
+    @Mapping(target = "activityTimeEntities", ignore = true)
+    @Mapping(target = "topicEntities", ignore = true)
     ActivityEntity toEntity(Activity activity);
 
     default Activity toDomain(ActivityEntity entity) {
@@ -48,7 +51,27 @@ public interface ActivityMapper {
         );
     }
 
-    Set<ActivityTime> toActivityTimes(Set<ActivityTimeEntity> entities);
+    default Set<ActivityTime> toActivityTimes(Set<ActivityTimeEntity> activityTimeEntities) {
+        if (activityTimeEntities == null) {
+            return new HashSet<>();
+        }
+
+        return activityTimeEntities.stream()
+                .map(this::toActivityTime)
+                .collect(Collectors.toSet());
+    };
+
+    default ActivityTime toActivityTime(ActivityTimeEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+
+        return ActivityTime.load(
+                entity.getId(),
+                entity.getStartAt(),
+                entity.getEndAt()
+        );
+    }
 
     default Set<Long> toTopicIds(Set<ActivityTopicEntity> topicEntities) {
         if (topicEntities == null) {

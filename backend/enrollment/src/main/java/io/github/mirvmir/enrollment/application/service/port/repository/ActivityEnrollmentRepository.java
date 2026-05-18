@@ -17,7 +17,8 @@ public interface ActivityEnrollmentRepository {
                                              Long activityId);
     Map<Long, Integer> countBookedByActivitySlotIds(Set<Long> activitySlotIds,
                                                     Instant now);
-    ActivityEnrollment tryEnroll(Long activitySlotId,
+    ActivityEnrollment tryEnroll(Long activityId,
+                                 Long activitySlotId,
                                  Long userId,
                                  Instant now);
     List<ActivityEnrollment> findActiveByActivitySlotId(Long activitySlotId);

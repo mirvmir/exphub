@@ -162,6 +162,7 @@ class DefaultOrderExpirationServiceTest {
     private ActivityEnrollment bookedExpiredActivityEnrollment() {
         return ActivityEnrollment.load(
                 10L,
+                100L,
                 200L,
                 1L,
                 ActivityEnrollmentStatus.BOOKED,

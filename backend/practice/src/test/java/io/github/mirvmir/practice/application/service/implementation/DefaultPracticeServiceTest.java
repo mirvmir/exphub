@@ -25,6 +25,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -72,8 +73,11 @@ class DefaultPracticeServiceTest {
     @Test
     void addAnswer_shouldCreateSubmissionAndAnswer_whenSubmissionDoesNotExist() {
         when(identityApi.getCurrentUserId()).thenReturn(1L);
-        when(courseApi.isPractice(100L)).thenReturn(true);
-        when(practiceSubmissionRepository.findByLessonIdAndStudentId(100L, 1L))
+        when(courseApi.isPractice(UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6")))
+                .thenReturn(true);
+        when(practiceSubmissionRepository.findByStableLessonIdAndStudentId(
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+                1L))
                 .thenReturn(null);
 
         when(enrollmentApi.getStudentCourseEnrollment(1L, 100L))
@@ -98,7 +102,7 @@ class DefaultPracticeServiceTest {
                 });
 
         PracticeAnswerResponse result = service.addAnswer(
-                100L,
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
                 new CreatePracticeAnswerRequest("<p>Ответ</p>", 50L)
         );
 
@@ -109,7 +113,9 @@ class DefaultPracticeServiceTest {
         assertEquals(now, result.createdAt());
 
         verify(practiceSubmissionRepository).saveOrUpdate(argThat(submission ->
-                submission.getLessonId().equals(100L)
+                submission.getStableLessonId().equals(
+                        UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6")
+                )
                 && submission.getCourseEnrollmentId().equals(200L)
                 && submission.getStudentId().equals(1L)
                 && submission.getCreatedAt().equals(now)
@@ -118,7 +124,7 @@ class DefaultPracticeServiceTest {
 
         verify(practiceSubmissionAnswerRepository).saveOrUpdate(argThat(answer ->
                 answer.getPracticeSubmissionId().equals(10L)
-                && answer.getHtml().equals("<p>Ответ</p>")
+                && answer.getText().equals("Ответ")
                 && answer.getFileId().equals(50L)
                 && answer.getCreatedAt().equals(now)
         ));
@@ -129,8 +135,11 @@ class DefaultPracticeServiceTest {
         PracticeSubmission submission = activeSubmission();
 
         when(identityApi.getCurrentUserId()).thenReturn(1L);
-        when(courseApi.isPractice(100L)).thenReturn(true);
-        when(practiceSubmissionRepository.findByLessonIdAndStudentId(100L, 1L))
+        when(courseApi.isPractice(UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6")))
+                .thenReturn(true);
+        when(practiceSubmissionRepository.findByStableLessonIdAndStudentId(
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+                1L))
                 .thenReturn(submission);
 
         when(practiceSubmissionAnswerRepository.saveOrUpdate(any(PracticeSubmissionAnswer.class)))
@@ -141,7 +150,7 @@ class DefaultPracticeServiceTest {
                 });
 
         PracticeAnswerResponse result = service.addAnswer(
-                100L,
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
                 new CreatePracticeAnswerRequest("<p>Ответ</p>", 50L)
         );
 
@@ -156,11 +165,12 @@ class DefaultPracticeServiceTest {
     @Test
     void addAnswer_shouldThrowBusinessException_whenLessonIsNotPractice() {
         when(identityApi.getCurrentUserId()).thenReturn(1L);
-        when(courseApi.isPractice(100L)).thenReturn(false);
+        when(courseApi.isPractice(UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6")))
+                .thenReturn(false);
 
         assertThrows(BusinessException.class,
                 () -> service.addAnswer(
-                        100L,
+                        UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
                         new CreatePracticeAnswerRequest("<p>Ответ</p>", 50L)
                 ));
 
@@ -171,15 +181,18 @@ class DefaultPracticeServiceTest {
     @Test
     void addAnswer_shouldThrowForbidden_whenStudentHasNoEnrollment() {
         when(identityApi.getCurrentUserId()).thenReturn(1L);
-        when(courseApi.isPractice(100L)).thenReturn(true);
-        when(practiceSubmissionRepository.findByLessonIdAndStudentId(100L, 1L))
+        when(courseApi.isPractice(UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6")))
+                .thenReturn(true);
+        when(practiceSubmissionRepository.findByStableLessonIdAndStudentId(
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+                1L))
                 .thenReturn(null);
         when(enrollmentApi.getStudentCourseEnrollment(1L, 100L))
                 .thenReturn(null);
 
         assertThrows(ForbiddenException.class,
                 () -> service.addAnswer(
-                        100L,
+                        UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
                         new CreatePracticeAnswerRequest("<p>Ответ</p>", 50L)
                 ));
 
@@ -192,13 +205,16 @@ class DefaultPracticeServiceTest {
         PracticeSubmission submission = checkedSubmission();
 
         when(identityApi.getCurrentUserId()).thenReturn(1L);
-        when(courseApi.isPractice(100L)).thenReturn(true);
-        when(practiceSubmissionRepository.findByLessonIdAndStudentId(100L, 1L))
+        when(courseApi.isPractice(UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6")))
+                .thenReturn(true);
+        when(practiceSubmissionRepository.findByStableLessonIdAndStudentId(
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+                1L))
                 .thenReturn(submission);
 
         assertThrows(BusinessException.class,
                 () -> service.addAnswer(
-                        100L,
+                        UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
                         new CreatePracticeAnswerRequest("<p>Ответ</p>", 50L)
                 ));
 
@@ -278,7 +294,10 @@ class DefaultPracticeServiceTest {
         PracticeSubmissionResponse result = service.checkSubmissionByTeacher(10L);
 
         assertEquals(10L, result.id());
-        assertEquals(100L, result.lessonId());
+        assertEquals(
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+                result.stableLessonId()
+        );
         assertEquals(200L, result.courseEnrollmentId());
         assertEquals(1L, result.studentId());
         assertEquals(now, result.checkedAt());
@@ -295,13 +314,20 @@ class DefaultPracticeServiceTest {
                         1L,
                         100L,
                         2L));
-        when(practiceSubmissionRepository.findByLessonIdAndStudentId(100L, 1L))
+        when(practiceSubmissionRepository.findByStableLessonIdAndStudentId(
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+                1L))
                 .thenReturn(null);
 
-        PracticeSubmissionDetailsResponse result = service.getMySubmission(100L);
+        PracticeSubmissionDetailsResponse result = service.getMySubmission(
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6")
+        );
 
         assertNull(result.id());
-        assertEquals(100L, result.lessonId());
+        assertEquals(
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+                result.stableLessonId()
+        );
         assertEquals(200L, result.courseEnrollmentId());
         assertEquals(1L, result.studentId());
         assertTrue(result.answers().isEmpty());
@@ -335,7 +361,7 @@ class DefaultPracticeServiceTest {
         PracticeSubmissionDetailsResponse expected =
                 new PracticeSubmissionDetailsResponse(
                         10L,
-                        100L,
+                        UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
                         200L,
                         1L,
                         submission.getCreatedAt(),
@@ -350,7 +376,9 @@ class DefaultPracticeServiceTest {
                         1L,
                         100L,
                         2L));
-        when(practiceSubmissionRepository.findByLessonIdAndStudentId(100L, 1L))
+        when(practiceSubmissionRepository.findByStableLessonIdAndStudentId(
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+                1L))
                 .thenReturn(submission);
         when(practiceSubmissionAnswerRepository.findByPracticeSubmissionId(10L))
                 .thenReturn(List.of(answer));
@@ -361,7 +389,9 @@ class DefaultPracticeServiceTest {
         when(practiceSubmissionResponseMapper.toSubmissionResponse(submission, List.of(answerResponse)))
                 .thenReturn(expected);
 
-        PracticeSubmissionDetailsResponse result = service.getMySubmission(100L);
+        PracticeSubmissionDetailsResponse result = service.getMySubmission(
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6")
+        );
 
         assertSame(expected, result);
     }
@@ -375,7 +405,7 @@ class DefaultPracticeServiceTest {
         PracticeSubmissionDetailsResponse expected =
                 new PracticeSubmissionDetailsResponse(
                         10L,
-                        100L,
+                        UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
                         200L,
                         1L,
                         submission.getCreatedAt(),
@@ -384,8 +414,10 @@ class DefaultPracticeServiceTest {
                 );
 
         when(identityApi.getCurrentUserId()).thenReturn(2L);
-        when(courseApi.isPractice(100L)).thenReturn(true);
-        when(practiceSubmissionRepository.findByLessonId(100L))
+        when(courseApi.isPractice(UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6")))
+                .thenReturn(true);
+        when(practiceSubmissionRepository.findByLessonId(
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6")))
                 .thenReturn(List.of(submission));
         when(enrollmentApi.isTeacherOfCourseEnrollment(2L, 200L))
                 .thenReturn(true);
@@ -400,7 +432,9 @@ class DefaultPracticeServiceTest {
         )).thenReturn(List.of(expected));
 
         List<PracticeSubmissionDetailsResponse> result =
-                service.getLessonSubmissionsForTeacher(100L);
+                service.getLessonSubmissionsForTeacher(
+                        UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6")
+                );
 
         assertEquals(List.of(expected), result);
 
@@ -416,14 +450,19 @@ class DefaultPracticeServiceTest {
         PracticeSubmission submission = activeSubmission();
 
         when(identityApi.getCurrentUserId()).thenReturn(2L);
-        when(courseApi.isPractice(100L)).thenReturn(true);
-        when(practiceSubmissionRepository.findByLessonId(100L))
+        when(courseApi.isPractice(UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6")))
+                .thenReturn(true);
+        when(practiceSubmissionRepository.findByLessonId(
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6")))
                 .thenReturn(List.of(submission));
         when(enrollmentApi.isTeacherOfCourseEnrollment(2L, 200L))
                 .thenReturn(false);
 
         assertThrows(ForbiddenException.class,
-                () -> service.getLessonSubmissionsForTeacher(100L));
+                () -> service.getLessonSubmissionsForTeacher(
+                        UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6")
+                )
+        );
 
         verifyNoInteractions(practiceSubmissionAnswerRepository);
         verifyNoInteractions(practiceSubmissionCommentRepository);
@@ -432,7 +471,7 @@ class DefaultPracticeServiceTest {
     private PracticeSubmission activeSubmission() {
         return PracticeSubmission.load(
                 10L,
-                100L,
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
                 200L,
                 1L,
                 Instant.parse("2026-05-13T09:00:00Z"),
@@ -443,7 +482,7 @@ class DefaultPracticeServiceTest {
     private PracticeSubmission checkedSubmission() {
         return PracticeSubmission.load(
                 10L,
-                100L,
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
                 200L,
                 1L,
                 Instant.parse("2026-05-13T09:00:00Z"),

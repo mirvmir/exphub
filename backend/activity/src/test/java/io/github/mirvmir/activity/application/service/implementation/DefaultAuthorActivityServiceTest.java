@@ -56,7 +56,6 @@ class DefaultAuthorActivityServiceTest {
     private ActivityResponseMapper activityResponseMapper;
     private ActivitySlotResponseMapper activitySlotResponseMapper;
     private ActivityEventMapper activityEventMapper;
-    private ActivityTimeResponseMapper activityTimeResponseMapper;
     private ActivityEventPublisher activityEventPublisher;
 
     private DefaultAuthorActivityService service;
@@ -73,7 +72,6 @@ class DefaultAuthorActivityServiceTest {
         activityResponseMapper = mock(ActivityResponseMapper.class);
         activitySlotResponseMapper = mock(ActivitySlotResponseMapper.class);
         activityEventMapper = mock(ActivityEventMapper.class);
-        activityTimeResponseMapper = mock(ActivityTimeResponseMapper.class);
         activityEventPublisher = mock(ActivityEventPublisher.class);
 
         service = new DefaultAuthorActivityService(
@@ -85,7 +83,6 @@ class DefaultAuthorActivityServiceTest {
                 activityResponseMapper,
                 activitySlotResponseMapper,
                 activityEventMapper,
-                activityTimeResponseMapper,
                 activityEventPublisher,
                 clock
         );
@@ -102,11 +99,10 @@ class DefaultAuthorActivityServiceTest {
         when(profileApi.getProfileName(activity.getAuthorId())).thenReturn(author);
         when(activitySlotRepository.existsPlannedByActivityId(activity.getId())).thenReturn(true);
         when(activityResponseMapper.toAuthorActivityDescriptionResponse(
-                eq(activity), eq(author), eq(Set.of()), eq(Set.of()), eq(Set.of()),
-                eq(false), eq(false), eq(false)
+                eq(activity), eq(author), eq(false), eq(false), eq(false)
         )).thenReturn(expected);
 
-        AuthorActivityDescriptionResponse result = service.getDescriptionForAuthor(activity.getId());
+        AuthorActivityDescriptionResponse result = service.getDescription(activity.getId());
 
         assertSame(expected, result);
     }
@@ -119,7 +115,7 @@ class DefaultAuthorActivityServiceTest {
         when(identityApi.getCurrentUserId()).thenReturn(99L);
 
         ForbiddenException exception = assertThrows(ForbiddenException.class,
-                () -> service.getDescriptionForAuthor(activity.getId()));
+                () -> service.getDescription(activity.getId()));
         verifyNoInteractions(profileApi, enrollmentApi);
     }
 
@@ -133,10 +129,8 @@ class DefaultAuthorActivityServiceTest {
                 new BigDecimal("1500"),
                 Currency.getInstance("RUB"),
                 60,
-                7L,
                 ActivityType.GROUP,
-                null,
-                Set.of(11L, 12L)
+                null
         );
 
         when(identityApi.getCurrentUserId()).thenReturn(2L);

@@ -67,13 +67,16 @@ public class ActivityEntity {
     @Column(name = "subject_id")
     private Long subjectId;
 
-    @OneToMany(fetch = FetchType.LAZY)
-    @JoinColumn(name = "activity_id")
-    private Set<ActivityTimeEntity> activityTimeEntities;
+    @OneToMany(
+            mappedBy = "activityEntity",
+            fetch = FetchType.LAZY
+    )
+    private Set<ActivityTimeEntity> activityTimeEntities = new HashSet<>();
 
     @OneToMany(
             mappedBy = "activityEntity",
             cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY,
             orphanRemoval = true
     )
     private Set<ActivityTopicEntity> topicEntities = new HashSet<>();

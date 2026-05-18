@@ -15,21 +15,21 @@ public class PracticeSubmissionAnswer {
     @NonNull
     private Long practiceSubmissionId;
     @NonNull
-    private String html;
+    private String text;
     private Long fileId;
     @NonNull
     private Instant createdAt;
 
     public static PracticeSubmissionAnswer createByStudent(
             Long practiceSubmissionId,
-            String html,
+            String text,
             Long fileId,
             Instant now
     ) {
         return new PracticeSubmissionAnswer(
                 null,
                 practiceSubmissionId,
-                html,
+                text,
                 fileId,
                 now
         );
@@ -38,14 +38,14 @@ public class PracticeSubmissionAnswer {
     public static PracticeSubmissionAnswer load(
             Long id,
             Long practiceSubmissionId,
-            String html,
+            String text,
             Long fileId,
             Instant createdAt
     ) {
         return new PracticeSubmissionAnswer(
                 id,
                 practiceSubmissionId,
-                html,
+                text,
                 fileId,
                 createdAt
         );

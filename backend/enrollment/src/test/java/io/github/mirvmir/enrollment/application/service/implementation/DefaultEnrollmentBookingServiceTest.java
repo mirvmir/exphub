@@ -250,7 +250,7 @@ class DefaultEnrollmentBookingServiceTest {
                 true
         );
 
-        ActivityEnrollment enrollment = ActivityEnrollment.create(now, 200L, 1L);
+        ActivityEnrollment enrollment = ActivityEnrollment.create(now, 2L, 200L, 1L);
         enrollment.assignId(10L);
 
         Order savedOrder = Order.load(
@@ -271,7 +271,7 @@ class DefaultEnrollmentBookingServiceTest {
         when(activityApi.getSlotPurchaseInfo(200L)).thenReturn(slot);
         when(activityEnrollmentRepository.existsActiveByUserIdAndActivitySlotId(1L, 200L, now))
                 .thenReturn(false);
-        when(activityEnrollmentRepository.tryEnroll(200L, 1L, now))
+        when(activityEnrollmentRepository.tryEnroll(2L, 200L, 1L, now))
                 .thenReturn(enrollment);
         when(orderRepository.saveOrUpdate(any(Order.class))).thenReturn(savedOrder);
         when(paymentApi.createPayment(any()))
@@ -283,7 +283,7 @@ class DefaultEnrollmentBookingServiceTest {
         assertEquals(200L, result.targetId());
         assertEquals(30L, result.paymentId());
 
-        verify(activityEnrollmentRepository).tryEnroll(200L, 1L, now);
+        verify(activityEnrollmentRepository).tryEnroll(2L, 200L, 1L, now);
         verify(paymentApi).createPayment(any());
     }
 
@@ -304,7 +304,7 @@ class DefaultEnrollmentBookingServiceTest {
 
         when(identityApi.getCurrentUserId()).thenReturn(1L);
         when(activityApi.getSlotPurchaseInfo(200L)).thenReturn(slot);
-        when(activityEnrollmentRepository.tryEnroll(200L, 1L, now))
+        when(activityEnrollmentRepository.tryEnroll(2L, 200L, 1L, now))
                 .thenReturn(null);
 
         assertThrows(BusinessException.class,
@@ -334,7 +334,7 @@ class DefaultEnrollmentBookingServiceTest {
                         Instant.parse("2026-05-15T11:30:00Z")
                         );
 
-        ActivityEnrollment enrollment = ActivityEnrollment.create(now, 500L, 1L);
+        ActivityEnrollment enrollment = ActivityEnrollment.create(now, 2L, 500L, 1L);
         enrollment.assignId(10L);
 
         Order savedOrder = Order.load(

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
+import java.util.UUID;
 
 @AllArgsConstructor
 @Service
@@ -58,6 +59,11 @@ public class DefaultCourseApi implements CourseApi {
     }
 
     @Override
+    public Long getCourseIdByStableLessonId(UUID stableLessonId) {
+        return courseRepository.findByStableLessonId(stableLessonId).getId();
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public boolean canTeacherAccessFile(Long userId,
                                         Long fileId) {
@@ -72,8 +78,8 @@ public class DefaultCourseApi implements CourseApi {
 
     @Override
     @Transactional(readOnly = true)
-    public boolean isPractice(Long courseLessonId) {
-        return courseRepository.isPractice(courseLessonId);
+    public boolean isPractice(UUID stableLessonId) {
+        return courseRepository.isPractice(stableLessonId);
     }
 
     @Override

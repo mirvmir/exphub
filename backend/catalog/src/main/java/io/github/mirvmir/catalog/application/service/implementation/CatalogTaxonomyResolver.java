@@ -22,7 +22,6 @@ public class CatalogTaxonomyResolver {
     public CatalogTaxonomyData resolve(Collection<Long> topicIds) {
         if (topicIds == null || topicIds.isEmpty()) {
             log.debug("Taxonomy resolving skipped: topicIds is empty");
-
             return new CatalogTaxonomyData(
                     Set.of(),
                     Set.of(),
@@ -45,12 +44,10 @@ public class CatalogTaxonomyResolver {
                 .map(TopicTaxonomyInfoResponse::subjectId)
                 .collect(Collectors.toSet());
 
-        log.debug(
-                "Taxonomy resolved: topicIds={}, sectionIds={}, subjectIds={}",
+        log.info("Taxonomy resolved: topicIds={}, sectionIds={}, subjectIds={}",
                 normalizedTopicIds,
                 sectionIds,
-                subjectIds
-        );
+                subjectIds);
 
         return new CatalogTaxonomyData(
                 normalizedTopicIds,

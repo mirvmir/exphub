@@ -7,7 +7,6 @@ import io.github.mirvmir.course.api.CourseApi;
 import io.github.mirvmir.course.api.dto.CoursePurchaseInfoResponse;
 import io.github.mirvmir.course.api.dto.CourseTeacherResponse;
 import io.github.mirvmir.enrollment.api.EnrollmentApi;
-import io.github.mirvmir.enrollment.api.dto.OrderPaymentInfoResponse;
 import io.github.mirvmir.enrollment.api.dto.StudentCourseEnrollmentResponse;
 import io.github.mirvmir.enrollment.application.properties.BookingProperties;
 import io.github.mirvmir.enrollment.application.service.port.repository.ActivityEnrollmentRepository;
@@ -25,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +49,7 @@ public class DefaultEnrollmentApi implements EnrollmentApi {
     @Transactional(readOnly = true)
     public boolean isStudentOfActivity(Long userId,
                                        Long activityId) {
-        log.info("Start checking paid activity access: userId={}, activityId={}",
+        log.debug("Checking paid activity access required: userId={}, activityId={}",
                 userId,
                 activityId);
         return activityEnrollmentRepository.existsPayedByUserIdAndActivityId(
@@ -62,7 +62,7 @@ public class DefaultEnrollmentApi implements EnrollmentApi {
     @Transactional(readOnly = true)
     public boolean isStudentOfCourse(Long userId,
                                      Long courseId) {
-        log.info("Start checking paid course access: userId={}, courseId={}",
+        log.debug("Checking paid course access required: userId={}, courseId={}",
                 userId,
                 courseId);
         return courseEnrollmentRepository.existsPayedByUserIdAndCourseId(
@@ -73,30 +73,9 @@ public class DefaultEnrollmentApi implements EnrollmentApi {
 
     @Override
     @Transactional(readOnly = true)
-    public boolean isStudentOfCourseEnrollment(Long userId,
-                                               Long courseEnrollmentId) {
-        log.info("Start checking course enrollment ownership: userId={}, courseEnrollmentId={}",
-                userId,
-                courseEnrollmentId);
-
-        CourseEnrollment enrollment =
-                courseEnrollmentRepository.findById(courseEnrollmentId);
-
-        if (enrollment == null) {
-            log.error("Course enrollment ownership check failed because enrollment was not found: userId={}, courseEnrollmentId={}",
-                    userId,
-                    courseEnrollmentId);
-            return false;
-        }
-
-        return enrollment.getUserId().equals(userId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public boolean isTeacherOfCourseEnrollment(Long teacherId,
                                                Long courseEnrollmentId) {
-        log.info("Start checking teacher access to course enrollment: teacherId={}, courseEnrollmentId={}",
+        log.debug("Checking teacher access to course enrollment required: teacherId={}, courseEnrollmentId={}",
                 teacherId,
                 courseEnrollmentId);
 
@@ -127,7 +106,7 @@ public class DefaultEnrollmentApi implements EnrollmentApi {
     @Transactional(readOnly = true)
     public Map<Long, Integer> countBookedByActivitySlotIds(Set<Long> activitySlotIds,
                                                            Instant now) {
-        log.info("Start counting active bookings for activity slots: slotCount={}, now={}",
+        log.debug("Counting active bookings for activity slots required: slotCount={}, now={}",
                 activitySlotIds == null ? 0 : activitySlotIds.size(),
                 now);
         return activityEnrollmentRepository.countBookedByActivitySlotIds(
@@ -140,7 +119,7 @@ public class DefaultEnrollmentApi implements EnrollmentApi {
     @Transactional(readOnly = true)
     public StudentCourseEnrollmentResponse getStudentCourseEnrollment(Long studentId,
                                                                       Long courseId) {
-        log.info("Start loading paid course enrollment for student: studentId={}, courseId={}",
+        log.debug("Loading paid course enrollment for student required: studentId={}, courseId={}",
                 studentId,
                 courseId);
 
@@ -174,7 +153,7 @@ public class DefaultEnrollmentApi implements EnrollmentApi {
     public void cancelByActivitySlotIdAndStudentId(Long activitySlotId,
                                                    Long studentId,
                                                    String reason) {
-        log.info("Start student activity cancellation: activitySlotId={}, studentId={}, reason={}",
+        log.debug("Student activity cancellation required: activitySlotId={}, studentId={}, reason={}",
                 activitySlotId,
                 studentId,
                 reason);
@@ -223,7 +202,7 @@ public class DefaultEnrollmentApi implements EnrollmentApi {
     @Transactional
     public void cancelAllByActivitySlotId(Long activitySlotId,
                                           String reason) {
-        log.info("Start cancelling all active activity enrollments by slot: activitySlotId={}, reason={}",
+        log.debug("Cancelling all active activity enrollments by slot required: activitySlotId={}, reason={}",
                 activitySlotId,
                 reason);
 
@@ -261,7 +240,7 @@ public class DefaultEnrollmentApi implements EnrollmentApi {
     @Transactional
     public void refundPayedCourseEnrollments(Long courseId,
                                              String reason) {
-        log.info("Start refunding paid course enrollments: courseId={}, reason={}",
+        log.debug("Refunding paid course enrollments required: courseId={}, reason={}",
                 courseId,
                 reason);
 
@@ -299,7 +278,7 @@ public class DefaultEnrollmentApi implements EnrollmentApi {
     @Transactional
     public void refundPayedActivityEnrollments(Long activitySlotId,
                                                String reason) {
-        log.info("Start refunding paid activity enrollments: activitySlotId={}, reason={}",
+        log.debug("Refunding paid activity enrollments required: activitySlotId={}, reason={}",
                 activitySlotId,
                 reason);
 
@@ -335,21 +314,9 @@ public class DefaultEnrollmentApi implements EnrollmentApi {
 
     @Override
     @Transactional(readOnly = true)
-    public OrderPaymentInfoResponse getPaymentInfo(Long orderId,
-                                                   Instant now) {
-        log.info("Start loading payment info: orderId={}, now={}",
-                orderId,
-                now);
-        Order order = getExistingOrder(orderId);
-
-        return toPaymentInfo(order, now);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public boolean isOrderExpired(Long orderId,
                                   Instant now) {
-        log.info("Start checking order expiration: orderId={}, now={}",
+        log.debug("Checking order expiration required: orderId={}, now={}",
                 orderId,
                 now);
         Order order = getExistingOrder(orderId);
@@ -361,7 +328,7 @@ public class DefaultEnrollmentApi implements EnrollmentApi {
     @Transactional
     public void markPaymentProcessing(Long orderId,
                                       Instant now) {
-        log.info("Start marking order as payment processing: orderId={}, now={}",
+        log.debug("Marking order as payment processing required: orderId={}, now={}",
                 orderId,
                 now);
         Order order = getExistingOrderForUpdate(orderId);
@@ -384,7 +351,7 @@ public class DefaultEnrollmentApi implements EnrollmentApi {
     @Override
     @Transactional(readOnly = true)
     public boolean isOrderCancelled(Long orderId) {
-        log.info("Start checking order cancellation: orderId={}",
+        log.debug("Checking order cancellation required: orderId={}",
                 orderId);
         Order order = getExistingOrder(orderId);
         return order.isCancelled();
@@ -394,7 +361,7 @@ public class DefaultEnrollmentApi implements EnrollmentApi {
     @Transactional
     public void expireOrder(Long orderId,
                             Instant now) {
-        log.info("Start expiring order from API: orderId={}, now={}",
+        log.debug("Expiring order from API required: orderId={}, now={}",
                 orderId,
                 now);
         Order order = getExistingOrderForUpdate(orderId);
@@ -433,7 +400,7 @@ public class DefaultEnrollmentApi implements EnrollmentApi {
                 enrollment.expire(now, bookingProperties.getBookingExpiresMinutes());
                 activityEnrollmentRepository.saveOrUpdate(enrollment);
             } else {
-                log.error("Activity enrollment was not found while expiring order: orderId={}, enrollmentId={}",
+                log.debug("Activity enrollment was not found while expiring order: orderId={}, enrollmentId={}",
                         orderId,
                         order.getEnrollmentId());
             }
@@ -445,7 +412,7 @@ public class DefaultEnrollmentApi implements EnrollmentApi {
     @Override
     @Transactional(readOnly = true)
     public Long getTeacherIdByOrderId(Long orderId) {
-        log.info("Start resolving teacher by order: orderId={}",
+        log.debug("Resolving teacher by order required: orderId={}",
                 orderId);
         Order order = orderRepository.findById(orderId);
 
@@ -524,7 +491,7 @@ public class DefaultEnrollmentApi implements EnrollmentApi {
     @Transactional(readOnly = true)
     public boolean canUserAccessFile(Long userId,
                                      Long fileId) {
-        log.info("Start checking file access by paid course enrollment: userId={}, fileId={}",
+        log.debug("Checking file access by paid course enrollment required: userId={}, fileId={}",
                 userId,
                 fileId);
         if (userId == null || fileId == null) {
@@ -552,7 +519,7 @@ public class DefaultEnrollmentApi implements EnrollmentApi {
     @Override
     @Transactional(readOnly = true)
     public boolean canUserAccessVideo(Long userId, Long videoId) {
-        log.info("Start checking video access by paid course enrollment: userId={}, videoId={}",
+        log.debug("Checking video access by paid course enrollment required: userId={}, videoId={}",
                 userId,
                 videoId);
         if (userId == null || videoId == null) {
@@ -583,19 +550,25 @@ public class DefaultEnrollmentApi implements EnrollmentApi {
 
         order.cancel();
 
+        if (order.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            log.debug("Order cancelled without refund because amount is zero: orderId={}",
+                    order.getId());
+            return;
+        }
+
         if (wasPayed) {
             requestRefund(order, reason);
             return;
         }
 
         if (wasPaymentProcessing) {
-            log.info("Payment-processing order was cancelled without immediate refund; refund will be requested if payment succeeds later: orderId={}",
+            log.debug("Payment-processing order was cancelled without immediate refund; refund will be requested if payment succeeds later: orderId={}",
                     order.getId());
         }
     }
 
     private void requestRefund(Order order, String reason) {
-        log.info("Requesting refund during cancellation: orderId={}, amount={}, currency={}, reason={}",
+        log.debug("Requesting refund during cancellation: orderId={}, amount={}, currency={}, reason={}",
                 order.getId(),
                 order.getAmount(),
                 order.getCurrency(),
@@ -639,7 +612,7 @@ public class DefaultEnrollmentApi implements EnrollmentApi {
         Order order = orderRepository.findByIdForUpdate(orderId);
 
         if (order == null) {
-            log.error("Order lookup for update failed: orderId={}",
+            log.error("Order lookup for update failed because order was not found: orderId={}",
                     orderId);
             throw new NotFoundException(
                     EnrollmentErrorCode.ORDER_NOT_FOUND,
@@ -648,24 +621,5 @@ public class DefaultEnrollmentApi implements EnrollmentApi {
         }
 
         return order;
-    }
-
-    private OrderPaymentInfoResponse toPaymentInfo(Order order,
-                                                   Instant now) {
-        return new OrderPaymentInfoResponse(
-                order.getId(),
-                order.getUserId(),
-                order.getEnrollmentId(),
-                order.getTargetType().name(),
-                order.getTargetId(),
-                order.getTargetVersionId(),
-                order.getAmount(),
-                order.getCurrency(),
-                order.getExpiresAt(),
-                order.isExpired(now),
-                order.isPaymentProcessing(),
-                order.isPayed(),
-                order.isFinalStatus()
-        );
     }
 }

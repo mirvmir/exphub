@@ -8,19 +8,24 @@ import io.github.mirvmir.course.api.CourseApi;
 import io.github.mirvmir.enrollment.api.EnrollmentApi;
 import io.github.mirvmir.enrollment.api.dto.StudentCourseEnrollmentResponse;
 import io.github.mirvmir.identity.api.IdentityApi;
+import io.github.mirvmir.practice.application.service.interfaces.PracticeService;
 import io.github.mirvmir.practice.application.service.mapper.PracticeSubmissionResponseMapper;
 import io.github.mirvmir.practice.application.service.port.repository.PracticeSubmissionAnswerRepository;
 import io.github.mirvmir.practice.application.service.port.repository.PracticeSubmissionCommentRepository;
 import io.github.mirvmir.practice.application.service.port.repository.PracticeSubmissionRepository;
-import io.github.mirvmir.practice.application.service.interfaces.PracticeService;
 import io.github.mirvmir.practice.domain.PracticeSubmission;
 import io.github.mirvmir.practice.domain.PracticeSubmissionAnswer;
 import io.github.mirvmir.practice.domain.PracticeSubmissionComment;
 import io.github.mirvmir.practice.exception.PracticeErrorCode;
 import io.github.mirvmir.practice.web.request.CreatePracticeAnswerRequest;
 import io.github.mirvmir.practice.web.request.CreatePracticeCommentRequest;
-import io.github.mirvmir.practice.web.response.*;
+import io.github.mirvmir.practice.web.response.PracticeAnswerDetailsResponse;
+import io.github.mirvmir.practice.web.response.PracticeAnswerResponse;
+import io.github.mirvmir.practice.web.response.PracticeCommentResponse;
+import io.github.mirvmir.practice.web.response.PracticeSubmissionDetailsResponse;
+import io.github.mirvmir.practice.web.response.PracticeSubmissionResponse;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,9 +33,10 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
-
+@Slf4j
 @AllArgsConstructor
 @Service
 public class DefaultPracticeService implements PracticeService {
@@ -49,26 +55,44 @@ public class DefaultPracticeService implements PracticeService {
 
     @Override
     @Transactional
-    public PracticeAnswerResponse addAnswer(
-            Long courseLessonId,
-            CreatePracticeAnswerRequest request
-    ) {
+    public PracticeAnswerResponse addAnswer(UUID stableLessonId,
+                                            CreatePracticeAnswerRequest request) {
+        log.debug("Practice submission answer creation requested: stableLessonId={}",
+                stableLessonId);
+
         Long studentId = identityApi.getCurrentUserId();
         Instant now = Instant.now(clock);
 
         if (studentId == null) {
-            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+            log.error("Unauthorized practice submission answer creation request");
+            throw new UnauthorizedException(
+                    "UNAUTHORIZED",
+                    "User not authorized"
+            );
         }
 
-        boolean isPractice = courseApi.isPractice(courseLessonId);
+        boolean isPractice = courseApi.isPractice(stableLessonId);
 
         if (!isPractice) {
+            log.warn("Practice lesson validation failed, lesson is not practice: stableLessonId={}, studentId={}",
+                    stableLessonId, studentId);
             throw new BusinessException(PracticeErrorCode.IS_NOT_PRACTICE);
         }
 
+        Long courseId = courseApi.getCourseIdByStableLessonId(stableLessonId);
+
+        if (courseId == null) {
+            log.error("Course loading by stable lesson id failed, course not found: stableLessonId={}, studentId={}",
+                    stableLessonId, studentId);
+            throw new NotFoundException(
+                    PracticeErrorCode.COURSE_ID,
+                    "Course by stableLessonId=" + stableLessonId + " not found"
+            );
+        }
+
         PracticeSubmission submission =
-                practiceSubmissionRepository.findByLessonIdAndStudentId(
-                        courseLessonId,
+                practiceSubmissionRepository.findByStableLessonIdAndStudentId(
+                        stableLessonId,
                         studentId
                 );
 
@@ -76,23 +100,31 @@ public class DefaultPracticeService implements PracticeService {
             StudentCourseEnrollmentResponse enrollment =
                     enrollmentApi.getStudentCourseEnrollment(
                             studentId,
-                            courseLessonId
+                            courseId
                     );
 
             if (enrollment == null) {
+                log.warn("Practice submission answer creation forbidden, enrollment not found: stableLessonId={}, courseId={}, studentId={}",
+                        stableLessonId, courseId, studentId);
                 throw new ForbiddenException(
                         PracticeErrorCode.PRACTICE_SUBMISSION_ANSWER_FORBIDDEN
                 );
             }
 
             submission = PracticeSubmission.create(
-                    courseLessonId,
+                    stableLessonId,
                     enrollment.enrollmentId(),
                     studentId,
                     now
             );
 
-            practiceSubmissionRepository.saveOrUpdate(submission);
+            PracticeSubmission savedSubmission =
+                    practiceSubmissionRepository.saveOrUpdate(submission);
+
+            submission = savedSubmission;
+
+            log.info("Practice submission successfully created: stableLessonId={}, courseId={}, courseEnrollmentId={}, studentId={}",
+                    stableLessonId, courseId, enrollment.enrollmentId(), studentId);
         }
 
         PracticeSubmissionAnswer answer =
@@ -105,10 +137,13 @@ public class DefaultPracticeService implements PracticeService {
         PracticeSubmissionAnswer savedAnswer =
                 practiceSubmissionAnswerRepository.saveOrUpdate(answer);
 
+        log.info("Practice submission answer successfully created: stableLessonId={}, courseId={}, practiceSubmissionId={}, answerId={}, studentId={}",
+                stableLessonId, courseId, savedAnswer.getPracticeSubmissionId(), savedAnswer.getId(), studentId);
+
         return new PracticeAnswerResponse(
                 savedAnswer.getId(),
                 savedAnswer.getPracticeSubmissionId(),
-                savedAnswer.getHtml(),
+                savedAnswer.getText(),
                 savedAnswer.getFileId(),
                 savedAnswer.getCreatedAt()
         );
@@ -118,12 +153,26 @@ public class DefaultPracticeService implements PracticeService {
     @Transactional
     public PracticeCommentResponse addComment(Long answerId,
                                               CreatePracticeCommentRequest request) {
+        log.debug("Practice submission comment creation requested: answerId={}",
+                answerId);
+
+        Long teacherId = identityApi.getCurrentUserId();
         Instant now = Instant.now(clock);
+
+        if (teacherId == null) {
+            log.error("Unauthorized practice submission comment creation request");
+            throw new UnauthorizedException(
+                    "UNAUTHORIZED",
+                    "User not authorized"
+            );
+        }
 
         PracticeSubmissionAnswer answer =
                 practiceSubmissionAnswerRepository.findById(answerId);
 
         if (answer == null) {
+            log.error("Practice submission answer loading failed, answer not found: answerId={}, teacherId={}",
+                    answerId, teacherId);
             throw new NotFoundException(
                     PracticeErrorCode.PRACTICE_SUBMISSION_ANSWER_NOT_FOUND,
                     "Practice answer with id=" + answerId + " not found"
@@ -136,6 +185,8 @@ public class DefaultPracticeService implements PracticeService {
                 );
 
         if (submission == null) {
+            log.error("Practice submission loading failed, submission not found: practiceSubmissionId={}, answerId={}, teacherId={}",
+                    answer.getPracticeSubmissionId(), answerId, teacherId);
             throw new NotFoundException(
                     PracticeErrorCode.PRACTICE_SUBMISSION_NOT_FOUND,
                     "Practice submission with id="
@@ -144,19 +195,19 @@ public class DefaultPracticeService implements PracticeService {
             );
         }
 
-        Long currentUserId = identityApi.getCurrentUserId();
-
-        if (currentUserId == null) {
-            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
-        }
-
         boolean teacherCanComment =
                 enrollmentApi.isTeacherOfCourseEnrollment(
-                        currentUserId,
+                        teacherId,
                         submission.getCourseEnrollmentId()
                 );
 
         if (!teacherCanComment) {
+            log.warn("Practice submission comment creation forbidden: stableLessonId={}, courseEnrollmentId={}, practiceSubmissionId={}, answerId={}, teacherId={}",
+                    submission.getStableLessonId(),
+                    submission.getCourseEnrollmentId(),
+                    submission.getId(),
+                    answerId,
+                    teacherId);
             throw new ForbiddenException(
                     PracticeErrorCode.PRACTICE_SUBMISSION_COMMENT_FORBIDDEN
             );
@@ -173,10 +224,18 @@ public class DefaultPracticeService implements PracticeService {
         PracticeSubmissionComment savedComment =
                 practiceSubmissionCommentRepository.saveOrUpdate(comment);
 
+        log.info("Practice submission comment successfully created: stableLessonId={}, courseEnrollmentId={}, practiceSubmissionId={}, answerId={}, commentId={}, teacherId={}",
+                submission.getStableLessonId(),
+                submission.getCourseEnrollmentId(),
+                submission.getId(),
+                answerId,
+                savedComment.getId(),
+                teacherId);
+
         return new PracticeCommentResponse(
                 savedComment.getId(),
                 savedComment.getPracticeSubmissionAnswerId(),
-                savedComment.getHtml(),
+                savedComment.getText(),
                 savedComment.getFileId(),
                 savedComment.getCreatedAt()
         );
@@ -185,17 +244,26 @@ public class DefaultPracticeService implements PracticeService {
     @Override
     @Transactional
     public PracticeSubmissionResponse checkSubmissionByTeacher(Long practiceSubmissionId) {
+        log.debug("Practice submission check requested: practiceSubmissionId={}",
+                practiceSubmissionId);
+
         Long teacherId = identityApi.getCurrentUserId();
         Instant now = Instant.now(clock);
 
         if (teacherId == null) {
-            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+            log.error("Unauthorized practice submission check request");
+            throw new UnauthorizedException(
+                    "UNAUTHORIZED",
+                    "User not authorized"
+            );
         }
 
         PracticeSubmission submission =
                 practiceSubmissionRepository.findById(practiceSubmissionId);
 
         if (submission == null) {
+            log.error("Practice submission loading failed, submission not found: practiceSubmissionId={}, teacherId={}",
+                    practiceSubmissionId, teacherId);
             throw new NotFoundException(
                     PracticeErrorCode.PRACTICE_SUBMISSION_NOT_FOUND,
                     "Practice submission with id=" + practiceSubmissionId + " not found"
@@ -209,6 +277,11 @@ public class DefaultPracticeService implements PracticeService {
                 );
 
         if (!teacherCanCheck) {
+            log.warn("Practice submission check forbidden: stableLessonId={}, courseEnrollmentId={}, practiceSubmissionId={}, teacherId={}",
+                    submission.getStableLessonId(),
+                    submission.getCourseEnrollmentId(),
+                    practiceSubmissionId,
+                    teacherId);
             throw new ForbiddenException(
                     PracticeErrorCode.PRACTICE_SUBMISSION_CHECK_FORBIDDEN
             );
@@ -219,9 +292,16 @@ public class DefaultPracticeService implements PracticeService {
         PracticeSubmission savedSubmission =
                 practiceSubmissionRepository.saveOrUpdate(submission);
 
+        log.info("Practice submission successfully checked: stableLessonId={}, courseEnrollmentId={}, practiceSubmissionId={}, studentId={}, teacherId={}",
+                savedSubmission.getStableLessonId(),
+                savedSubmission.getCourseEnrollmentId(),
+                savedSubmission.getId(),
+                savedSubmission.getStudentId(),
+                teacherId);
+
         return new PracticeSubmissionResponse(
                 savedSubmission.getId(),
-                savedSubmission.getLessonId(),
+                savedSubmission.getStableLessonId(),
                 savedSubmission.getCourseEnrollmentId(),
                 savedSubmission.getStudentId(),
                 savedSubmission.getCreatedAt(),
@@ -231,40 +311,66 @@ public class DefaultPracticeService implements PracticeService {
 
     @Override
     @Transactional(readOnly = true)
-    public PracticeSubmissionDetailsResponse getMySubmission(Long courseLessonId) {
+    public PracticeSubmissionDetailsResponse getMySubmission(UUID stableLessonId) {
+        log.debug("Getting student practice submission: stableLessonId={}",
+                stableLessonId);
+
         Long studentId = identityApi.getCurrentUserId();
 
         if (studentId == null) {
-            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+            log.error("Unauthorized student practice submission request");
+            throw new UnauthorizedException(
+                    "UNAUTHORIZED",
+                    "User not authorized"
+            );
+        }
+
+        boolean isPractice = courseApi.isPractice(stableLessonId);
+
+        if (!isPractice) {
+            log.warn("Practice lesson validation failed, lesson is not practice: stableLessonId={}, studentId={}",
+                    stableLessonId,
+                    studentId);
+            throw new BusinessException(PracticeErrorCode.IS_NOT_PRACTICE);
+        }
+
+        Long courseId = courseApi.getCourseIdByStableLessonId(stableLessonId);
+
+        if (courseId == null) {
+            log.error("Course loading by stable lesson id failed, course not found: stableLessonId={}, studentId={}",
+                    stableLessonId, studentId);
+            throw new NotFoundException(
+                    PracticeErrorCode.COURSE_ID,
+                    "Course by stableLessonId=" + stableLessonId + " not found"
+            );
         }
 
         StudentCourseEnrollmentResponse enrollment =
                 enrollmentApi.getStudentCourseEnrollment(
                         studentId,
-                        courseLessonId
+                        courseId
                 );
 
         if (enrollment == null) {
+            log.warn("Practice submission getting forbidden, enrollment not found: stableLessonId={}, courseId={}, studentId={}",
+                    stableLessonId, courseId, studentId);
             throw new ForbiddenException(
                     PracticeErrorCode.PRACTICE_SUBMISSION_ANSWER_FORBIDDEN
             );
         }
 
         PracticeSubmission submission =
-                practiceSubmissionRepository.findByLessonIdAndStudentId(
-                        courseLessonId,
+                practiceSubmissionRepository.findByStableLessonIdAndStudentId(
+                        stableLessonId,
                         studentId
                 );
 
         if (submission == null) {
-            return new PracticeSubmissionDetailsResponse(
-                    null,
-                    courseLessonId,
-                    enrollment.enrollmentId(),
-                    studentId,
-                    null,
-                    null,
-                    List.of()
+            log.error("Student practice submission not found: stableLessonId={}, courseId={}, courseEnrollmentId={}, studentId={}",
+                    stableLessonId, courseId, enrollment.enrollmentId(), studentId);
+            throw new NotFoundException(
+                    PracticeErrorCode.PRACTICE_SUBMISSION_NOT_FOUND,
+                    "Practice submission by stableLessonId=" + stableLessonId + " not found"
             );
         }
 
@@ -277,12 +383,7 @@ public class DefaultPracticeService implements PracticeService {
                 .toList();
 
         Map<Long, List<PracticeSubmissionComment>> commentsByAnswerId =
-                practiceSubmissionCommentRepository
-                        .findByPracticeSubmissionAnswerIds(answerIds)
-                        .stream()
-                        .collect(Collectors.groupingBy(
-                                PracticeSubmissionComment::getPracticeSubmissionAnswerId
-                        ));
+                getCommentsByAnswerId(answerIds);
 
         List<PracticeAnswerDetailsResponse> answerResponses =
                 answers.stream()
@@ -295,6 +396,13 @@ public class DefaultPracticeService implements PracticeService {
                         ))
                         .toList();
 
+        log.info("Student practice submission successfully received: stableLessonId={}, courseId={}, practiceSubmissionId={}, answersCount={}, studentId={}",
+                stableLessonId,
+                courseId,
+                submission.getId(),
+                answers.size(),
+                studentId);
+
         return practiceSubmissionResponseMapper.toSubmissionResponse(
                 submission,
                 answerResponses
@@ -303,25 +411,45 @@ public class DefaultPracticeService implements PracticeService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PracticeSubmissionDetailsResponse> getLessonSubmissionsForTeacher(
-            Long courseLessonId
-    ) {
+    public List<PracticeSubmissionDetailsResponse> getLessonSubmissionsForTeacher(UUID stableLessonId) {
+        log.debug("Getting lesson practice submissions for teacher: stableLessonId={}",
+                stableLessonId);
+
         Long teacherId = identityApi.getCurrentUserId();
 
         if (teacherId == null) {
-            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+            log.error("Unauthorized teacher practice submissions request");
+            throw new UnauthorizedException(
+                    "UNAUTHORIZED",
+                    "User not authorized"
+            );
         }
 
-        boolean isPractice = courseApi.isPractice(courseLessonId);
+        boolean isPractice = courseApi.isPractice(stableLessonId);
 
         if (!isPractice) {
+            log.warn("Practice lesson validation failed, lesson is not practice: stableLessonId={}, teacherId={}",
+                    stableLessonId, teacherId);
             throw new BusinessException(PracticeErrorCode.IS_NOT_PRACTICE);
         }
 
+        Long courseId = courseApi.getCourseIdByStableLessonId(stableLessonId);
+
+        if (courseId == null) {
+            log.error("Course loading by stable lesson id failed, course not found: stableLessonId={}, teacherId={}",
+                    stableLessonId, teacherId);
+            throw new NotFoundException(
+                    PracticeErrorCode.COURSE_ID,
+                    "Course by stableLessonId=" + stableLessonId + " not found"
+            );
+        }
+
         List<PracticeSubmission> submissions =
-                practiceSubmissionRepository.findByLessonId(courseLessonId);
+                practiceSubmissionRepository.findByLessonId(stableLessonId);
 
         if (submissions.isEmpty()) {
+            log.info("Lesson practice submissions successfully received: stableLessonId={}, courseId={}, submissionsCount={}, answersCount={}, teacherId={}",
+                    stableLessonId, courseId, 0, 0, teacherId);
             return List.of();
         }
 
@@ -333,6 +461,12 @@ public class DefaultPracticeService implements PracticeService {
                     );
 
             if (!teacherCanView) {
+                log.warn("Practice submission getting forbidden: stableLessonId={}, courseId={}, courseEnrollmentId={}, practiceSubmissionId={}, teacherId={}",
+                        stableLessonId,
+                        courseId,
+                        submission.getCourseEnrollmentId(),
+                        submission.getId(),
+                        teacherId);
                 throw new ForbiddenException(
                         PracticeErrorCode.PRACTICE_SUBMISSION_CHECK_FORBIDDEN
                 );
@@ -352,12 +486,7 @@ public class DefaultPracticeService implements PracticeService {
                 .toList();
 
         Map<Long, List<PracticeSubmissionComment>> commentsByAnswerId =
-                practiceSubmissionCommentRepository
-                        .findByPracticeSubmissionAnswerIds(answerIds)
-                        .stream()
-                        .collect(Collectors.groupingBy(
-                                PracticeSubmissionComment::getPracticeSubmissionAnswerId
-                        ));
+                getCommentsByAnswerId(answerIds);
 
         Map<Long, List<PracticeSubmissionAnswer>> answersBySubmissionId =
                 answers.stream()
@@ -365,10 +494,30 @@ public class DefaultPracticeService implements PracticeService {
                                 PracticeSubmissionAnswer::getPracticeSubmissionId
                         ));
 
+        log.info("Lesson practice submissions successfully received: stableLessonId={}, courseId={}, submissionsCount={}, answersCount={}, teacherId={}",
+                stableLessonId,
+                courseId,
+                submissions.size(),
+                answers.size(),
+                teacherId);
+
         return practiceSubmissionResponseMapper.toSubmissionResponses(
                 submissions,
                 answersBySubmissionId,
                 commentsByAnswerId
         );
+    }
+
+    private Map<Long, List<PracticeSubmissionComment>> getCommentsByAnswerId(List<Long> answerIds) {
+        if (answerIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return practiceSubmissionCommentRepository
+                .findByPracticeSubmissionAnswerIds(answerIds)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        PracticeSubmissionComment::getPracticeSubmissionAnswerId
+                ));
     }
 }

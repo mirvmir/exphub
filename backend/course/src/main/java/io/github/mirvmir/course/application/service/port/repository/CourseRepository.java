@@ -2,13 +2,16 @@ package io.github.mirvmir.course.application.service.port.repository;
 
 import io.github.mirvmir.course.domain.Course;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 public interface CourseRepository {
     Course saveOrUpdate(Course course);
     Course findById(Long id);
+    List<Course> findByAuthorId(Long authorId);
     Course findActiveById(Long id);
+    Course findByStableLessonId(UUID stableLessonId);
     Course findByIdWithDraftInfo(Long id);
     Course findByIdWithDraftContent(Long id);
     Course findByIdWithDraftModules(Long id);
@@ -21,7 +24,7 @@ public interface CourseRepository {
     Course findByIdWithSettings(Long id);
     boolean canTeacherAccessFile(Long userId, Long fileId);
     boolean canTeacherAccessVideo(Long userId, Long videoId);
-    boolean isPractice(Long courseLessonId);
+    boolean isPractice(UUID stableLessonId);
     Set<Long> findCourseIdsByFileId(Long fileId);
     Set<Long> findCourseIdsByVideoId(Long videoId);
 }

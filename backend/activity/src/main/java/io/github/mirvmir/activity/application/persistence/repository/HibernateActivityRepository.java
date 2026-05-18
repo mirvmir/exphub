@@ -10,6 +10,8 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @AllArgsConstructor
 @Repository
 public class HibernateActivityRepository implements ActivityRepository {
@@ -49,6 +51,27 @@ public class HibernateActivityRepository implements ActivityRepository {
                 .uniqueResult();
 
         return activityMapper.toDomain(entity);
+    }
+
+    @Override
+    public List<Activity> findByAuthorId(Long authorId) {
+        Session session = sessionFactory.getCurrentSession();
+
+        List<ActivityEntity> entities = session.createQuery("""
+                select distinct a
+                from ActivityEntity a
+                left join fetch a.topicEntities
+                where a.authorId = :authorId
+                  and a.contentStatus <> :deletedStatus
+                order by a.id desc
+                """, ActivityEntity.class)
+                .setParameter("authorId", authorId)
+                .setParameter("deletedStatus", ContentStatus.DELETED)
+                .getResultList();
+
+        return entities.stream()
+                .map(activityMapper::toDomain)
+                .toList();
     }
 
     @Override

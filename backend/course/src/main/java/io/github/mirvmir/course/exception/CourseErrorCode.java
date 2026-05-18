@@ -62,7 +62,9 @@ public enum CourseErrorCode implements ErrorCode {
     TOPIC_SUBJECT_MISMATCH("TOPIC_SUBJECT_MISMATCH",
             "One or more topics do not belong to the specified subject"),
     INVALID_LESSON_BLOCK_HTML("INVALID_LESSON_BLOCK_HTML",
-            "");
+            "Invalid lesson block html"),
+    TOPIC_NOT_FOUND("TOPIC_NOT_FOUND",
+            "One or more topics not found");
 
     private final String code;
     private final String message;

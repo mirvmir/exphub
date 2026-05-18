@@ -47,12 +47,11 @@ public class DefaultCourseProgressService implements CourseProgressService {
         Instant now = Instant.now(clock);
 
         if (studentId == null) {
-            log.info("Unauthorized complete lesson request");
-
+            log.error("Unauthorized complete lesson request");
             throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
         }
 
-        log.info("Start completing course lesson: studentId={}, courseId={}, courseLessonId={}",
+        log.debug("Start completing course lesson: studentId={}, courseId={}, courseLessonId={}",
                 studentId,
                 courseId,
                 courseLessonId);
@@ -104,7 +103,7 @@ public class DefaultCourseProgressService implements CourseProgressService {
         if (lessonInfo.isPractice()) {
             boolean practiceCompleted =
                     practiceApi.isPracticeCompletedByLessonIdAndStudentId(
-                            courseLessonId,
+                            lessonInfo.stableLessonId(),
                             studentId
                     );
 

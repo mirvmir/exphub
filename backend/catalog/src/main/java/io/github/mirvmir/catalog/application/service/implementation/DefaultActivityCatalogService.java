@@ -34,12 +34,10 @@ public class DefaultActivityCatalogService implements ActivityCatalogService {
     @Override
     @Transactional
     public void addActivityToCatalog(ActivityPublishedEvent event) {
-        log.info(
-                "Adding activity to catalog: activityId={}, authorId={}, activityType={}",
+        log.debug("Adding activity to catalog: activityId={}, authorId={}, activityType={}",
                 event.activityId(),
                 event.authorId(),
-                event.activityType()
-        );
+                event.activityType());
 
         ReviewRatingInfoResponse ratingInfo = reviewApi.getRatingInfo(
                 event.activityId(),
@@ -66,30 +64,26 @@ public class DefaultActivityCatalogService implements ActivityCatalogService {
         );
 
         activityCatalogRepository.saveOrUpdate(activityCatalog);
-
-        log.info(
-                "Activity added to catalog: activityId={}, ratingAvg={}, reviewCount={}, topicIds={}",
+        log.info("Activity added to catalog: activityId={}, ratingAvg={}, reviewCount={}, topicIds={}",
                 event.activityId(),
                 ratingInfo.ratingAvg(),
                 ratingInfo.reviewCount(),
-                taxonomyData.topicIds()
-        );
+                taxonomyData.topicIds());
     }
 
     @Override
     @Transactional
     public void removeActivityFromCatalog(Long activityId) {
-        log.info("Removing activity from catalog: activityId={}", activityId);
+        log.debug("Removing activity from catalog: activityId={}", activityId);
 
         activityCatalogRepository.deleteByActivityId(activityId);
-
         log.info("Activity removed from catalog: activityId={}", activityId);
     }
 
     @Override
     @Transactional
     public void updateTopicIds(Long activityId, Set<Long> topicIds) {
-        log.info("Updating activity catalog topics: activityId={}, topicIds={}", activityId, topicIds);
+        log.debug("Updating activity catalog topics: activityId={}, topicIds={}", activityId, topicIds);
 
         CatalogTaxonomyData taxonomyData =
                 catalogTaxonomyResolver.resolve(topicIds);
@@ -100,14 +94,11 @@ public class DefaultActivityCatalogService implements ActivityCatalogService {
                 taxonomyData.sectionIds(),
                 taxonomyData.subjectIds()
         );
-
-        log.info(
-                "Activity catalog topics updated: activityId={}, topicIds={}, sectionIds={}, subjectIds={}",
+        log.info("Activity catalog topics updated: activityId={}, topicIds={}, sectionIds={}, subjectIds={}",
                 activityId,
                 taxonomyData.topicIds(),
                 taxonomyData.sectionIds(),
-                taxonomyData.subjectIds()
-        );
+                taxonomyData.subjectIds());
     }
 
     private Format resolveFormat(String activityType) {
@@ -122,8 +113,7 @@ public class DefaultActivityCatalogService implements ActivityCatalogService {
                 .filter(s -> !s.isBlank())
                 .collect(Collectors.joining(" "));
 
-        log.debug("Resolved activity author name: authorId={}, authorName={}", authorId, authorName);
-
+        log.info("Resolved activity author name: authorId={}, authorName={}", authorId, authorName);
         return authorName;
     }
 }

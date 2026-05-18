@@ -75,7 +75,7 @@ public class DefaultActivityService implements ActivityService {
             );
 
             if (!activity.isActive() && !isStudent) {
-                log.debug("Inactive activity requested by non-student: activityId={}, userId={}",
+                log.warn("Inactive activity requested by non-student: activityId={}, userId={}",
                         id,
                         currentUserId
                 );
@@ -129,7 +129,7 @@ public class DefaultActivityService implements ActivityService {
             }
         }
 
-        log.debug("Activity description prepared: activityId={}, userId={}, isStudent={}",
+        log.info("Activity description prepared: activityId={}, userId={}, isStudent={}",
                 activity.getId(),
                 currentUserId,
                 isStudent);

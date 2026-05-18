@@ -9,7 +9,6 @@ public record UpdateActivityTopicsRequest(
         @NotNull
         @Positive
         Long subjectId,
-        @NotNull
         Set<@NotNull @Positive Long> topicIds
 ) {
 }

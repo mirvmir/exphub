@@ -249,7 +249,8 @@ class PaymentControllerTest {
     void handleBankPayoutWebhook_shouldReturn200() throws Exception {
         BankPayoutWebhookRequest request = new BankPayoutWebhookRequest(
                 "payout-ext-1",
-                "SUCCEEDED"
+                "SUCCEEDED",
+                null
         );
 
         mockMvc.perform(post("/payments/webhook/bank/payout")
@@ -268,7 +269,8 @@ class PaymentControllerTest {
     void handleBankRefundWebhook_shouldReturn200() throws Exception {
         BankRefundWebhookRequest request = new BankRefundWebhookRequest(
                 "refund-ext-1",
-                "SUCCEEDED"
+                "SUCCEEDED",
+                null
         );
 
         mockMvc.perform(post("/payments/webhook/bank/refund")

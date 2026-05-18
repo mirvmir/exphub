@@ -5,7 +5,7 @@ import java.util.Currency;
 
 public record BankRefundRequest(
         String externalPaymentId,
-        Long refundId,
+        String refundId,
         BigDecimal amount,
         Currency currency,
         String reason,

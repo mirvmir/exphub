@@ -5,12 +5,16 @@ import io.github.mirvmir.catalog.domain.ActivityCatalog;
 import io.github.mirvmir.catalog.application.service.dto.CatalogFilterDto;
 import io.github.mirvmir.catalog.application.persistence.entity.ActivityCatalogEntity;
 import io.github.mirvmir.catalog.application.persistence.mapper.ActivityCatalogMapper;
+import io.github.mirvmir.catalog.domain.Format;
 import lombok.AllArgsConstructor;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.query.NativeQuery;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @AllArgsConstructor
@@ -24,49 +28,101 @@ public class HibernateActivityCatalogRepository implements ActivityCatalogReposi
     public List<ActivityCatalog> search(CatalogFilterDto filter) {
         Session session = sessionFactory.getCurrentSession();
 
-        String sql = """
-                select distinct a.*
-                from activity_catalog a
-                where (:search is null
-                       or lower(a.title) like :search
-                       or lower(a.author_name) like :search
-                       or lower(a.short_description) like :search)
-                  and (:minPrice is null or a.price_amount >= :minPrice)
-                  and (:maxPrice is null or a.price_amount <= :maxPrice)
-                  and (:minRating is null or a.rating_avg >= :minRating)
-                  and (:format is null or a.format = :format)
-                  and (:topicId is null or exists (
-                        select 1
-                        from activity_catalog_topic act
-                        where act.activity_catalog_id = a.id
-                          and act.topic_id = :topicId
-                  ))
-                  and (:sectionId is null or exists (
-                        select 1
-                        from activity_catalog_section acs
-                        where acs.activity_catalog_id = a.id
-                          and acs.section_id = :sectionId
-                  ))
-                  and (:subjectId is null or exists (
-                        select 1
-                        from activity_catalog_subject acsu
-                        where acsu.activity_catalog_id = a.id
-                          and acsu.subject_id = :subjectId
-                  ))
-                order by a.rating_avg desc nulls last
-                """;
+        StringBuilder sql = new StringBuilder("""
+            select distinct c.*
+            from activity_catalog c
+            where 1 = 1
+            """);
 
-        List<ActivityCatalogEntity> entities = session
-                .createNativeQuery(sql, ActivityCatalogEntity.class)
-                .setParameter("search", prepareSearch(filter.search()))
-                .setParameter("minPrice", filter.minPrice())
-                .setParameter("maxPrice", filter.maxPrice())
-                .setParameter("minRating", filter.minRating())
-                .setParameter("format", filter.format() == null ? null : filter.format().name())
-                .setParameter("topicId", filter.topicId())
-                .setParameter("sectionId", filter.sectionId())
-                .setParameter("subjectId", filter.subjectId())
-                .getResultList();
+        Map<String, Object> params = new HashMap<>();
+
+        if (filter != null) {
+            String search = prepareSearch(filter.search());
+
+            if (search != null) {
+                sql.append("""
+                    and (
+                    lower(c.title) like :search
+                      or lower(c.author_name) like :search
+                      or lower(c.short_description) like :search
+                    )
+                    """);
+                params.put("search", search);
+            }
+
+            if (filter.minPrice() != null) {
+                sql.append("""
+                        and c.price_amount >= :minPrice
+                        """);
+                params.put("minPrice", filter.minPrice());
+            }
+
+            if (filter.maxPrice() != null) {
+                sql.append("""
+                        and c.price_amount <= :maxPrice
+                        """);
+                params.put("maxPrice", filter.maxPrice());
+            }
+
+            if (filter.minRating() != null) {
+                sql.append("""
+                        and c.rating_avg >= :minRating
+                        """);
+                params.put("minRating", filter.minRating());
+            }
+
+            if (filter.format() != null) {
+                sql.append("""
+                        and c.format = :format
+                        """);
+                params.put("format", filter.format().name());
+            }
+
+            if (filter.topicId() != null) {
+                sql.append("""
+                    and exists (
+                    select 1
+                    from activity_catalog_topic act
+                    where act.activity_catalog_id = c.id
+                      and act.topic_id = :topicId
+                    )
+                    """);
+                params.put("topicId", filter.topicId());
+            }
+
+            if (filter.sectionId() != null) {
+                sql.append("""
+                    and exists (
+                    select 1
+                    from activity_catalog_section acs
+                    where acs.activity_catalog_id = c.id
+                      and acs.section_id = :sectionId
+                    )
+                    """);
+                params.put("sectionId", filter.sectionId());
+            }
+
+            if (filter.subjectId() != null) {
+                sql.append("""
+                    and exists (
+                    select 1
+                    from activity_catalog_subject acsu
+                    where acsu.activity_catalog_id = c.id
+                      and acsu.subject_id = :subjectId
+                    )
+                    """);
+                params.put("subjectId", filter.subjectId());
+            }
+        }
+
+        sql.append("order by c.rating_avg desc nulls last");
+
+        NativeQuery<ActivityCatalogEntity> query =
+                session.createNativeQuery(sql.toString(), ActivityCatalogEntity.class);
+
+        params.forEach(query::setParameter);
+
+        List<ActivityCatalogEntity> entities = query.getResultList();
 
         return entities.stream()
                 .map(activityCatalogMapper::toDomain)

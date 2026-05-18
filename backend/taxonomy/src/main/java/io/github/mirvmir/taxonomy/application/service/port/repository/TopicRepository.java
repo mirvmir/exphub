@@ -13,6 +13,4 @@ public interface TopicRepository {
     List<Topic> findAllBySectionId(Long sectionId);
     List<Topic> findAllByIds(Collection<Long> ids);
     Topic saveOrUpdate(Topic topic);
-    boolean existsBySectionIdAndName(Long sectionId,
-                                     String name);
 }

@@ -33,11 +33,9 @@ public class DefaultCourseCatalogService implements CourseCatalogService {
     @Override
     @Transactional
     public void addCourseToCatalog(CoursePublishedEvent event) {
-        log.info(
-                "Adding course to catalog: courseId={}, authorId={}",
+        log.debug("Adding course to catalog: courseId={}, authorId={}",
                 event.courseId(),
-                event.authorId()
-        );
+                event.authorId());
 
         ReviewRatingInfoResponse ratingInfo = reviewApi.getRatingInfo(
                 null,
@@ -64,19 +62,17 @@ public class DefaultCourseCatalogService implements CourseCatalogService {
 
         courseCatalogRepository.saveOrUpdate(courseCatalog);
 
-        log.info(
-                "Course added to catalog: courseId={}, ratingAvg={}, reviewCount={}, topicIds={}",
+        log.info("Course added to catalog: courseId={}, ratingAvg={}, reviewCount={}, topicIds={}",
                 event.courseId(),
                 ratingInfo.ratingAvg(),
                 ratingInfo.reviewCount(),
-                taxonomyData.topicIds()
-        );
+                taxonomyData.topicIds());
     }
 
     @Override
     @Transactional
     public void removeCourseFromCatalog(Long courseId) {
-        log.info("Removing course from catalog: courseId={}", courseId);
+        log.debug("Removing course from catalog: courseId={}", courseId);
 
         courseCatalogRepository.deleteByCourseId(courseId);
 
@@ -86,7 +82,7 @@ public class DefaultCourseCatalogService implements CourseCatalogService {
     @Override
     @Transactional
     public void updateTopicIds(Long courseId, Set<Long> topicIds) {
-        log.info("Updating course catalog topics: courseId={}, topicIds={}", courseId, topicIds);
+        log.debug("Updating course catalog topics: courseId={}, topicIds={}", courseId, topicIds);
 
         CatalogTaxonomyData taxonomyData =
                 catalogTaxonomyResolver.resolve(topicIds);
@@ -98,13 +94,11 @@ public class DefaultCourseCatalogService implements CourseCatalogService {
                 taxonomyData.subjectIds()
         );
 
-        log.info(
-                "Course catalog topics updated: courseId={}, topicIds={}, sectionIds={}, subjectIds={}",
+        log.info("Course catalog topics updated: courseId={}, topicIds={}, sectionIds={}, subjectIds={}",
                 courseId,
                 taxonomyData.topicIds(),
                 taxonomyData.sectionIds(),
-                taxonomyData.subjectIds()
-        );
+                taxonomyData.subjectIds());
     }
 
     private String resolveAuthorName(Long authorId) {

@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.UUID;
 
 public record SaveDraftModuleLessonsRequest(
-        @NotNull
         List<@Valid SaveDraftLessonItemRequest> lessons,
         UUID stableModuleId
 ) {

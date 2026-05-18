@@ -15,6 +15,7 @@ import org.hibernate.SessionFactory;
 import org.springframework.stereotype.Repository;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -62,11 +63,30 @@ public class HibernateCourseRepository implements CourseRepository {
                 .setParameter("id", id)
                 .uniqueResult();
 
-        if (entity == null) {
-            return null;
-        }
+        return entity == null
+                ? null
+                : courseMapper.toDomain(entity);
+    }
 
-        return courseMapper.toDomain(entity);
+    @Override
+    public List<Course> findByAuthorId(Long authorId) {
+        Session session = sessionFactory.getCurrentSession();
+
+        List<CourseEntity> entities = session.createQuery("""
+                 select distinct c
+                 from CourseEntity c
+                 left join fetch c.draftVersion
+                 left join fetch c.topicEntities
+                 where c.authorId = :authorId
+                   and c.status <> :deletedStatus
+                 """, CourseEntity.class)
+                .setParameter("authorId", authorId)
+                .setParameter("deletedStatus", ContentStatus.DELETED)
+                .getResultList();
+
+        return entities.stream()
+                .map(courseMapper::toDomain)
+                .toList();
     }
 
     @Override
@@ -87,11 +107,29 @@ public class HibernateCourseRepository implements CourseRepository {
                 .setParameter("status", ContentStatus.ACTIVE)
                 .uniqueResult();
 
-        if (entity == null) {
-            return null;
-        }
+        return entity == null
+                ? null
+                : courseMapper.toDomain(entity);
+    }
 
-        return courseMapper.toDomain(entity);
+    @Override
+    public Course findByStableLessonId(UUID stableLessonId) {
+        Session session = sessionFactory.getCurrentSession();
+
+        CourseEntity entity = session.createQuery("""
+                select distinct c
+                from CourseEntity c
+                join c.versions v
+                join v.modules m
+                join m.lessons l
+                where l.stableLessonId = :stableLessonId
+                """, CourseEntity.class)
+                .setParameter("stableLessonId", stableLessonId)
+                .uniqueResult();
+
+        return entity == null
+                ? null
+                : courseMapper.toDomain(entity);
     }
 
     @Override
@@ -170,7 +208,9 @@ public class HibernateCourseRepository implements CourseRepository {
 
         CourseEntity entity = findCourseWithDraft(id);
         if (entity == null || entity.getDraftVersion() == null) {
-            return entity == null ? null : courseMapper.toDomain(entity);
+            return entity == null
+                    ? null
+                    : courseMapper.toDomain(entity);
         }
         Hibernate.initialize(entity.getDraftVersion().getModules());
 
@@ -344,17 +384,17 @@ public class HibernateCourseRepository implements CourseRepository {
     }
 
     @Override
-    public boolean isPractice(Long courseLessonId) {
+    public boolean isPractice(UUID stableLessonId) {
         Session session = sessionFactory.getCurrentSession();
 
         return Boolean.TRUE.equals(
                 session.createQuery("""
                         select count(cl.id) > 0
                         from CourseLessonEntity cl
-                        where cl.id = :courseLessonId
+                        where cl.stableLessonId = :stableLessonId
                           and cl.type = :practiceType
                         """, Boolean.class)
-                        .setParameter("courseLessonId", courseLessonId)
+                        .setParameter("stableLessonId", stableLessonId)
                         .setParameter("practiceType", LessonType.PRACTICE)
                         .uniqueResult()
         );
