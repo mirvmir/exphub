@@ -16,23 +16,29 @@ public class ActivityTime {
     private Instant startAt;
     @NonNull
     private Instant endAt;
+    @NonNull
+    private Integer bookingStepMinutes;
 
     public static ActivityTime create(Instant startAt,
-                                      Instant endAt) {
+                                      Instant endAt,
+                                      Integer bookingStepMinutes) {
         return new ActivityTime(
                 null,
                 startAt,
-                endAt
+                endAt,
+                bookingStepMinutes
         );
     }
 
     public static ActivityTime load(Long id,
                                     Instant startAt,
-                                    Instant endAt) {
+                                    Instant endAt,
+                                    Integer bookingStepMinutes) {
         return new ActivityTime(
                 id,
                 startAt,
-                endAt
+                endAt,
+                bookingStepMinutes
         );
     }
 

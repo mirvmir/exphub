@@ -41,42 +41,25 @@ public class DefaultAuthorActivityTimeService implements AuthorActivityTimeServi
     @Transactional
     public ActivityTimeResponse createAvailabilityTime(Long activityId,
                                                        CreateAvailabilityTimeRequest request) {
-        log.debug("Availability time creation requested: activityId={}, startAt={}",
+        log.debug("Availability time creation requested: activityId={}, startAt={}, endAt={}, step={}",
                 activityId,
-                request.startAt());
+                request.startAt(),
+                request.endAt(),
+                request.bookingStepMinutes());
 
-        Activity activity = activityRepository.findById(activityId);
+        Activity activity = getActivityForCurrentAuthor(activityId);
 
-        if (activity == null) {
-            log.warn("Activity not found for availability time creation: activityId={}", activityId);
-            throw new NotFoundException(
-                    ActivityErrorCode.ACTIVITY_NOT_FOUND,
-                    "Activity with id=" + activityId + " not found"
-            );
-        }
-
-        Long currentUserId = identityApi.getCurrentUserId();
-
-        if (currentUserId == null) {
-            log.warn("Unauthorized create availability time request");
-            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
-        }
-
-        if (!activity.getAuthorId().equals(currentUserId)) {
-            log.warn("Forbidden availability time creation: activityId={}, userId={}, authorId={}",
-                    activityId,
-                    currentUserId,
-                    activity.getAuthorId());
-            throw new ForbiddenException(
-                    ActivityErrorCode.ACTIVITY_FORBIDDEN
-            );
+        if (!activity.isIndividual()) {
+            throw new BusinessException(ActivityErrorCode.ONLY_FOR_INDIVIDUAL);
         }
 
         Instant now = Instant.now(clock);
+
         ActivityTime activityTime = activity.createAvailabilityTime(
                 now,
                 request.startAt(),
-                request.endAt()
+                request.endAt(),
+                request.bookingStepMinutes()
         );
 
         ActivityTime savedActivityTime = activityTimeRepository.save(
@@ -85,12 +68,13 @@ public class DefaultAuthorActivityTimeService implements AuthorActivityTimeServi
         );
 
         activityRepository.saveOrUpdate(activity);
-        log.info("Availability time created: activityId={}, activityTimeId={}, authorId={}",
-                activity.getId(),
-                activityTime.getId(),
-                currentUserId);
 
-        return activityTimeResponseMapper.toResponse(activityTime);
+        log.info("Availability time created: activityId={}, activityTimeId={}, step={}",
+                activityId,
+                savedActivityTime.getId(),
+                savedActivityTime.getBookingStepMinutes());
+
+        return activityTimeResponseMapper.toResponse(savedActivityTime);
     }
 
     @Override

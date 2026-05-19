@@ -85,7 +85,7 @@ class DefaultActivityServiceTest {
         );
         ActivityDescriptionResponse expected = mock(ActivityDescriptionResponse.class);
 
-        when(activityRepository.findById(activity.getId())).thenReturn(activity);
+        when(activityRepository.findActiveById(activity.getId())).thenReturn(activity);
         when(identityApi.getCurrentUserId()).thenReturn(99L);
         when(enrollmentApi.isStudentOfActivity(99L, activity.getId())).thenReturn(false);
         when(profileApi.getProfileName(activity.getAuthorId())).thenReturn(author);
@@ -114,7 +114,7 @@ class DefaultActivityServiceTest {
         );
         ActivityDescriptionResponse expected = mock(ActivityDescriptionResponse.class);
 
-        when(activityRepository.findById(activity.getId())).thenReturn(activity);
+        when(activityRepository.findActiveById(activity.getId())).thenReturn(activity);
         when(identityApi.getCurrentUserId()).thenReturn(99L);
         when(enrollmentApi.isStudentOfActivity(99L, activity.getId())).thenReturn(false);
         when(profileApi.getProfileName(activity.getAuthorId())).thenReturn(author);
@@ -140,7 +140,7 @@ class DefaultActivityServiceTest {
         ProfileNameDto author = mock(ProfileNameDto.class);
         ActivityDescriptionResponse expected = mock(ActivityDescriptionResponse.class);
 
-        when(activityRepository.findById(activity.getId())).thenReturn(activity);
+        when(activityRepository.findActiveById(activity.getId())).thenReturn(activity);
         when(identityApi.getCurrentUserId()).thenReturn(99L);
         when(enrollmentApi.isStudentOfActivity(99L, activity.getId())).thenReturn(true);
         when(profileApi.getProfileName(activity.getAuthorId())).thenReturn(author);
@@ -156,7 +156,7 @@ class DefaultActivityServiceTest {
 
     @Test
     void getActivity_shouldThrowNotFound_whenActivityDoesNotExist() {
-        when(activityRepository.findById(1L)).thenReturn(null);
+        when(activityRepository.findActiveById(1L)).thenReturn(null);
 
         NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> service.getActivity(1L));
@@ -167,7 +167,7 @@ class DefaultActivityServiceTest {
     void getActivity_shouldThrowNotFound_whenArchivedActivityRequestedByNotStudent() {
         Activity activity = individualActivity(ContentStatus.ARCHIVED, ModerationStatus.APPROVED);
 
-        when(activityRepository.findById(activity.getId())).thenReturn(activity);
+        when(activityRepository.findActiveById(activity.getId())).thenReturn(activity);
         when(identityApi.getCurrentUserId()).thenReturn(99L);
         when(enrollmentApi.isStudentOfActivity(99L, activity.getId())).thenReturn(false);
 
@@ -189,7 +189,6 @@ class DefaultActivityServiceTest {
                 60,
                 7L,
                 ActivityType.INDIVIDUAL,
-                30,
                 contentStatus,
                 moderationStatus,
                 null,
@@ -211,7 +210,6 @@ class DefaultActivityServiceTest {
                 60,
                 7L,
                 ActivityType.GROUP,
-                null,
                 contentStatus,
                 moderationStatus,
                 null,

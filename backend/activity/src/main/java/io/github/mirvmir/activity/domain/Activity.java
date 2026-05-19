@@ -39,7 +39,6 @@ public class Activity {
     private Long subjectId;
     @NonNull
     private ActivityType type;
-    private Integer bookingStepMinutes;
     @NonNull
     private ContentStatus contentStatus;
     @NonNull
@@ -54,8 +53,7 @@ public class Activity {
                                             String descriptionHtml,
                                             BigDecimal amount,
                                             Currency currency,
-                                            Integer durationMinutes,
-                                            Integer bookingStepMinutes) {
+                                            Integer durationMinutes) {
         Money price = new Money(amount, currency);
         return new Activity(
                 null,
@@ -68,7 +66,6 @@ public class Activity {
                 durationMinutes,
                 null,
                 ActivityType.INDIVIDUAL,
-                bookingStepMinutes,
                 ContentStatus.DRAFT,
                 ModerationStatus.DRAFT,
                 null,
@@ -101,7 +98,6 @@ public class Activity {
                 durationMinutes,
                 null,
                 ActivityType.GROUP,
-                null,
                 ContentStatus.DRAFT,
                 ModerationStatus.DRAFT,
                 null,
@@ -121,7 +117,6 @@ public class Activity {
                                 Integer durationMinutes,
                                 Long subjectId,
                                 ActivityType type,
-                                Integer bookingStepMinutes,
                                 ContentStatus contentStatus,
                                 ModerationStatus moderationStatus,
                                 String moderationComment,
@@ -140,7 +135,6 @@ public class Activity {
                 durationMinutes,
                 subjectId,
                 type,
-                bookingStepMinutes,
                 contentStatus,
                 moderationStatus,
                 moderationComment,
@@ -282,7 +276,7 @@ public class Activity {
                 .toMinutes();
 
         if (minutesFromWindowStart < 0
-                || minutesFromWindowStart % bookingStepMinutes != 0) {
+                || minutesFromWindowStart % time.getBookingStepMinutes() != 0) {
             throw new BusinessException(ActivityErrorCode.ACTIVITY_NOT_IN_TIME);
         }
 
@@ -324,7 +318,8 @@ public class Activity {
 
     public ActivityTime createAvailabilityTime(Instant now,
                                                Instant startAt,
-                                               Instant endAt) {
+                                               Instant endAt,
+                                               Integer bookingStepMinutes) {
         ensureActive();
         ensureIndividual();
 
@@ -336,11 +331,46 @@ public class Activity {
             throw new BusinessException(ActivityErrorCode.ACTIVITY_TIME_INVALID);
         }
 
+        if (bookingStepMinutes == null || bookingStepMinutes <= 0) {
+            throw new BusinessException(ActivityErrorCode.ACTIVITY_TIME_INVALID);
+        }
+
+        long freeWindowMinutes = Duration
+                .between(startAt, endAt)
+                .toMinutes();
+
+        if (freeWindowMinutes < durationMinutes) {
+            throw new BusinessException(
+                    ActivityErrorCode.ACTIVITY_TIME_INVALID
+            );
+        }
+
+        if (bookingStepMinutes > freeWindowMinutes) {
+            throw new BusinessException(
+                    ActivityErrorCode.ACTIVITY_TIME_INVALID
+            );
+        }
+
+        boolean hasIntersection = activityTimes.stream()
+                .anyMatch(existing ->
+                        startAt.isBefore(existing.getEndAt())
+                                && endAt.isAfter(existing.getStartAt())
+                );
+
+        if (hasIntersection) {
+            throw new BusinessException(
+                    ActivityErrorCode.ACTIVITY_TIME_ALREADY_BOOKED
+            );
+        }
+
         ActivityTime availableTime = ActivityTime.create(
                 startAt,
-                endAt
+                endAt,
+                bookingStepMinutes
         );
+
         activityTimes.add(availableTime);
+
         return availableTime;
     }
 

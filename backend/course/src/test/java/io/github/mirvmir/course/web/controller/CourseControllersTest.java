@@ -114,7 +114,7 @@ class CourseControllersTest {
 
         verify(authorCourseService).createCourse(argThat(actual ->
                 actual != null
-                && actual.title().equals("Новый курс")
+                        && actual.title().equals("Новый курс")
         ));
     }
 
@@ -166,8 +166,8 @@ class CourseControllersTest {
 
         verify(authorCourseService).updateDraftCourse(eq(1L), argThat(actual ->
                 actual != null
-                && actual.title().equals("Новое название")
-                && actual.priceAmount().equals(new BigDecimal("4500"))
+                        && actual.title().equals("Новое название")
+                        && actual.priceAmount().equals(new BigDecimal("4500"))
         ));
     }
 
@@ -179,11 +179,11 @@ class CourseControllersTest {
         authorMockMvc.perform(patch("/author/courses/1/topics")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         verify(authorCourseService).updateTopics(eq(1L), argThat(actual ->
                 actual != null
-                && actual.topicIds().equals(Set.of(11L, 12L))
+                        && actual.topicIds().equals(Set.of(11L, 12L))
         ));
     }
 
@@ -198,7 +198,7 @@ class CourseControllersTest {
         authorMockMvc.perform(patch("/author/courses/1/lessons/" + stableLessonId + "/opens-at")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         verify(authorCourseService).updateLessonOpensAt(
                 eq(1L),
@@ -228,7 +228,7 @@ class CourseControllersTest {
 
         verify(authorCourseService).saveDraftModules(eq(1L), argThat(actual ->
                 actual.modules().size() == 1
-                && actual.modules().get(0).title().equals("Модуль 1")
+                        && actual.modules().get(0).title().equals("Модуль 1")
         ));
     }
 
@@ -258,7 +258,7 @@ class CourseControllersTest {
 
         verify(authorCourseService).saveDraftModuleLessons(eq(1L), eq(2L), argThat(actual ->
                 actual.stableModuleId().equals(stableModuleId)
-                && actual.lessons().get(0).title().equals("Урок 1")
+                        && actual.lessons().get(0).title().equals("Урок 1")
         ));
     }
 
@@ -290,14 +290,14 @@ class CourseControllersTest {
 
         verify(authorCourseService).saveDraftLessonBlocks(eq(1L), eq(3L), argThat(actual ->
                 actual.stableLessonId().equals(stableLessonId)
-                && actual.blocks().get(0).html().equals("<p>Текст</p>")
+                        && actual.blocks().get(0).html().equals("<p>Текст</p>")
         ));
     }
 
     @Test
     void requestPublication_shouldReturn200() throws Exception {
         authorMockMvc.perform(post("/author/courses/1/publication-request"))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         verify(authorCourseService).requestPublication(1L);
     }
@@ -305,7 +305,7 @@ class CourseControllersTest {
     @Test
     void archive_shouldReturn200() throws Exception {
         authorMockMvc.perform(post("/author/courses/1/archive"))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         verify(authorCourseService).archive(1L);
     }
@@ -313,7 +313,7 @@ class CourseControllersTest {
     @Test
     void unarchive_shouldReturn200() throws Exception {
         authorMockMvc.perform(post("/author/courses/1/unarchive"))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         verify(authorCourseService).unarchive(1L);
     }
@@ -321,7 +321,7 @@ class CourseControllersTest {
     @Test
     void deleteCourse_shouldReturn200() throws Exception {
         authorMockMvc.perform(delete("/author/courses/1"))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         verify(authorCourseService).deleteCourse(1L);
     }
@@ -376,7 +376,7 @@ class CourseControllersTest {
 
     @Test
     void approve_shouldReturn200() throws Exception {
-        moderationMockMvc.perform(post("/admin/courses/1/approve"))
+        moderationMockMvc.perform(post("/moderation/courses/1/approve"))
                 .andExpect(status().isOk());
 
         verify(moderationCourseService).approve(1L);
@@ -387,7 +387,7 @@ class CourseControllersTest {
         RejectCourseRequest request =
                 new RejectCourseRequest("Нужно доработать описание");
 
-        moderationMockMvc.perform(post("/admin/courses/1/reject")
+        moderationMockMvc.perform(post("/moderation/courses/1/reject")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
@@ -399,7 +399,7 @@ class CourseControllersTest {
 
     @Test
     void block_shouldReturn200() throws Exception {
-        moderationMockMvc.perform(post("/admin/courses/1/block"))
+        moderationMockMvc.perform(post("/moderation/courses/1/block"))
                 .andExpect(status().isOk());
 
         verify(moderationCourseService).block(1L);

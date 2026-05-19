@@ -2,6 +2,7 @@ package io.github.mirvmir.activity.web.request;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 import java.time.Instant;
 
@@ -11,6 +12,9 @@ public record CreateAvailabilityTimeRequest(
         Instant startAt,
         @NotNull
         @Future
-        Instant endAt
+        Instant endAt,
+        @NotNull
+        @Positive
+        Integer bookingStepMinutes
 ) {
 }

@@ -13,11 +13,13 @@ import io.github.mirvmir.activity.application.properties.ActivityCancellationPro
 import io.github.mirvmir.activity.web.request.CancelActivitySlotRequest;
 import io.github.mirvmir.activity.web.request.UpdateActivitySlotRoomJoinUrlRequest;
 import io.github.mirvmir.activity.web.request.UpdateActivityTopicsRequest;
+import io.github.mirvmir.activity.web.response.ActivitySlotWithStatusResponse;
 import io.github.mirvmir.common.exception.BusinessException;
 import io.github.mirvmir.common.exception.ForbiddenException;
 import io.github.mirvmir.common.exception.NotFoundException;
 import io.github.mirvmir.common.exception.UnauthorizedException;
 import io.github.mirvmir.enrollment.api.EnrollmentApi;
+import io.github.mirvmir.enrollment.api.dto.StudentActivityEnrollmentResponse;
 import io.github.mirvmir.identity.api.IdentityApi;
 import io.github.mirvmir.taxonomy.api.TaxonomyApi;
 import io.github.mirvmir.taxonomy.api.dto.TopicTaxonomyInfoResponse;
@@ -28,7 +30,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Instant;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Slf4j
@@ -47,6 +51,67 @@ public class DefaultActivitySlotService implements ActivitySlotService {
     private final ActivityEventPublisher activityEventPublisher;
 
     private final Clock clock;
+
+    @Override
+    @Transactional(readOnly = true)
+    public Set<ActivitySlotWithStatusResponse> getCurrentStudentActivities() {
+        Long studentId = identityApi.getCurrentUserId();
+
+        log.debug("Getting student activities: studentId={}", studentId);
+
+        Set<StudentActivityEnrollmentResponse> enrollments =
+                enrollmentApi.getStudentActivityEnrollments(studentId);
+
+        if (enrollments.isEmpty()) {
+            log.info("Student activities prepared: studentId={}, count={}",
+                    studentId,
+                    0);
+            return Set.of();
+        }
+
+        Set<Long> activityIds = enrollments.stream()
+                .map(StudentActivityEnrollmentResponse::activityId)
+                .collect(Collectors.toSet());
+        Set<Long> slotIds = enrollments.stream()
+                .map(StudentActivityEnrollmentResponse::activitySlotId)
+                .collect(Collectors.toSet());
+
+        Map<Long, Activity> activitiesById = activityRepository.findByIds(activityIds)
+                .stream()
+                .collect(Collectors.toMap(Activity::getId, Function.identity()));
+        Map<Long, ActivitySlot> slotsById = activitySlotRepository.findByIds(slotIds)
+                .stream()
+                .collect(Collectors.toMap(ActivitySlot::getId, Function.identity()));
+
+        Set<ActivitySlotWithStatusResponse> result = enrollments.stream()
+                .map(enrollment -> {
+                    Activity activity = activitiesById.get(enrollment.activityId());
+                    ActivitySlot slot = slotsById.get(enrollment.activitySlotId());
+
+                    if (activity == null || slot == null) {
+                        log.debug("Student activity enrollment skipped because activity or slot was not found: enrollmentId={}, activityId={}, slotId={}",
+                                enrollment.enrollmentId(),
+                                enrollment.activityId(),
+                                enrollment.activitySlotId());
+                        return null;
+                    }
+
+                    return new ActivitySlotWithStatusResponse(
+                            slot.getId(),
+                            slot.getStartAt(),
+                            slot.getEndAt(),
+                            slot.getStatus(),
+                            studentId
+                    );
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        log.info("Student activities prepared: studentId={}, count={}",
+                studentId,
+                result.size());
+        return result;
+    }
 
     @Override
     @Transactional
@@ -73,8 +138,7 @@ public class DefaultActivitySlotService implements ActivitySlotService {
             log.warn("Forbidden author action: activityId={}, userId={}, authorId={}",
                     activity.getId(),
                     currentUserId,
-                    activity.getAuthorId()
-            );
+                    activity.getAuthorId());
             throw new ForbiddenException(ActivityErrorCode.ACTIVITY_FORBIDDEN);
         }
 

@@ -259,16 +259,16 @@ class DefaultAuthorActivityServiceTest {
                 60,
                 7L,
                 ActivityType.GROUP,
-                null,
                 contentStatus,
                 moderationStatus,
                 null,
                 Set.of(11L, 12L),
                 Set.of(ActivityTime.load(
-                        100L,
-                        Instant.parse("2026-05-13T10:00:00Z"),
-                        Instant.parse("2026-05-13T11:00:00Z")
-                )
+                                100L,
+                                Instant.parse("2026-05-13T10:00:00Z"),
+                                Instant.parse("2026-05-13T11:00:00Z"),
+                                60
+                        )
                 )
         );
     }

@@ -4,7 +4,7 @@ import io.github.mirvmir.activity.domain.ActivitySlotStatus;
 
 import java.time.Instant;
 
-public record ActivityPlannedSlotResponse(
+public record ActivitySlotWithStatusResponse(
         Long slotId,
         Instant startAt,
         Instant endAt,

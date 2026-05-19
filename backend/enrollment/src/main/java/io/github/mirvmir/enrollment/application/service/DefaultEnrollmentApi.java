@@ -7,6 +7,7 @@ import io.github.mirvmir.course.api.CourseApi;
 import io.github.mirvmir.course.api.dto.CoursePurchaseInfoResponse;
 import io.github.mirvmir.course.api.dto.CourseTeacherResponse;
 import io.github.mirvmir.enrollment.api.EnrollmentApi;
+import io.github.mirvmir.enrollment.api.dto.StudentActivityEnrollmentResponse;
 import io.github.mirvmir.enrollment.api.dto.StudentCourseEnrollmentResponse;
 import io.github.mirvmir.enrollment.application.properties.BookingProperties;
 import io.github.mirvmir.enrollment.application.service.port.repository.ActivityEnrollmentRepository;
@@ -29,6 +30,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Slf4j
@@ -146,6 +148,20 @@ public class DefaultEnrollmentApi implements EnrollmentApi {
                 enrollment.getCourseId(),
                 enrollment.getPublishedVersionId()
         );
+    }
+
+    @Override
+    public Set<StudentActivityEnrollmentResponse> getStudentActivityEnrollments(Long studentId) {
+        List<ActivityEnrollment> enrollments = activityEnrollmentRepository.findActiveByStudentId(studentId);
+
+        return enrollments.stream()
+                .map(enrollment -> new StudentActivityEnrollmentResponse(
+                        enrollment.getId(),
+                        enrollment.getUserId(),
+                        enrollment.getActivityId(),
+                        enrollment.getActivitySlotId()
+                ))
+                .collect(Collectors.toSet());
     }
 
     @Override

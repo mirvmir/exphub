@@ -18,6 +18,7 @@ public interface ActivityTimeMapper {
                 activityTime.getId(),
                 activityTime.getStartAt(),
                 activityTime.getEndAt(),
+                activityTime.getBookingStepMinutes(),
                 activityEntity
         );
     }
@@ -30,7 +31,8 @@ public interface ActivityTimeMapper {
         return ActivityTime.load(
                 entity.getId(),
                 entity.getStartAt(),
-                entity.getEndAt()
+                entity.getEndAt(),
+                entity.getBookingStepMinutes()
         );
     }
 }

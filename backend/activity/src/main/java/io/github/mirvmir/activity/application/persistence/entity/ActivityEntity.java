@@ -49,9 +49,6 @@ public class ActivityEntity {
     @Column(name = "moderation_comment")
     private String moderationComment;
 
-    @Column(name = "booking_step_minutes")
-    private Integer bookingStepMinutes;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "moderation_status", nullable = false)
     private ModerationStatus moderationStatus;

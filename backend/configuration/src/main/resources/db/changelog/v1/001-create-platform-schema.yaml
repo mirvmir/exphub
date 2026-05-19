@@ -146,7 +146,6 @@ databaseChangeLog:
                   price_currency VARCHAR(3) NOT NULL,
                   duration_minutes INTEGER NOT NULL,
                   moderation_comment VARCHAR(255),
-                  booking_step_minutes INTEGER,
                   moderation_status VARCHAR(255) NOT NULL,
                   content_status VARCHAR(255) NOT NULL,
                   type VARCHAR(255) NOT NULL,
@@ -166,6 +165,7 @@ databaseChangeLog:
                   activity_id BIGINT NOT NULL,
                   start_at TIMESTAMP WITH TIME ZONE NOT NULL,
                   end_at TIMESTAMP WITH TIME ZONE NOT NULL,
+                  booking_step_minutes INTEGER,
 
                   CONSTRAINT fk_activity_time_activity
                   FOREIGN KEY (activity_id)

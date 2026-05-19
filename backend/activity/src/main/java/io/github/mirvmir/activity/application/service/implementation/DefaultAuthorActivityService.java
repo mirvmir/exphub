@@ -192,8 +192,7 @@ public class DefaultAuthorActivityService implements AuthorActivityService {
                     request.descriptionHtml(),
                     request.priceAmount(),
                     request.priceCurrency(),
-                    request.durationMinutes(),
-                    request.bookingStepMinutes()
+                    request.durationMinutes()
             );
         }
         else {

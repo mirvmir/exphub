@@ -64,7 +64,6 @@ public interface ActivitySlotMapper {
                 null,
                 null,
                 null,
-                null,
                 null
         );
     }

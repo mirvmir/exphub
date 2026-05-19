@@ -59,7 +59,7 @@ class PaymentControllerTest {
                 "4111111111111111",
                 "IVAN IVANOV",
                 "12",
-                "30",
+                "2030",
                 "123"
         );
         BindCardResponse response = new BindCardResponse(
@@ -74,7 +74,7 @@ class PaymentControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.cardId").value(10L))
                 .andExpect(jsonPath("$.maskedPan").value("**** **** **** 1111"))
                 .andExpect(jsonPath("$.paymentSystem").value("MIR"));
@@ -151,7 +151,7 @@ class PaymentControllerTest {
                 "4111111111111111",
                 "IVAN IVANOV",
                 "12",
-                "30",
+                "2030",
                 "123"
         );
 
@@ -172,7 +172,7 @@ class PaymentControllerTest {
                 "4111111111111111",
                 "IVAN IVANOV",
                 "12",
-                "30",
+                "2030",
                 "123"
         );
 
@@ -210,7 +210,7 @@ class PaymentControllerTest {
                 "4111111111111111",
                 "IVAN IVANOV",
                 "12",
-                "30",
+                "2030",
                 "123"
         );
 

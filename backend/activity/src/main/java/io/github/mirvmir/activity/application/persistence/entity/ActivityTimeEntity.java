@@ -26,6 +26,9 @@ public class ActivityTimeEntity {
     @Column(name = "end_at", nullable = false)
     private Instant endAt;
 
+    @Column(name = "booking_step_minutes", nullable = false)
+    private Integer bookingStepMinutes;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "activity_id", nullable = false)
     private ActivityEntity activityEntity;

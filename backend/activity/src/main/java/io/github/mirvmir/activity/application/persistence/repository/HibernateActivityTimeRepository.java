@@ -35,18 +35,18 @@ public class HibernateActivityTimeRepository implements ActivityTimeRepository {
                 null,
                 activityTime.getStartAt(),
                 activityTime.getEndAt(),
+                activityTime.getBookingStepMinutes(),
                 activityEntity
         );
 
         session.persist(entity);
         session.flush();
 
-        activityTime.assignId(entity.getId());
-
         return ActivityTime.load(
                 entity.getId(),
                 entity.getStartAt(),
-                entity.getEndAt()
+                entity.getEndAt(),
+                entity.getBookingStepMinutes()
         );
     }
 

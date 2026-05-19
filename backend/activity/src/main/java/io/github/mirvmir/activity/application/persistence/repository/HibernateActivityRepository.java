@@ -11,6 +11,7 @@ import org.hibernate.SessionFactory;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Set;
 
 @AllArgsConstructor
 @Repository
@@ -51,6 +52,32 @@ public class HibernateActivityRepository implements ActivityRepository {
                 .uniqueResult();
 
         return activityMapper.toDomain(entity);
+    }
+
+    @Override
+    public List<Activity> findByIds(Set<Long> activityIds) {
+        if (activityIds == null || activityIds.isEmpty()) {
+            return List.of();
+        }
+
+        Session session = sessionFactory.getCurrentSession();
+
+        List<ActivityEntity> entities = session.createQuery("""
+                select distinct a
+                from ActivityEntity a
+                left join fetch a.topicEntities
+                left join fetch a.activityTimeEntities
+                where a.id in (:activityIds)
+                  and a.contentStatus <> :deletedStatus
+                order by a.id desc
+                """, ActivityEntity.class)
+                .setParameter("activityIds", activityIds)
+                .setParameter("deletedStatus", ContentStatus.DELETED)
+                .getResultList();
+
+        return entities.stream()
+                .map(activityMapper::toDomain)
+                .toList();
     }
 
     @Override

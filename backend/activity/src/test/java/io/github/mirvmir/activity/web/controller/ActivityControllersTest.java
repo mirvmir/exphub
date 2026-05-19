@@ -300,11 +300,17 @@ class ActivityControllersTest {
     void createAvailabilityTime_shouldReturn200() throws Exception {
         Instant startAt = Instant.now().plusSeconds(3600);
         Instant endAt = Instant.now().plusSeconds(10800);
-        CreateAvailabilityTimeRequest request = new CreateAvailabilityTimeRequest(startAt, endAt);
+        Integer bookingStep = 60;
+        CreateAvailabilityTimeRequest request = new CreateAvailabilityTimeRequest(
+                startAt,
+                endAt,
+                bookingStep
+        );
         ActivityTimeResponse response = new ActivityTimeResponse(
                 1L,
                 startAt,
-                startAt.plusSeconds(3600)
+                startAt.plusSeconds(3600),
+                bookingStep
         );
 
         when(authorActivityTimeService.createAvailabilityTime(eq(1L), any())).thenReturn(response);

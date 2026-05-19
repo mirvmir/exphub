@@ -249,6 +249,21 @@ public class HibernateActivityEnrollmentRepository implements ActivityEnrollment
     }
 
     @Override
+    public List<ActivityEnrollment> findActiveByStudentId(Long studentId) {
+        return sessionFactory.getCurrentSession()
+                .createQuery("""
+                select e
+                from ActivityEnrollmentEntity e
+                where e.userId = :userId
+                """, ActivityEnrollmentEntity.class)
+                .setParameter("userId", studentId)
+                .list()
+                .stream()
+                .map(activityEnrollmentMapper::toDomain)
+                .toList();
+    }
+
+    @Override
     public List<ActivityEnrollment> findActiveByActivitySlotId(Long activitySlotId) {
         return sessionFactory.getCurrentSession()
                 .createQuery("""

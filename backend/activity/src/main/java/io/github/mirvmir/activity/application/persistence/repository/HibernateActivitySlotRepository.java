@@ -4,6 +4,7 @@ import io.github.mirvmir.activity.application.persistence.entity.ActivityEntity;
 import io.github.mirvmir.activity.application.persistence.entity.ActivitySlotEntity;
 import io.github.mirvmir.activity.application.persistence.mapper.ActivitySlotMapper;
 import io.github.mirvmir.activity.application.service.port.repository.ActivitySlotRepository;
+import io.github.mirvmir.activity.domain.Activity;
 import io.github.mirvmir.activity.domain.ActivitySlot;
 import io.github.mirvmir.activity.domain.ActivitySlotStatus;
 import io.github.mirvmir.activity.exception.ActivityErrorCode;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 
 @AllArgsConstructor
 @Repository
@@ -92,6 +94,27 @@ public class HibernateActivitySlotRepository implements ActivitySlotRepository {
         return entity == null
                 ? null
                 : activitySlotMapper.toDomain(entity);
+    }
+
+    @Override
+    public List<ActivitySlot> findByIds(Set<Long> activitySlotIds) {
+        if (activitySlotIds == null || activitySlotIds.isEmpty()) {
+            return List.of();
+        }
+
+        Session session = sessionFactory.getCurrentSession();
+
+        return session.createQuery("""
+                select s
+                from ActivitySlotEntity s
+                where s.id in (:activitySlotIds)
+                order by s.startAt asc
+                """, ActivitySlotEntity.class)
+                .setParameter("activitySlotIds", activitySlotIds)
+                .getResultList()
+                .stream()
+                .map(activitySlotMapper::toDomain)
+                .toList();
     }
 
     @Override

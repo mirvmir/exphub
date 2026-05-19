@@ -126,7 +126,6 @@ class DefaultModerationActivityServiceTest {
                 60,
                 7L,
                 ActivityType.GROUP,
-                null,
                 contentStatus,
                 moderationStatus,
                 moderationComment,

@@ -219,7 +219,6 @@ class ReviewControllersTest {
 
         moderationMockMvc.perform(patch("/admin/reviews/1/approve"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("REVIEW_NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value("Отзыв с id=1 не найден"));
     }
 

@@ -42,7 +42,6 @@ public interface ActivityMapper {
                 entity.getDurationMinutes(),
                 entity.getSubjectId(),
                 entity.getType(),
-                entity.getBookingStepMinutes(),
                 entity.getContentStatus(),
                 entity.getModerationStatus(),
                 entity.getModerationComment(),
@@ -69,7 +68,8 @@ public interface ActivityMapper {
         return ActivityTime.load(
                 entity.getId(),
                 entity.getStartAt(),
-                entity.getEndAt()
+                entity.getEndAt(),
+                entity.getBookingStepMinutes()
         );
     }
 

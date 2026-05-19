@@ -23,33 +23,32 @@ public class DefaultIndividualActivityAvailabilityService
                                                                        List<ActivitySlot> plannedSlots) {
         if (activity.getActivityTimes() == null
                 || activity.getActivityTimes().isEmpty()) {
-            log.warn("No availability times for individual activity: activityId={}", activity.getId());
+            log.debug("No availability times for individual activity: activityId={}", activity.getId());
             return Set.of();
         }
 
         Integer durationMinutes = activity.getDurationMinutes();
-
-        if (durationMinutes == null || durationMinutes <= 0) {
-            log.error("Invalid individual activity duration: activityId={}, durationMinutes={}",
+        if (durationMinutes <= 0) {
+            log.error("Invalid activity duration for individual activity availability calculation: activityId={}, durationMinutes={}",
                     activity.getId(),
-                    durationMinutes);
+                    activity.getDurationMinutes());
             throw new IllegalStateException("Длительность занятия должна быть больше 0");
         }
 
-        Set<IndividualActivitySlotResponse> result = activity.getActivityTimes()
+        List<ActivitySlot> safePlannedSlots = plannedSlots == null
+                ? List.of()
+                : plannedSlots;
+
+        return activity.getActivityTimes()
                 .stream()
+                .sorted(Comparator.comparing(ActivityTime::getStartAt))
                 .flatMap(activityTime -> calculateForActivityTime(
                         activity.getId(),
                         activityTime,
-                        plannedSlots == null ? List.of() : plannedSlots,
+                        safePlannedSlots,
                         durationMinutes
                 ).stream())
                 .collect(Collectors.toCollection(LinkedHashSet::new));
-
-        log.info("Calculated available individual activity times: activityId={}, availableTimesCount={}",
-                activity.getId(),
-                result.size());
-        return result;
     }
 
     private List<IndividualActivitySlotResponse> calculateForActivityTime(Long activityId,
@@ -58,6 +57,13 @@ public class DefaultIndividualActivityAvailabilityService
                                                                           Integer durationMinutes) {
         Instant windowStart = activityTime.getStartAt();
         Instant windowEnd = activityTime.getEndAt();
+        Integer stepMinutes = activityTime.getBookingStepMinutes();
+        if (stepMinutes <= 0) {
+            log.error("Invalid booking step configuration: stepMinutes must be greater than 0, activityId={}, stepMinutes={}",
+                    activityId,
+                    stepMinutes);
+            throw new IllegalStateException("Шаг бронирования должен быть больше 0");
+        }
 
         List<ActivitySlot> busySlots = plannedSlots.stream()
                 .filter(slot -> isOverlapping(
@@ -77,12 +83,13 @@ public class DefaultIndividualActivityAvailabilityService
             Instant busyStart = max(busySlot.getStartAt(), windowStart);
             Instant busyEnd = min(busySlot.getEndAt(), windowEnd);
 
-            addIfFits(
+            addAvailableStarts(
                     result,
                     activityId,
                     freeStart,
                     busyStart,
-                    durationMinutes
+                    durationMinutes,
+                    stepMinutes
             );
 
             if (busyEnd.isAfter(freeStart)) {
@@ -90,31 +97,38 @@ public class DefaultIndividualActivityAvailabilityService
             }
         }
 
-        addIfFits(
+        addAvailableStarts(
                 result,
                 activityId,
                 freeStart,
                 windowEnd,
-                durationMinutes
+                durationMinutes,
+                stepMinutes
         );
 
         return result;
     }
 
-    private void addIfFits(List<IndividualActivitySlotResponse> result,
-                           Long activityId,
-                           Instant startTime,
-                           Instant endTime,
-                           Integer durationMinutes) {
-        long freeMinutes = Duration.between(startTime, endTime).toMinutes();
+    private void addAvailableStarts(List<IndividualActivitySlotResponse> result,
+                                    Long activityId,
+                                    Instant startTime,
+                                    Instant endTime,
+                                    Integer durationMinutes,
+                                    Integer stepMinutes) {
+        Duration duration = Duration.ofMinutes(durationMinutes);
+        Duration step = Duration.ofMinutes(stepMinutes);
 
-        if (freeMinutes >= durationMinutes) {
+        Instant slotStart = startTime;
+
+        while (!slotStart.plus(duration).isAfter(endTime)) {
             result.add(new IndividualActivitySlotResponse(
                     null,
                     activityId,
-                    startTime,
-                    endTime
+                    slotStart,
+                    slotStart.plus(duration)
             ));
+
+            slotStart = slotStart.plus(step);
         }
     }
 

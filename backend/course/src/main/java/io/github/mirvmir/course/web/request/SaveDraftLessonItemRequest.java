@@ -10,7 +10,7 @@ public record SaveDraftLessonItemRequest(
         @NotBlank
         @Size(max = 250)
         String title,
-        @NotBlank
+        @NotNull
         LessonType type,
         @NotNull
         @PositiveOrZero

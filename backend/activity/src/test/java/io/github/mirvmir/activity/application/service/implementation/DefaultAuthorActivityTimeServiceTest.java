@@ -59,15 +59,27 @@ class DefaultAuthorActivityTimeServiceTest {
         Activity activity = individualActivity();
         Instant startAt = Instant.parse("2026-05-13T10:00:00Z");
         Instant endAt = Instant.parse("2026-05-13T15:00:00Z");
-        ActivityTimeResponse expected = new ActivityTimeResponse(null, startAt, startAt.plusSeconds(3600));
+        Integer bookingStepMinutes = 60;
+        ActivityTimeResponse expected = new ActivityTimeResponse(
+                null,
+                startAt,
+                startAt.plusSeconds(3600),
+                bookingStepMinutes
+        );
 
         when(activityRepository.findById(activity.getId())).thenReturn(activity);
         when(identityApi.getCurrentUserId()).thenReturn(activity.getAuthorId());
+        when(activityTimeRepository.save(eq(activity.getId()), any(ActivityTime.class)))
+                .thenAnswer(invocation -> {
+                    ActivityTime activityTime = invocation.getArgument(1);
+                    activityTime.assignId(100L);
+                    return activityTime;
+                });
         when(activityTimeResponseMapper.toResponse(any(ActivityTime.class))).thenReturn(expected);
 
         ActivityTimeResponse result = service.createAvailabilityTime(
                 activity.getId(),
-                new CreateAvailabilityTimeRequest(startAt, endAt)
+                new CreateAvailabilityTimeRequest(startAt, endAt, bookingStepMinutes)
         );
 
         assertEquals(expected, result);
@@ -88,7 +100,8 @@ class DefaultAuthorActivityTimeServiceTest {
                         activity.getId(),
                         new CreateAvailabilityTimeRequest(
                                 Instant.parse("2026-05-13T10:00:00Z"),
-                                Instant.parse("2026-05-13T15:00:00Z")
+                                Instant.parse("2026-05-13T15:00:00Z"),
+                                60
                         )
                 ));
         verify(activityRepository, never()).saveOrUpdate(any());
@@ -103,7 +116,8 @@ class DefaultAuthorActivityTimeServiceTest {
                         1L,
                         new CreateAvailabilityTimeRequest(
                                 Instant.parse("2026-05-13T10:00:00Z"),
-                                Instant.parse("2026-05-13T15:00:00Z")
+                                Instant.parse("2026-05-13T15:00:00Z"),
+                                60
                         )
                 ));
         verifyNoInteractions(identityApi, activityTimeResponseMapper);
@@ -122,7 +136,6 @@ class DefaultAuthorActivityTimeServiceTest {
                 60,
                 7L,
                 ActivityType.INDIVIDUAL,
-                30,
                 ContentStatus.ACTIVE,
                 ModerationStatus.APPROVED,
                 null,

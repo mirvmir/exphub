@@ -1,5 +1,6 @@
 package io.github.mirvmir.enrollment.api;
 
+import io.github.mirvmir.enrollment.api.dto.StudentActivityEnrollmentResponse;
 import io.github.mirvmir.enrollment.api.dto.StudentCourseEnrollmentResponse;
 
 import java.time.Instant;
@@ -14,6 +15,8 @@ public interface EnrollmentApi {
                                                     Instant now);
     StudentCourseEnrollmentResponse getStudentCourseEnrollment(Long studentId,
                                                                Long courseId);
+
+    Set<StudentActivityEnrollmentResponse> getStudentActivityEnrollments(Long studentId);
 
     void cancelByActivitySlotIdAndStudentId(Long activitySlotId,
                                             Long studentId,

@@ -18,7 +18,6 @@ import io.github.mirvmir.common.exception.ForbiddenException;
 import io.github.mirvmir.common.exception.NotFoundException;
 import io.github.mirvmir.enrollment.api.EnrollmentApi;
 import io.github.mirvmir.identity.api.IdentityApi;
-import io.github.mirvmir.payment.api.PaymentApi;
 import io.github.mirvmir.taxonomy.api.TaxonomyApi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -198,7 +197,6 @@ class DefaultActivitySlotServiceTest {
                 60,
                 7L,
                 ActivityType.INDIVIDUAL,
-                30,
                 ContentStatus.ACTIVE,
                 ModerationStatus.APPROVED,
                 null,
@@ -220,7 +218,6 @@ class DefaultActivitySlotServiceTest {
                 60,
                 7L,
                 ActivityType.GROUP,
-                null,
                 ContentStatus.ACTIVE,
                 ModerationStatus.APPROVED,
                 null,

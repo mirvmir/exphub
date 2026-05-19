@@ -55,7 +55,7 @@ class DefaultCourseServiceTest {
         ProfileNameDto author = mock(ProfileNameDto.class);
         CourseInfoResponse expected = mock(CourseInfoResponse.class);
 
-        when(courseRepository.findById(1L)).thenReturn(course);
+        when(courseRepository.findActiveById(1L)).thenReturn(course);
         when(profileApi.getProfileName(2L)).thenReturn(author);
         when(identityApi.getCurrentUserId()).thenReturn(5L);
         when(enrollmentApi.isStudentOfCourse(1L, 5L)).thenReturn(true);
@@ -69,8 +69,9 @@ class DefaultCourseServiceTest {
         CourseInfoResponse result = service.getCourse(1L);
 
         assertSame(expected, result);
-        verify(courseRepository).findById(1L);
+        verify(courseRepository).findActiveById(1L);
         verify(profileApi).getProfileName(2L);
+        verify(identityApi).getCurrentUserId();
         verify(enrollmentApi).isStudentOfCourse(1L, 5L);
     }
 

@@ -21,6 +21,7 @@ import io.github.mirvmir.media.api.MediaApi;
 import io.github.mirvmir.profile.api.ProfileApi;
 import io.github.mirvmir.profile.api.dto.ProfileNameDto;
 import io.github.mirvmir.taxonomy.api.TaxonomyApi;
+import io.github.mirvmir.taxonomy.api.dto.TopicTaxonomyInfoResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -191,8 +192,15 @@ class DefaultAuthorCourseServiceTest {
     void updateTopics_shouldSaveAndPublishTopicChangeEvent() {
         Course course = draftCourse();
 
+        TopicTaxonomyInfoResponse topic11 = mock(TopicTaxonomyInfoResponse.class);
+        TopicTaxonomyInfoResponse topic12 = mock(TopicTaxonomyInfoResponse.class);
+
+        when(topic11.subjectId()).thenReturn(3L);
+        when(topic12.subjectId()).thenReturn(3L);
         when(courseRepository.findById(1L)).thenReturn(course);
         when(identityApi.getCurrentUserId()).thenReturn(2L);
+        when(taxonomyApi.getTopicTaxonomyInfo(Set.of(11L, 12L)))
+                .thenReturn(List.of(topic11, topic12));
         when(courseRepository.saveOrUpdate(course)).thenReturn(course);
 
         service.updateTopics(1L, new UpdateCourseTopicsRequest(3L, Set.of(11L, 12L)));
