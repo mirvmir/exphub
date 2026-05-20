@@ -124,13 +124,13 @@ class DefaultAuthorCourseServiceTest {
     }
 
     @Test
-    void getCourse_shouldThrowForbidden_whenCurrentUserIsNotAuthor() {
+    void getCourse_shouldThrowNotFound_whenCurrentUserIsNotAuthor() {
         Course course = draftCourse();
 
         when(courseRepository.findById(1L)).thenReturn(course);
         when(identityApi.getCurrentUserId()).thenReturn(99L);
 
-        assertThrows(ForbiddenException.class,
+        assertThrows(NotFoundException.class,
                 () -> service.getCourse(1L));
 
         verifyNoInteractions(courseVersionRepository, profileApi, courseResponseMapper);

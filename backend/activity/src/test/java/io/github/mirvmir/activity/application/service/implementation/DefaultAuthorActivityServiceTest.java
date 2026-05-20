@@ -114,7 +114,7 @@ class DefaultAuthorActivityServiceTest {
         when(activityRepository.findById(activity.getId())).thenReturn(activity);
         when(identityApi.getCurrentUserId()).thenReturn(99L);
 
-        ForbiddenException exception = assertThrows(ForbiddenException.class,
+        assertThrows(NotFoundException.class,
                 () -> service.getDescription(activity.getId()));
         verifyNoInteractions(profileApi, enrollmentApi);
     }

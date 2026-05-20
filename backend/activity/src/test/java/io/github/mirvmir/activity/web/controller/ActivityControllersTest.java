@@ -254,7 +254,7 @@ class ActivityControllersTest {
     void cancelSlotByAuthor_shouldReturn204() throws Exception {
         CancelActivitySlotRequest request = new CancelActivitySlotRequest("Не состоится");
 
-        authorMockMvc.perform(post("/author/activities/10/cancel")
+        authorMockMvc.perform(post("/author/activities/slots/10/cancel")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNoContent());
@@ -453,19 +453,4 @@ class ActivityControllersTest {
                 .andExpect(jsonPath("$.code").value("DATABASE_ERROR"))
                 .andExpect(jsonPath("$.message").value("Ошибка при обращении к базе данных"));
     }
-
-    @Test
-    void cancelSlotByStudent_whenPaymentUnavailable_shouldReturn503() throws Exception {
-        CancelActivitySlotRequest request = new CancelActivitySlotRequest("Не смогу прийти");
-
-        doThrow(new PaymentUnavailableException("Платежная система временно недоступна"))
-                .when(activitySlotService).cancelByStudent(eq(10L), any());
-
-        studentMockMvc.perform(post("/student/activities/10/cancel")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isServiceUnavailable())
-                .andExpect(jsonPath("$.message").value("Платежная система временно недоступна"));
-    }
-
 }

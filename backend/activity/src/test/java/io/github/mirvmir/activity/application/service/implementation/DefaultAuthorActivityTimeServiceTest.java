@@ -89,13 +89,13 @@ class DefaultAuthorActivityTimeServiceTest {
     }
 
     @Test
-    void createAvailabilityTime_shouldThrowForbidden_whenCurrentUserIsNotAuthor() {
+    void createAvailabilityTime_shouldThrowNotFound_whenCurrentUserIsNotAuthor() {
         Activity activity = individualActivity();
 
         when(activityRepository.findById(activity.getId())).thenReturn(activity);
         when(identityApi.getCurrentUserId()).thenReturn(99L);
 
-        ForbiddenException exception = assertThrows(ForbiddenException.class,
+        assertThrows(NotFoundException.class,
                 () -> service.createAvailabilityTime(
                         activity.getId(),
                         new CreateAvailabilityTimeRequest(
