@@ -61,7 +61,7 @@ class PracticeControllerTest {
                 any()))
                 .thenReturn(response);
 
-        mockMvc.perform(post("/student/practice/lessons/100/answers")
+        mockMvc.perform(post("/student/practice/lessons/3fa85f64-5717-4562-b3fc-2c963f66afa6/answers")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -96,7 +96,7 @@ class PracticeControllerTest {
         when(practiceService.addComment(eq(1L), any()))
                 .thenReturn(response);
 
-        mockMvc.perform(post("/teacher/practice/answers/1/comments")
+        mockMvc.perform(post("/author/practice/answers/1/comments")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -120,10 +120,10 @@ class PracticeControllerTest {
         when(practiceService.checkSubmissionByTeacher(10L))
                 .thenReturn(response);
 
-        mockMvc.perform(post("/teacher/practice/submissions/10/check"))
+        mockMvc.perform(post("/author/practice/submissions/10/check"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(10L))
-                .andExpect(jsonPath("$.lessonId").value(100L))
+                .andExpect(jsonPath("$.stableLessonId").value("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
                 .andExpect(jsonPath("$.courseEnrollmentId").value(200L))
                 .andExpect(jsonPath("$.studentId").value(1L));
     }
@@ -137,10 +137,10 @@ class PracticeControllerTest {
                 UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6")))
                 .thenReturn(response);
 
-        mockMvc.perform(get("/student/practice/lessons/100/submission"))
+        mockMvc.perform(get("/student/practice/lessons/3fa85f64-5717-4562-b3fc-2c963f66afa6/submission"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(10L))
-                .andExpect(jsonPath("$.lessonId").value(100L))
+                .andExpect(jsonPath("$.stableLessonId").value("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
                 .andExpect(jsonPath("$.courseEnrollmentId").value(200L))
                 .andExpect(jsonPath("$.studentId").value(1L))
                 .andExpect(jsonPath("$.answers[0].id").value(1000L))
@@ -160,10 +160,10 @@ class PracticeControllerTest {
                 UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6")))
                 .thenReturn(List.of(response));
 
-        mockMvc.perform(get("/teacher/practice/lessons/100/submissions"))
+        mockMvc.perform(get("/teacher/practice/lessons/3fa85f64-5717-4562-b3fc-2c963f66afa6/submissions"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(10L))
-                .andExpect(jsonPath("$[0].lessonId").value(100L))
+                .andExpect(jsonPath("$[0].stableLessonId").value("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
                 .andExpect(jsonPath("$[0].studentId").value(1L))
                 .andExpect(jsonPath("$[0].answers[0].id").value(1000L))
                 .andExpect(jsonPath("$[0].answers[0].comments[0].id").value(5000L));

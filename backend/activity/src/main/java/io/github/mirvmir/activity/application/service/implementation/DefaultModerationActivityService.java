@@ -39,8 +39,10 @@ public class DefaultModerationActivityService implements ModerationActivityServi
 
         if (activity == null) {
             log.warn("Activity not found for moderation action: activityId={}", id);
-            throw new NotFoundException(ActivityErrorCode.ACTIVITY_NOT_FOUND,
-                    "Activity with id=" + id + " not found");
+            throw new NotFoundException(
+                    ActivityErrorCode.ACTIVITY_NOT_FOUND,
+                    "Activity with id=" + id + " not found"
+            );
         }
 
         activity.approveModeration();
@@ -62,8 +64,10 @@ public class DefaultModerationActivityService implements ModerationActivityServi
 
         if (activity == null) {
             log.warn("Activity not found: activityId={}", id);
-            throw new NotFoundException(ActivityErrorCode.ACTIVITY_NOT_FOUND,
-                    "Activity with id=" + id + " not found");
+            throw new NotFoundException(
+                    ActivityErrorCode.ACTIVITY_NOT_FOUND,
+                    "Activity with id=" + id + " not found"
+            );
         }
 
         activity.rejectModeration(request.moderationComment());
@@ -80,8 +84,10 @@ public class DefaultModerationActivityService implements ModerationActivityServi
 
         if (activity == null) {
             log.warn("Activity not found: activityId={}", id);
-            throw new NotFoundException(ActivityErrorCode.ACTIVITY_NOT_FOUND,
-                    "Activity with id=" + id + " not found");
+            throw new NotFoundException(
+                    ActivityErrorCode.ACTIVITY_NOT_FOUND,
+                    "Activity with id=" + id + " not found"
+            );
         }
 
         activity.block();

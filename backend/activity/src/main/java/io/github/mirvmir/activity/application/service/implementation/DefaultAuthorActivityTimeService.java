@@ -85,7 +85,7 @@ public class DefaultAuthorActivityTimeService implements AuthorActivityTimeServi
         Activity activity = getActivityForCurrentAuthor(activityId);
 
         if (!activity.isIndividual()) {
-            log.warn("Availability times request rejected because activity is not individual: activityId={}, currentType={}",
+            log.warn("Availability times request rejected, activity is not individual: activityId={}, currentType={}",
                     activityId,
                     activity.getType());
             throw new BusinessException(ActivityErrorCode.ONLY_FOR_INDIVIDUAL);
@@ -109,7 +109,7 @@ public class DefaultAuthorActivityTimeService implements AuthorActivityTimeServi
         Activity activity = getActivityForCurrentAuthor(activityId);
 
         if (!activity.isIndividual()) {
-            log.warn("Availability time deletion rejected because activity is not individual: activityId={}, activityTimeId={}, currentType={}",
+            log.warn("Availability time deletion rejected, activity is not individual: activityId={}, activityTimeId={}, currentType={}",
                     activityId,
                     activityTimeId,
                     activity.getType());
@@ -126,7 +126,7 @@ public class DefaultAuthorActivityTimeService implements AuthorActivityTimeServi
         Activity activity = activityRepository.findById(activityId);
 
         if (activity == null) {
-            log.warn("Author activity lookup failed because activity was not found: activityId={}", activityId);
+            log.warn("Author activity lookup failed, activity was not found: activityId={}", activityId);
             throw new NotFoundException(
                     ActivityErrorCode.ACTIVITY_NOT_FOUND,
                     "Activity with id=" + activityId + " not found"
@@ -140,12 +140,15 @@ public class DefaultAuthorActivityTimeService implements AuthorActivityTimeServi
             throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
         }
 
-        if (!activity.getAuthorId().equals(currentUserId)) {
+        if (!currentUserId.equals(activity.getAuthorId())) {
             log.warn("Forbidden author activity access: activityId={}, expectedAuthorId={}, currentUserId={}",
                     activityId,
                     activity.getAuthorId(),
                     currentUserId);
-            throw new ForbiddenException(ActivityErrorCode.ACTIVITY_FORBIDDEN);
+            throw new NotFoundException(
+                    ActivityErrorCode.ACTIVITY_NOT_FOUND,
+                    "Activity with id=" + activityId + " not found"
+            );
         }
 
         return activity;

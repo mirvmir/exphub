@@ -1,7 +1,6 @@
 package io.github.mirvmir.course.application.service.implementation;
 
 import io.github.mirvmir.common.exception.BusinessException;
-import io.github.mirvmir.common.exception.ForbiddenException;
 import io.github.mirvmir.common.exception.NotFoundException;
 import io.github.mirvmir.common.exception.UnauthorizedException;
 import io.github.mirvmir.course.api.event.CourseChangeTopicIds;
@@ -59,7 +58,7 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
         Long currentUserId = identityApi.getCurrentUserId();
 
         if (currentUserId == null) {
-            log.info("Unauthorized author request");
+            log.warn("Unauthorized author request");
             throw new UnauthorizedException(
                     "UNAUTHORIZED",
                     "User not authorized"
@@ -564,7 +563,7 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
         Course course = courseRepository.findById(courseId);
 
         if (course == null) {
-            log.error("Course loading failed, course not found: courseId={}", courseId);
+            log.warn("Course loading failed, course not found: courseId={}", courseId);
             throw new NotFoundException(
                     CourseErrorCode.COURSE_NOT_FOUND,
                     "Course with id=" + courseId + " not found"
@@ -577,7 +576,7 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
     private Long getDraftVersionId(Course course) {
         if (course.getDraftVersion() == null
                 || course.getDraftVersion().getId() == null) {
-            log.error("Draft version loading failed, draft version not found: courseId={}",
+            log.warn("Draft version loading failed, draft version not found: courseId={}",
                     course.getId());
             throw new NotFoundException(
                     CourseErrorCode.COURSE_DRAFT_VERSION_NOT_FOUND,
@@ -592,14 +591,14 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
         Long currentUserId = identityApi.getCurrentUserId();
 
         if (currentUserId == null) {
-            log.error("Unauthorized author request");
+            log.warn("Unauthorized author request");
             throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
         }
 
         if (!currentUserId.equals(course.getAuthorId())) {
-            log.error("Course access denied: courseId={}, currentUserId={}, authorId={}",
+            log.warn("Forbidden author course action: courseId={}, currentUserId={}, authorId={}",
                     course.getId(), currentUserId, course.getAuthorId());
-            throw new ForbiddenException(CourseErrorCode.COURSE_FORBIDDEN);
+            throw new NotFoundException(CourseErrorCode.COURSE_NOT_FOUND);
         }
     }
 

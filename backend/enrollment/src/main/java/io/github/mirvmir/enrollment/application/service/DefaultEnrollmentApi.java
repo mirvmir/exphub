@@ -1,10 +1,10 @@
 package io.github.mirvmir.enrollment.application.service;
 
 import io.github.mirvmir.activity.api.ActivityApi;
-import io.github.mirvmir.activity.api.dto.ActivitySlotPurchaseInfoResponse;
+import io.github.mirvmir.activity.api.dto.ActivitySlotBookingInfoResponse;
 import io.github.mirvmir.common.exception.NotFoundException;
 import io.github.mirvmir.course.api.CourseApi;
-import io.github.mirvmir.course.api.dto.CoursePurchaseInfoResponse;
+import io.github.mirvmir.course.api.dto.CourseBookingInfoResponse;
 import io.github.mirvmir.course.api.dto.CourseTeacherResponse;
 import io.github.mirvmir.enrollment.api.EnrollmentApi;
 import io.github.mirvmir.enrollment.api.dto.StudentActivityEnrollmentResponse;
@@ -455,8 +455,8 @@ public class DefaultEnrollmentApi implements EnrollmentApi {
                 );
             }
 
-            ActivitySlotPurchaseInfoResponse activitySlot =
-                    activityApi.getSlotPurchaseInfo(enrollment.getActivitySlotId());
+            ActivitySlotBookingInfoResponse activitySlot =
+                    activityApi.getSlotBookingInfo(enrollment.getActivitySlotId());
 
             if (activitySlot == null) {
                 log.error("Teacher resolving failed because activity slot info was not found: orderId={}, activitySlotId={}",
@@ -482,7 +482,7 @@ public class DefaultEnrollmentApi implements EnrollmentApi {
                 );
             }
 
-            CoursePurchaseInfoResponse course =
+            CourseBookingInfoResponse course =
                     courseApi.getInfo(enrollment.getCourseId());
 
             if (course == null) {

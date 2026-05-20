@@ -4,7 +4,6 @@ import io.github.mirvmir.activity.api.event.ActivityDeleteEvent;
 import io.github.mirvmir.activity.application.persistence.mapper.ActivityEventMapper;
 import io.github.mirvmir.activity.application.persistence.mapper.ActivityResponseMapper;
 import io.github.mirvmir.activity.application.persistence.mapper.ActivitySlotResponseMapper;
-import io.github.mirvmir.activity.application.persistence.mapper.ActivityTimeResponseMapper;
 import io.github.mirvmir.activity.application.service.port.event.ActivityEventPublisher;
 import io.github.mirvmir.activity.application.service.port.repository.ActivityRepository;
 import io.github.mirvmir.activity.application.service.port.repository.ActivitySlotRepository;
@@ -18,7 +17,6 @@ import io.github.mirvmir.activity.web.request.CreateGroupActivitySlotRequest;
 import io.github.mirvmir.activity.web.request.UpdateActivityRequest;
 import io.github.mirvmir.activity.web.response.*;
 import io.github.mirvmir.common.exception.BusinessException;
-import io.github.mirvmir.common.exception.ForbiddenException;
 import io.github.mirvmir.common.exception.NotFoundException;
 import io.github.mirvmir.common.exception.UnauthorizedException;
 import io.github.mirvmir.enrollment.api.EnrollmentApi;
@@ -64,7 +62,7 @@ public class DefaultAuthorActivityService implements AuthorActivityService {
         Long authorId = identityApi.getCurrentUserId();
 
         if (authorId == null) {
-            log.error("Unauthorized author request");
+            log.warn("Unauthorized author request");
             throw new UnauthorizedException(
                     "UNAUTHORIZED",
                     "User not authorized"
@@ -117,7 +115,7 @@ public class DefaultAuthorActivityService implements AuthorActivityService {
         Activity activity = getActivityForCurrentAuthor(activityId);
 
         if (!activity.isIndividual()) {
-            log.warn("Individual slots request rejected because activity is not individual: activityId={}, currentType={}",
+            log.warn("Individual slots request rejected, activity is not individual: activityId={}, currentType={}",
                     activityId,
                     activity.getType());
             throw new BusinessException(ActivityErrorCode.ONLY_FOR_INDIVIDUAL);
@@ -134,7 +132,7 @@ public class DefaultAuthorActivityService implements AuthorActivityService {
         Activity activity = getActivityForCurrentAuthor(activityId);
 
         if (!activity.isGroup()) {
-            log.warn("Group slots request rejected because activity is not group: activityId={}, currentType={}",
+            log.warn("Group slots request rejected, activity is not group: activityId={}, currentType={}",
                     activityId,
                     activity.getType());
             throw new BusinessException(ActivityErrorCode.ONLY_FOR_GROUP);
@@ -217,7 +215,7 @@ public class DefaultAuthorActivityService implements AuthorActivityService {
         Activity activity = activityRepository.findById(activityId);
 
         if (activity == null) {
-            log.warn("Activity update failed because activity was not found: activityId={}", activityId);
+            log.warn("Activity update failed, activity not found: activityId={}", activityId);
             throw new NotFoundException(
                     ActivityErrorCode.ACTIVITY_NOT_FOUND,
                     "Activity with id=" + activityId + " not found"
@@ -251,7 +249,7 @@ public class DefaultAuthorActivityService implements AuthorActivityService {
         Activity activity = activityRepository.findById(id);
 
         if (activity == null) {
-            log.warn("Activity publication failed because activity was not found: activityId={}", id);
+            log.warn("Activity publication failed, activity not found: activityId={}", id);
             throw new NotFoundException(
                     ActivityErrorCode.ACTIVITY_NOT_FOUND,
                     "Activity with id=" + id + " not found"
@@ -274,7 +272,7 @@ public class DefaultAuthorActivityService implements AuthorActivityService {
         Activity activity = activityRepository.findById(id);
 
         if (activity == null) {
-            log.warn("Activity archive failed because activity was not found: activityId={}", id);
+            log.warn("Activity archive failed, activity not found: activityId={}", id);
             throw new NotFoundException(
                     ActivityErrorCode.ACTIVITY_NOT_FOUND,
                     "Activity with id=" + id + " not found"
@@ -301,7 +299,7 @@ public class DefaultAuthorActivityService implements AuthorActivityService {
         Activity activity = activityRepository.findById(id);
 
         if (activity == null) {
-            log.warn("Activity unarchive failed because activity was not found: activityId={}", id);
+            log.warn("Activity unarchive failed, activity not found: activityId={}", id);
             throw new NotFoundException(
                     ActivityErrorCode.ACTIVITY_NOT_FOUND,
                     "Activity with id=" + id + " not found"
@@ -328,7 +326,7 @@ public class DefaultAuthorActivityService implements AuthorActivityService {
         Activity activity = activityRepository.findById(id);
 
         if (activity == null) {
-            log.warn("Activity deletion failed because activity was not found: activityId={}", id);
+            log.warn("Activity deletion failed, activity not found: activityId={}", id);
             throw new NotFoundException(
                     ActivityErrorCode.ACTIVITY_NOT_FOUND,
                     "Activity with id=" + id + " not found"
@@ -341,7 +339,7 @@ public class DefaultAuthorActivityService implements AuthorActivityService {
         boolean hasPlannedSlots =
                 activitySlotRepository.existsPlannedByActivityId(id);
         if (hasPlannedSlots) {
-            log.warn("Activity deletion rejected because planned slots exist: activityId={}", id);
+            log.warn("Activity deletion rejected, planned slots exist: activityId={}", id);
             throw new BusinessException(
                     ActivityErrorCode.ACTIVITY_HAS_PLANNED_SLOTS
             );
@@ -361,7 +359,7 @@ public class DefaultAuthorActivityService implements AuthorActivityService {
         Activity activity = activityRepository.findById(id);
 
         if (activity == null || !activity.isActive()) {
-            log.warn("Group activity slot creation failed because active activity was not found: activityId={}", id);
+            log.warn("Group activity slot creation failed, active activity not found: activityId={}", id);
             throw new NotFoundException(
                     ActivityErrorCode.ACTIVITY_NOT_FOUND,
                     "Activity with id=" + id + " not found"
@@ -408,11 +406,21 @@ public class DefaultAuthorActivityService implements AuthorActivityService {
             log.warn("Forbidden author activity action: expectedAuthorId={}, currentUserId={}",
                     authorId,
                     currentUserId);
-            throw new ForbiddenException(ActivityErrorCode.ACTIVITY_FORBIDDEN);
+            throw new NotFoundException(ActivityErrorCode.ACTIVITY_NOT_FOUND);
         }
     }
 
     private Activity getActivityForCurrentAuthor(Long activityId) {
+        Long currentUserId = identityApi.getCurrentUserId();
+
+        if (currentUserId == null) {
+            log.warn("Unauthorized author request");
+            throw new UnauthorizedException(
+                    "UNAUTHORIZED",
+                    "User not authorized"
+            );
+        }
+
         Activity activity = activityRepository.findById(activityId);
 
         if (activity == null) {
@@ -424,22 +432,16 @@ public class DefaultAuthorActivityService implements AuthorActivityService {
             );
         }
 
-        Long currentUserId = identityApi.getCurrentUserId();
-
-        if (currentUserId == null) {
-            log.warn("Unauthorized author request");
-            throw new UnauthorizedException(
-                    "UNAUTHORIZED",
-                    "User not authorized"
-            );
-        }
-
-        if (!activity.getAuthorId().equals(currentUserId)) {
-            log.warn("Forbidden author activity access: activityId={}, expectedAuthorId={}, currentUserId={}",
-                    activityId,
-                    activity.getAuthorId(),
+        Long authorId = activity.getAuthorId();
+        boolean isAuthor = currentUserId.equals(authorId);
+        if (!isAuthor) {
+            log.warn("Forbidden author activity action: expectedAuthorId={}, currentUserId={}",
+                    authorId,
                     currentUserId);
-            throw new ForbiddenException(ActivityErrorCode.ACTIVITY_FORBIDDEN);
+            throw new NotFoundException(
+                    ActivityErrorCode.ACTIVITY_NOT_FOUND,
+                    "Activity with id=" + activityId + " not found"
+            );
         }
 
         return activity;

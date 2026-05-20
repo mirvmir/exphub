@@ -63,7 +63,7 @@ public class DefaultActivitySlotService implements ActivitySlotService {
                 enrollmentApi.getStudentActivityEnrollments(studentId);
 
         if (enrollments.isEmpty()) {
-            log.info("Student activities prepared: studentId={}, count={}",
+            log.info("Student activities successfully received: studentId={}, count={}",
                     studentId,
                     0);
             return Set.of();
@@ -89,7 +89,7 @@ public class DefaultActivitySlotService implements ActivitySlotService {
                     ActivitySlot slot = slotsById.get(enrollment.activitySlotId());
 
                     if (activity == null || slot == null) {
-                        log.debug("Student activity enrollment skipped because activity or slot was not found: enrollmentId={}, activityId={}, slotId={}",
+                        log.debug("Student activity enrollment getting failed, activity or slot not found: enrollmentId={}, activityId={}, slotId={}",
                                 enrollment.enrollmentId(),
                                 enrollment.activityId(),
                                 enrollment.activitySlotId());
@@ -107,7 +107,7 @@ public class DefaultActivitySlotService implements ActivitySlotService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        log.info("Student activities prepared: studentId={}, count={}",
+        log.info("Student activities successfully received: studentId={}, count={}",
                 studentId,
                 result.size());
         return result;
@@ -210,7 +210,7 @@ public class DefaultActivitySlotService implements ActivitySlotService {
         activityEventPublisher.delete(
                 new ActivityDeleteEvent(activity.getId())
         );
-        log.info("Activity slot cancellation by student processed: activityId={}, activitySlotId={}, userId={}",
+        log.info("Activity slot successfully cancellation by student: activityId={}, activitySlotId={}, userId={}",
                 activity.getId(),
                 slot.getId(),
                 currentUserId);
@@ -245,7 +245,7 @@ public class DefaultActivitySlotService implements ActivitySlotService {
         slot.complete();
 
         activitySlotRepository.saveOrUpdate(slot);
-        log.info("Activity slot completed: activityId={}, activitySlotId={}, userId={}",
+        log.info("Activity slot successfully completed: activityId={}, activitySlotId={}, userId={}",
                 activity.getId(),
                 slot.getId(),
                 currentUserId);

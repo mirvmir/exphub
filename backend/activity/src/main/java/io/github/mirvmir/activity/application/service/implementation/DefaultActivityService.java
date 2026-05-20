@@ -129,7 +129,7 @@ public class DefaultActivityService implements ActivityService {
             }
         }
 
-        log.info("Activity description prepared: activityId={}, userId={}, isStudent={}",
+        log.info("Activity description successfully received: activityId={}, userId={}, isStudent={}",
                 activity.getId(),
                 currentUserId,
                 isStudent);

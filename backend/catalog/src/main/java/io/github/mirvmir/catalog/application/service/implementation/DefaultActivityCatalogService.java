@@ -94,6 +94,7 @@ public class DefaultActivityCatalogService implements ActivityCatalogService {
                 taxonomyData.sectionIds(),
                 taxonomyData.subjectIds()
         );
+
         log.info("Activity catalog topics updated: activityId={}, topicIds={}, sectionIds={}, subjectIds={}",
                 activityId,
                 taxonomyData.topicIds(),

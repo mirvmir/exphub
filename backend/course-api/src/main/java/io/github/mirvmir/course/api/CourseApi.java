@@ -1,14 +1,14 @@
 package io.github.mirvmir.course.api;
 
 import io.github.mirvmir.course.api.dto.CourseLessonInfoResponse;
-import io.github.mirvmir.course.api.dto.CoursePurchaseInfoResponse;
+import io.github.mirvmir.course.api.dto.CourseBookingInfoResponse;
 import io.github.mirvmir.course.api.dto.CourseTeacherResponse;
 
 import java.util.Set;
 import java.util.UUID;
 
 public interface CourseApi {
-    CoursePurchaseInfoResponse getInfo(Long courseId);
+    CourseBookingInfoResponse getInfo(Long courseId);
     CourseLessonInfoResponse getLessonInfo(Long courseLessonId);
     CourseTeacherResponse getCourseTeacher(Long courseId);
     Long getCourseIdByStableLessonId(UUID stableLessonId);

@@ -6,6 +6,7 @@ import io.github.mirvmir.enrollment.web.response.BookingResponse;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @AllArgsConstructor
@@ -39,16 +40,17 @@ public class EnrollmentController {
 
     @PostMapping("/individual-activities/{activityId}/book")
     @ResponseStatus(HttpStatus.CREATED)
-    public BookingResponse bookIndividualActivity(
+    public ResponseEntity<BookingResponse> bookIndividualActivity(
             @PathVariable("activityId")
             Long activityId,
             @Valid
             @RequestBody
             BookIndividualActivityRequest request
     ) {
-        return enrollmentBookingService.bookIndividualActivity(
+        var response = enrollmentBookingService.bookIndividualActivity(
                 activityId,
                 request
         );
+        return ResponseEntity.ok(response);
     }
 }

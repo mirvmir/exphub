@@ -423,10 +423,10 @@ class ActivityControllersTest {
         studentMockMvc.perform(post("/student/activities/10/cancel")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                            {
-                              "reason": ""
-                            }
-                            """))
+                                {
+                                  "reason": ""
+                                }
+                                """))
                 .andExpect(status().isBadRequest());
 
         verify(activitySlotService, never()).cancelByStudent(anyLong(), any());
