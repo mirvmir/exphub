@@ -93,7 +93,7 @@ public class WebConfig implements WebMvcConfigurer {
                         .title("Exphub API")
                         .version("1.0.0")
                         .description("Документация API"))
-                .addServersItem(new Server().url("/configuration"))
+                .addServersItem(new Server().url("/"))
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
                 .components(new Components()
                         .addSecuritySchemes(securitySchemeName,
