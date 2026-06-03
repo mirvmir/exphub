@@ -259,36 +259,6 @@ user: postgres
 password: password
 ```
 
-## Payment system
-
-The payment module depends on an external banking/payment system. To test payment scenarios, the banking system must also be started separately from another repository.
-
-Example repository:
-
-```text
-https://github.com/example/banking-system
-```
-
-Clone and run the banking system according to its own README before testing payment flows in this application.
-
-For Docker Compose run, the backend currently expects the banking system to be available inside the Docker network by this URL:
-
-```text
-http://exphub-mock-bank:8000
-```
-
-If the banking system has a different service/container name or runs on another port, update the `BANK_BASE_URL` value in `backend/docker-compose.yml` before starting the backend.
-
-For example:
-
-```bash
-git clone https://github.com/example/banking-system.git
-cd banking-system
-docker compose up --build
-```
-
-After the banking system is running, start the backend application from the `./backend` directory.
-
 ## Run without Docker
 
 Before running the commands, make sure you are inside the backend directory:
