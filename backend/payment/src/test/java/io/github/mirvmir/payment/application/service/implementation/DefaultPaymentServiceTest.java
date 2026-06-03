@@ -7,6 +7,7 @@ import io.github.mirvmir.payment.api.event.PaymentSucceededEvent;
 import io.github.mirvmir.payment.application.integration.BankPaymentGatewayClient;
 import io.github.mirvmir.payment.application.integration.dto.BankBindCardResponse;
 import io.github.mirvmir.payment.application.integration.dto.BankPayResponse;
+import io.github.mirvmir.payment.application.properties.BankProperties;
 import io.github.mirvmir.payment.application.service.port.event.PaymentEventPublisher;
 import io.github.mirvmir.payment.application.service.port.repository.PaymentRepository;
 import io.github.mirvmir.payment.application.service.port.repository.PayoutRepository;
@@ -45,6 +46,7 @@ class DefaultPaymentServiceTest {
 
     private EnrollmentApi enrollmentApi;
     private IdentityApi identityApi;
+    private BankProperties bankProperties;
     private BankPaymentGatewayClient bankPaymentGatewayClient;
     private UserCardRepository userCardRepository;
     private PaymentRepository paymentRepository;
@@ -63,6 +65,7 @@ class DefaultPaymentServiceTest {
     void setUp() {
         enrollmentApi = mock(EnrollmentApi.class);
         identityApi = mock(IdentityApi.class);
+        bankProperties = mock(BankProperties.class);
         bankPaymentGatewayClient = mock(BankPaymentGatewayClient.class);
         userCardRepository = mock(UserCardRepository.class);
         paymentRepository = mock(PaymentRepository.class);
@@ -70,9 +73,12 @@ class DefaultPaymentServiceTest {
         refundRepository = mock(RefundRepository.class);
         eventPublisher = mock(PaymentEventPublisher.class);
 
+        when(bankProperties.getPaymentWebhookUrl()).thenReturn("http://localhost/payments/webhook/bank");
+
         service = new DefaultPaymentService(
                 enrollmentApi,
                 identityApi,
+                bankProperties,
                 bankPaymentGatewayClient,
                 userCardRepository,
                 paymentRepository,
@@ -330,7 +336,8 @@ class DefaultPaymentServiceTest {
         Payout payout = payout(1L, PayoutStatus.PROCESSING, "external-payout-1");
         BankPayoutWebhookRequest request = new BankPayoutWebhookRequest(
                 "external-payout-1",
-                "SUCCEEDED"
+                "SUCCEEDED",
+                null
         );
 
         when(payoutRepository.findByExternalPayoutId("external-payout-1")).thenReturn(payout);
@@ -348,7 +355,8 @@ class DefaultPaymentServiceTest {
         Payment payment = payment(1L, 2L, PaymentStatus.SUCCEEDED, "external-payment-1");
         BankRefundWebhookRequest request = new BankRefundWebhookRequest(
                 "external-refund-1",
-                "SUCCEEDED"
+                "SUCCEEDED",
+                null
         );
 
         when(refundRepository.findByExternalRefundId("external-refund-1")).thenReturn(refund);
@@ -367,7 +375,8 @@ class DefaultPaymentServiceTest {
         Refund refund = refund(1L, 1L, RefundStatus.SUCCEEDED, "external-refund-1");
         BankRefundWebhookRequest request = new BankRefundWebhookRequest(
                 "external-refund-1",
-                "SUCCEEDED"
+                "SUCCEEDED",
+                null
         );
 
         when(refundRepository.findByExternalRefundId("external-refund-1")).thenReturn(refund);

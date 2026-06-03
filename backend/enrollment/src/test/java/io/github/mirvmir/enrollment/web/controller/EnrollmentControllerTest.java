@@ -90,7 +90,7 @@ class EnrollmentControllerTest {
     }
 
     @Test
-    void bookIndividualActivity_shouldReturnCreated() throws Exception {
+    void bookIndividualActivity_shouldReturnOk() throws Exception {
         Instant startAt = Instant.now().plusSeconds(3600);
         BookIndividualActivityRequest request =
                 new BookIndividualActivityRequest(300L, startAt);
@@ -113,7 +113,7 @@ class EnrollmentControllerTest {
         mockMvc.perform(post("/enrollments/individual-activities/400/book")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.targetType").value("INDIVIDUAL_ACTIVITY"))
                 .andExpect(jsonPath("$.targetId").value(400L));
 

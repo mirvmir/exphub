@@ -2,10 +2,12 @@ package io.github.mirvmir.payment.application.service.implementation;
 
 import io.github.mirvmir.common.exception.ForbiddenException;
 import io.github.mirvmir.common.exception.NotFoundException;
+import io.github.mirvmir.common.exception.UnauthorizedException;
 import io.github.mirvmir.enrollment.api.EnrollmentApi;
 import io.github.mirvmir.identity.api.IdentityApi;
 import io.github.mirvmir.payment.api.event.PaymentRefundedEvent;
 import io.github.mirvmir.payment.api.event.PayoutSucceededEvent;
+import io.github.mirvmir.payment.application.properties.BankProperties;
 import io.github.mirvmir.payment.application.service.port.event.PaymentEventPublisher;
 import io.github.mirvmir.payment.application.service.port.repository.PayoutRepository;
 import io.github.mirvmir.payment.application.service.port.repository.RefundRepository;
@@ -29,7 +31,6 @@ import io.github.mirvmir.payment.web.request.BindCardRequest;
 import io.github.mirvmir.payment.web.response.BindCardResponse;
 import io.github.mirvmir.payment.web.response.ConfirmPaymentResponse;
 import lombok.AllArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,6 +48,7 @@ public class DefaultPaymentService implements PaymentService {
 
     private final EnrollmentApi enrollmentApi;
     private final IdentityApi identityApi;
+    private final BankProperties bankProperties;
 
     private final BankPaymentGatewayClient bankPaymentGatewayClient;
 
@@ -82,6 +84,10 @@ public class DefaultPaymentService implements PaymentService {
         }
 
         Long currentUserId = identityApi.getCurrentUserId();
+
+        if (currentUserId == null) {
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
 
         if (userCardRepository.existsByUserIdAndCardToken(
                 currentUserId,
@@ -119,6 +125,10 @@ public class DefaultPaymentService implements PaymentService {
     public List<BindCardResponse> getMyCard() {
         Long currentUserId = identityApi.getCurrentUserId();
 
+        if (currentUserId == null) {
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
+
         List<UserCard> cards = userCardRepository.findByUserId(currentUserId);
 
         return cards.stream()
@@ -135,6 +145,10 @@ public class DefaultPaymentService implements PaymentService {
     @Transactional
     public void setDefaultCard(Long cardId) {
         Long currentUserId = identityApi.getCurrentUserId();
+
+        if (currentUserId == null) {
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
 
         UserCard newDefaultCard = userCardRepository.findById(cardId);
 
@@ -196,12 +210,7 @@ public class DefaultPaymentService implements PaymentService {
             throw new PaymentException("Заказ был отменён");
         }
 
-        boolean orderExpired = enrollmentApi.isOrderExpired(
-                payment.getOrderId(),
-                now
-        );
-
-        if (orderExpired) {
+        if (enrollmentApi.isOrderExpired(payment.getOrderId(), now)) {
             enrollmentApi.expireOrder(payment.getOrderId(), now);
             payment.expire();
 
@@ -210,17 +219,11 @@ public class DefaultPaymentService implements PaymentService {
             throw new PaymentException("Время оплаты истекло");
         }
 
-        enrollmentApi.markPaymentProcessing(
-                payment.getOrderId(),
-                now
-        );
+        enrollmentApi.markPaymentProcessing(payment.getOrderId(), now);
 
-        UserCard card;
-        if (cardId != null) {
-            card = userCardRepository.findById(cardId);
-        } else {
-            card = userCardRepository.findDefaultByUserId(payment.getUserId());
-        }
+        UserCard card = cardId != null
+                ? userCardRepository.findById(cardId)
+                : userCardRepository.findDefaultByUserId(payment.getUserId());
 
         if (card == null
                 || !card.getUserId().equals(payment.getUserId())
@@ -235,13 +238,19 @@ public class DefaultPaymentService implements PaymentService {
                         card.getCardToken(),
                         payment.getPrice().getAmount(),
                         payment.getPrice().getCurrency(),
-                        payment.getOrderId(),
+                        String.valueOf(payment.getOrderId()),
                         payment.getDescription(),
-                        "http://localhost:8080/payments/webhook/bank"
+                        bankProperties.getPaymentWebhookUrl()
                 )
         );
 
-        payment.markProcessing(bankResponse.paymentId());
+        if ("PROCESSING".equals(bankResponse.status())) {
+            payment.markProcessing(bankResponse.paymentId());
+        } else if ("FAILED".equals(bankResponse.status())) {
+            payment.markFailed(bankResponse.paymentId());
+        } else {
+            throw new PaymentException("Некорректный статус платежа от банка");
+        }
 
         paymentRepository.save(payment);
 
@@ -364,10 +373,8 @@ public class DefaultPaymentService implements PaymentService {
                             refund.getRefundedAt()
                     )
             );
-
         } else if (RefundStatus.FAILED == bankStatus) {
             refund.markFailedFromWebhook();
-
         } else {
             throw new PaymentException("Некорректный статус возврата от банка");
         }

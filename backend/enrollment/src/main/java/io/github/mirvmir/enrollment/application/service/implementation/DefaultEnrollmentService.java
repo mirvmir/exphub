@@ -11,14 +11,14 @@ import io.github.mirvmir.enrollment.domain.CourseEnrollment;
 import io.github.mirvmir.enrollment.domain.order.Order;
 import io.github.mirvmir.enrollment.domain.order.OrderTargetType;
 import io.github.mirvmir.enrollment.exception.EnrollmentErrorCode;
-import io.github.mirvmir.payment.api.PaymentApi;
-import io.github.mirvmir.payment.api.dto.CreateRefundRequest;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Currency;
 
 @AllArgsConstructor
 @Slf4j
@@ -31,7 +31,7 @@ public class DefaultEnrollmentService implements EnrollmentService {
 
     private final BookingProperties bookingProperties;
 
-    private final PaymentApi paymentApi;
+    private final RefundOrderService refundOrderService;
 
     @Override
     @Transactional
@@ -49,8 +49,7 @@ public class DefaultEnrollmentService implements EnrollmentService {
         }
 
         if (order.isRefundRequired()) {
-            log.info("Payment success event ignored because refund is already requested: orderId={}",
-                    orderId);
+            log.info("Order already requires refund, payment success event ignored: orderId={}", orderId);
             return;
         }
 
@@ -64,8 +63,13 @@ public class DefaultEnrollmentService implements EnrollmentService {
             log.info("Payment succeeded after order cancellation, refund will be requested: orderId={}, targetType={}",
                     orderId,
                     order.getTargetType());
-            refundOrder(order, "Заказ был отменен");
-            orderRepository.saveOrUpdate(order);
+
+            requireRefund(
+                    order.getId(),
+                    order.getAmount(),
+                    order.getCurrency(),
+                    "Заказ был отменен"
+            );
             return;
         }
 
@@ -76,12 +80,15 @@ public class DefaultEnrollmentService implements EnrollmentService {
                     now);
 
             if (!order.isExpiredStatus()) {
-                order.expire(now);
-                expireEnrollment(order, now);
+                refundOrderService.markExpiredAndRefundRequired(orderId, now);
             }
 
-            refundOrder(order, "Бронирование истекло до подтверждения оплаты");
-            orderRepository.saveOrUpdate(order);
+            requireRefund(
+                    order.getId(),
+                    order.getAmount(),
+                    order.getCurrency(),
+                    "Бронирование истекло до подтверждения оплаты"
+            );
             return;
         }
 
@@ -94,8 +101,13 @@ public class DefaultEnrollmentService implements EnrollmentService {
                 log.info("Payment succeeded for cancelled course enrollment, refund will be requested: orderId={}, enrollmentId={}",
                         orderId,
                         enrollment.getId());
-                refundOrder(order, "Заказ был отменен");
-                orderRepository.saveOrUpdate(order);
+
+                requireRefund(
+                        order.getId(),
+                        order.getAmount(),
+                        order.getCurrency(),
+                        "Курс был отменен"
+                );
                 return;
             }
 
@@ -112,8 +124,13 @@ public class DefaultEnrollmentService implements EnrollmentService {
                 log.info("Payment succeeded for cancelled activity enrollment, refund will be requested: orderId={}, enrollmentId={}",
                         orderId,
                         enrollment.getId());
-                refundOrder(order, "Заказ был отменен");
-                orderRepository.saveOrUpdate(order);
+
+                requireRefund(
+                        order.getId(),
+                        order.getAmount(),
+                        order.getCurrency(),
+                        "Занятие было отменено"
+                );
                 return;
             }
 
@@ -150,53 +167,25 @@ public class DefaultEnrollmentService implements EnrollmentService {
         orderRepository.saveOrUpdate(order);
     }
 
-    private void expireEnrollment(Order order, Instant now) {
-        if (OrderTargetType.COURSE == order.getTargetType()) {
-            CourseEnrollment enrollment = getCourseEnrollment(order);
-            enrollment.expire(now, bookingProperties.getBookingExpiresMinutes());
-            courseEnrollmentRepository.saveOrUpdate(enrollment);
-            return;
-        }
-
-        if (OrderTargetType.ACTIVITY_SLOT == order.getTargetType()) {
-            ActivityEnrollment enrollment = getActivityEnrollment(order);
-            enrollment.expire(now, bookingProperties.getBookingExpiresMinutes());
-            activityEnrollmentRepository.saveOrUpdate(enrollment);
-            return;
-        }
-
-        log.error("Enrollment expiration skipped because order target type is unsupported: orderId={}, targetType={}",
-                order.getId(),
-                order.getTargetType());
-        throw new IllegalStateException("Unsupported order target type: " + order.getTargetType());
-    }
-
-    private void refundOrder(Order order, String reason) {
-        log.info("Requesting payment refund: orderId={}, amount={}, currency={}, reason={}",
-                order.getId(),
-                order.getAmount(),
-                order.getCurrency(),
-                reason);
+    private void requireRefund(Long orderId,
+                               BigDecimal amount,
+                               Currency currency,
+                               String reason) {
+        refundOrderService.markRefundRequired(orderId);
 
         try {
-            paymentApi.refundPayment(
-                    new CreateRefundRequest(
-                            order.getId(),
-                            order.getAmount(),
-                            order.getCurrency(),
-                            reason
-                    )
+            refundOrderService.requestRefund(
+                    orderId,
+                    amount,
+                    currency,
+                    reason
             );
         } catch (RuntimeException exception) {
-            log.error("Payment refund request failed: orderId={}, targetType={}, targetId={}",
-                    order.getId(),
-                    order.getTargetType(),
-                    order.getTargetId(),
+            log.error("Payment refund request failed: orderId={}, reason={}",
+                    orderId,
+                    reason,
                     exception);
-            throw exception;
         }
-
-        order.markRefundRequired();
     }
 
     private CourseEnrollment getCourseEnrollment(Order order) {

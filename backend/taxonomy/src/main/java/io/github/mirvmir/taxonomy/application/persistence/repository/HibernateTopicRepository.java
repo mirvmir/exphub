@@ -94,20 +94,4 @@ public class HibernateTopicRepository implements TopicRepository {
 
         return topicMapper.toDomain(entity);
     }
-
-    @Override
-    public boolean existsBySectionIdAndName(Long sectionId, String name) {
-        return Boolean.TRUE.equals(
-                sessionFactory.getCurrentSession()
-                        .createQuery("""
-                                select count(t.id) > 0
-                                from TopicEntity t
-                                where t.sectionId = :sectionId
-                                  and lower(t.name) = lower(:name)
-                                """, Boolean.class)
-                                .setParameter("sectionId", sectionId)
-                                .setParameter("name", name)
-                                .uniqueResult()
-        );
-    }
 }

@@ -2,6 +2,7 @@ package io.github.mirvmir.review.application.service.implementation;
 
 import io.github.mirvmir.common.exception.BusinessException;
 import io.github.mirvmir.common.exception.ForbiddenException;
+import io.github.mirvmir.common.exception.UnauthorizedException;
 import io.github.mirvmir.enrollment.api.EnrollmentApi;
 import io.github.mirvmir.identity.api.IdentityApi;
 import io.github.mirvmir.review.api.dto.ReviewRatingInfoResponse;
@@ -33,6 +34,10 @@ public class DefaultReviewService implements ReviewService {
     public ReviewResponse createActivityReview(Long activityId,
                                                CreateReviewRequest request) {
         Long currentUserId = identityApi.getCurrentUserId();
+
+        if (currentUserId == null) {
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
 
         boolean isStudent = enrollmentApi.isStudentOfActivity(
                 currentUserId,
@@ -73,6 +78,10 @@ public class DefaultReviewService implements ReviewService {
     public ReviewResponse createCourseReview(Long courseId,
                                              CreateReviewRequest request) {
         Long currentUserId = identityApi.getCurrentUserId();
+
+        if (currentUserId == null) {
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
 
         boolean isStudent = enrollmentApi.isStudentOfCourse(
                 currentUserId,

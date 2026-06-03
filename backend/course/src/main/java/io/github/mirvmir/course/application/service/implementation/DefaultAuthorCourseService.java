@@ -1,8 +1,8 @@
 package io.github.mirvmir.course.application.service.implementation;
 
 import io.github.mirvmir.common.exception.BusinessException;
-import io.github.mirvmir.common.exception.ForbiddenException;
 import io.github.mirvmir.common.exception.NotFoundException;
+import io.github.mirvmir.common.exception.UnauthorizedException;
 import io.github.mirvmir.course.api.event.CourseChangeTopicIds;
 import io.github.mirvmir.course.api.event.CourseDeleteEvent;
 import io.github.mirvmir.course.api.event.CoursePublishedEvent;
@@ -33,7 +33,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Slf4j
@@ -51,6 +50,36 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
     private final CourseResponseMapper courseResponseMapper;
 
     private final CourseEventPublisher eventPublisher;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AuthorCourseResponse> getAllCourse() {
+        log.debug("Getting all course for author");
+        Long currentUserId = identityApi.getCurrentUserId();
+
+        if (currentUserId == null) {
+            log.warn("Unauthorized author request");
+            throw new UnauthorizedException(
+                    "UNAUTHORIZED",
+                    "User not authorized"
+            );
+        }
+
+        ProfileNameDto author = profileApi.getProfileName(currentUserId);
+        List<Course> courses = courseRepository.findByAuthorId(currentUserId);
+        List<AuthorCourseResponse> response = courses.stream()
+                .map(course -> courseResponseMapper.toAuthorCourseResponse(
+                        course,
+                        course.getDraftVersion(),
+                        author,
+                        course.isEditable(),
+                        course.isPublishable()
+                ))
+                .toList();
+
+        log.info("Author courses successfully received");
+        return response;
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -169,10 +198,15 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
     @Override
     @Transactional
     public IdResponse createCourse(CreateCourseRequest request) {
-        log.info("Course creation requested: title={}",
+        log.debug("Course creation requested: title={}",
                 request.title());
 
         Long authorId = identityApi.getCurrentUserId();
+
+        if (authorId == null) {
+            log.error("Unauthorized create course request");
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
 
         Course course = Course.create(
                 authorId,
@@ -190,19 +224,27 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
     @Transactional
     public void updateTopics(Long courseId,
                              UpdateCourseTopicsRequest request) {
-        log.info("Course topics update requested: courseId={}, topicIds={}",
+        log.debug("Course topics update requested: courseId={}, topicIds={}",
                 courseId, request.topicIds());
 
         Course course = getExistingCourse(courseId);
         ensureAuthor(course);
 
         List<TopicTaxonomyInfoResponse> topicsInfo = taxonomyApi.getTopicTaxonomyInfo(request.topicIds());
+        if (topicsInfo.size() != request.topicIds().size()) {
+            log.warn("Course topics update failed, topic not found: topicIds={}",
+                    request.topicIds());
+            throw new NotFoundException(CourseErrorCode.TOPIC_NOT_FOUND);
+        }
         boolean inSubject = topicsInfo.stream()
                 .allMatch(
                         topicInfo ->
                                 request.subjectId().equals(topicInfo.subjectId())
                 );
         if (!inSubject) {
+            log.warn("Course topics update failed, topic not in subject: topicIds={}, subjectId={}",
+                    request.topicIds(),
+                    request.subjectId());
             throw new BusinessException(CourseErrorCode.TOPIC_SUBJECT_MISMATCH);
         }
 
@@ -225,7 +267,7 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
     public void updateLessonOpensAt(Long courseId,
                                     UUID stableLessonId,
                                     UpdateLessonOpensAtRequest request) {
-        log.info("Course lesson open date update requested: courseId={}, stableLessonId={}, opensAt={}",
+        log.debug("Course lesson open date update requested: courseId={}, stableLessonId={}, opensAt={}",
                 courseId, stableLessonId, request.opensAt());
 
         Course course = getExistingCourse(courseId);
@@ -247,7 +289,7 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
     @Transactional
     public AuthorCourseResponse updateDraftCourse(Long courseId,
                                                   UpdateCourseDraftRequest request) {
-        log.info("Course draft update requested: courseId={}", courseId);
+        log.debug("Course draft update requested: courseId={}", courseId);
 
         Course course = courseRepository.findByIdWithDraftInfo(courseId);
 
@@ -292,7 +334,7 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
     @Transactional
     public AuthorCourseResponse saveDraftModules(Long courseId,
                                                  SaveDraftModulesRequest request) {
-        log.info("Course draft modules saving requested: courseId={}", courseId);
+        log.debug("Course draft modules saving requested: courseId={}", courseId);
 
         Course course = courseRepository.findByIdWithDraftModules(courseId);
 
@@ -331,7 +373,7 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
     public AuthorCourseModuleResponse saveDraftModuleLessons(Long courseId,
                                                              Long moduleId,
                                                              SaveDraftModuleLessonsRequest request) {
-        log.info("Course draft module lessons saving requested: courseId={}, moduleId={}, stableModuleId={}",
+        log.debug("Course draft module lessons saving requested: courseId={}, moduleId={}, stableModuleId={}",
                 courseId, moduleId, request.stableModuleId());
 
         Course course = courseRepository.findByIdWithDraftModuleLessons(
@@ -381,7 +423,7 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
     public AuthorCourseLessonResponse saveDraftLessonBlocks(Long courseId,
                                                             Long lessonId,
                                                             SaveDraftLessonBlocksRequest request) {
-        log.info("Course draft lesson blocks saving requested: courseId={}, lessonId={}, stableLessonId={}",
+        log.debug("Course draft lesson blocks saving requested: courseId={}, lessonId={}, stableLessonId={}",
                 courseId, lessonId, request.stableLessonId());
 
         Course course = courseRepository.findByIdWithDraftLessonBlocks(
@@ -429,12 +471,13 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
     @Override
     @Transactional
     public void requestPublication(Long courseId) {
-        log.info("Course publication requested: courseId={}", courseId);
+        log.debug("Course publication requested: courseId={}", courseId);
 
         Course course = courseRepository.findByIdWithDraftContent(courseId);
 
         if (course == null) {
-            log.error("Course loading with full draft content failed, course not found: courseId={}", courseId);
+            log.error("Course loading with full draft content failed, course not found: courseId={}",
+                    courseId);
             throw new NotFoundException(
                     CourseErrorCode.COURSE_NOT_FOUND,
                     "Course with id=" + courseId + " not found"
@@ -454,7 +497,7 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
     @Override
     @Transactional
     public void archive(Long courseId) {
-        log.info("Course archiving requested: courseId={}", courseId);
+        log.debug("Course archiving requested: courseId={}", courseId);
 
         Course course = getExistingCourse(courseId);
 
@@ -474,7 +517,7 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
     @Override
     @Transactional
     public void unarchive(Long courseId) {
-        log.info("Course unarchiving requested: courseId={}", courseId);
+        log.debug("Course unarchiving requested: courseId={}", courseId);
 
         Course course = getExistingCourse(courseId);
         ensureAuthor(course);
@@ -499,7 +542,7 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
     @Override
     @Transactional
     public void deleteCourse(Long courseId) {
-        log.info("Course deletion requested: courseId={}", courseId);
+        log.debug("Course deletion requested: courseId={}", courseId);
 
         Course course = getExistingCourse(courseId);
 
@@ -520,7 +563,7 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
         Course course = courseRepository.findById(courseId);
 
         if (course == null) {
-            log.error("Course loading failed, course not found: courseId={}", courseId);
+            log.warn("Course loading failed, course not found: courseId={}", courseId);
             throw new NotFoundException(
                     CourseErrorCode.COURSE_NOT_FOUND,
                     "Course with id=" + courseId + " not found"
@@ -533,7 +576,7 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
     private Long getDraftVersionId(Course course) {
         if (course.getDraftVersion() == null
                 || course.getDraftVersion().getId() == null) {
-            log.error("Draft version loading failed, draft version not found: courseId={}",
+            log.warn("Draft version loading failed, draft version not found: courseId={}",
                     course.getId());
             throw new NotFoundException(
                     CourseErrorCode.COURSE_DRAFT_VERSION_NOT_FOUND,
@@ -547,10 +590,15 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
     private void ensureAuthor(Course course) {
         Long currentUserId = identityApi.getCurrentUserId();
 
+        if (currentUserId == null) {
+            log.warn("Unauthorized author request");
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
+
         if (!currentUserId.equals(course.getAuthorId())) {
-            log.error("Course access denied: courseId={}, currentUserId={}, authorId={}",
+            log.warn("Forbidden author course action: courseId={}, currentUserId={}, authorId={}",
                     course.getId(), currentUserId, course.getAuthorId());
-            throw new ForbiddenException(CourseErrorCode.COURSE_FORBIDDEN);
+            throw new NotFoundException(CourseErrorCode.COURSE_NOT_FOUND);
         }
     }
 
@@ -577,9 +625,13 @@ public class DefaultAuthorCourseService implements AuthorCourseService {
         }
 
         if (!mediaApi.existsFileByIds(fileIds)) {
+            log.error("File loading failed, file not found: fileIds={}",
+                    fileIds);
             throw new NotFoundException(CourseErrorCode.LESSON_BLOCK_FILE_REQUIRED);
         }
         if (!mediaApi.existsVideoByIds(videoIds)) {
+            log.error("Video loading failed, file not found: videoIds={}",
+                    videoIds);
             throw new NotFoundException(CourseErrorCode.LESSON_BLOCK_VIDEO_REQUIRED);
         }
     }

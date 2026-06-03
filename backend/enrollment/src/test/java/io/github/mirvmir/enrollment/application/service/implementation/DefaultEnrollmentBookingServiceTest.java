@@ -1,13 +1,13 @@
 package io.github.mirvmir.enrollment.application.service.implementation;
 
 import io.github.mirvmir.activity.api.ActivityApi;
-import io.github.mirvmir.activity.api.dto.ActivityPurchaseInfoResponse;
-import io.github.mirvmir.activity.api.dto.ActivitySlotPurchaseInfoResponse;
+import io.github.mirvmir.activity.api.dto.ActivityBookingInfoResponse;
+import io.github.mirvmir.activity.api.dto.ActivitySlotBookingInfoResponse;
 import io.github.mirvmir.activity.api.dto.CreatedActivitySlotResponse;
 import io.github.mirvmir.common.exception.BusinessException;
 import io.github.mirvmir.common.exception.NotFoundException;
 import io.github.mirvmir.course.api.CourseApi;
-import io.github.mirvmir.course.api.dto.CoursePurchaseInfoResponse;
+import io.github.mirvmir.course.api.dto.CourseBookingInfoResponse;
 import io.github.mirvmir.enrollment.application.properties.BookingProperties;
 import io.github.mirvmir.enrollment.application.service.port.repository.ActivityEnrollmentRepository;
 import io.github.mirvmir.enrollment.application.service.port.repository.CourseEnrollmentRepository;
@@ -77,7 +77,7 @@ class DefaultEnrollmentBookingServiceTest {
 
     @Test
     void bookCourse_shouldCreateEnrollmentOrderAndPayment() {
-        CoursePurchaseInfoResponse course = new CoursePurchaseInfoResponse(
+        CourseBookingInfoResponse course = new CourseBookingInfoResponse(
                 100L,
                 1000L,
                 2L,
@@ -149,7 +149,7 @@ class DefaultEnrollmentBookingServiceTest {
 
     @Test
     void bookCourse_shouldConfirmEnrollmentWithoutPayment_whenCourseIsFree() {
-        CoursePurchaseInfoResponse course = new CoursePurchaseInfoResponse(
+        CourseBookingInfoResponse course = new CourseBookingInfoResponse(
                 100L,
                 1000L,
                 2L,
@@ -213,7 +213,7 @@ class DefaultEnrollmentBookingServiceTest {
 
     @Test
     void bookCourse_shouldThrowBusinessException_whenAlreadyActive() {
-        CoursePurchaseInfoResponse course = new CoursePurchaseInfoResponse(
+        CourseBookingInfoResponse course = new CourseBookingInfoResponse(
                 100L,
                 1000L,
                 2L,
@@ -237,7 +237,7 @@ class DefaultEnrollmentBookingServiceTest {
 
     @Test
     void bookGroupActivitySlot_shouldCreateEnrollmentOrderAndPayment() {
-        ActivitySlotPurchaseInfoResponse slot = new ActivitySlotPurchaseInfoResponse(
+        ActivitySlotBookingInfoResponse slot = new ActivitySlotBookingInfoResponse(
                 200L,
                 2L,
                 3L,
@@ -250,7 +250,7 @@ class DefaultEnrollmentBookingServiceTest {
                 true
         );
 
-        ActivityEnrollment enrollment = ActivityEnrollment.create(now, 200L, 1L);
+        ActivityEnrollment enrollment = ActivityEnrollment.create(now, 2L, 200L, 1L);
         enrollment.assignId(10L);
 
         Order savedOrder = Order.load(
@@ -268,10 +268,10 @@ class DefaultEnrollmentBookingServiceTest {
         );
 
         when(identityApi.getCurrentUserId()).thenReturn(1L);
-        when(activityApi.getSlotPurchaseInfo(200L)).thenReturn(slot);
+        when(activityApi.getSlotBookingInfo(200L)).thenReturn(slot);
         when(activityEnrollmentRepository.existsActiveByUserIdAndActivitySlotId(1L, 200L, now))
                 .thenReturn(false);
-        when(activityEnrollmentRepository.tryEnroll(200L, 1L, now))
+        when(activityEnrollmentRepository.tryEnroll(2L, 200L, 1L, now))
                 .thenReturn(enrollment);
         when(orderRepository.saveOrUpdate(any(Order.class))).thenReturn(savedOrder);
         when(paymentApi.createPayment(any()))
@@ -283,13 +283,13 @@ class DefaultEnrollmentBookingServiceTest {
         assertEquals(200L, result.targetId());
         assertEquals(30L, result.paymentId());
 
-        verify(activityEnrollmentRepository).tryEnroll(200L, 1L, now);
+        verify(activityEnrollmentRepository).tryEnroll(2L, 200L, 1L, now);
         verify(paymentApi).createPayment(any());
     }
 
     @Test
     void bookGroupActivitySlot_shouldThrowBusinessException_whenSlotFull() {
-        ActivitySlotPurchaseInfoResponse slot = new ActivitySlotPurchaseInfoResponse(
+        ActivitySlotBookingInfoResponse slot = new ActivitySlotBookingInfoResponse(
                 200L,
                 2L,
                 3L,
@@ -303,8 +303,8 @@ class DefaultEnrollmentBookingServiceTest {
         );
 
         when(identityApi.getCurrentUserId()).thenReturn(1L);
-        when(activityApi.getSlotPurchaseInfo(200L)).thenReturn(slot);
-        when(activityEnrollmentRepository.tryEnroll(200L, 1L, now))
+        when(activityApi.getSlotBookingInfo(200L)).thenReturn(slot);
+        when(activityEnrollmentRepository.tryEnroll(2L, 200L, 1L, now))
                 .thenReturn(null);
 
         assertThrows(BusinessException.class,
@@ -317,7 +317,7 @@ class DefaultEnrollmentBookingServiceTest {
     void bookIndividualActivity_shouldCreateSlotEnrollmentOrderAndPayment() {
         Instant startAt = Instant.parse("2026-05-14T10:00:00Z");
 
-        ActivityPurchaseInfoResponse activity = new ActivityPurchaseInfoResponse(
+        ActivityBookingInfoResponse activity = new ActivityBookingInfoResponse(
                 200L,
                 2L,
                 "Индивидуальное занятие",
@@ -334,7 +334,7 @@ class DefaultEnrollmentBookingServiceTest {
                         Instant.parse("2026-05-15T11:30:00Z")
                         );
 
-        ActivityEnrollment enrollment = ActivityEnrollment.create(now, 500L, 1L);
+        ActivityEnrollment enrollment = ActivityEnrollment.create(now, 2L, 500L, 1L);
         enrollment.assignId(10L);
 
         Order savedOrder = Order.load(
@@ -352,7 +352,7 @@ class DefaultEnrollmentBookingServiceTest {
         );
 
         when(identityApi.getCurrentUserId()).thenReturn(1L);
-        when(activityApi.getPurchaseInfo(400L)).thenReturn(activity);
+        when(activityApi.getBookingInfo(400L)).thenReturn(activity);
         when(activityApi.createIndividualSlot(any())).thenReturn(createdSlot);
         when(activityEnrollmentRepository.saveOrUpdate(any(ActivityEnrollment.class)))
                 .thenReturn(enrollment);

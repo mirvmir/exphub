@@ -4,6 +4,8 @@ import io.github.mirvmir.practice.application.service.port.repository.PracticeSu
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -21,29 +23,45 @@ class DefaultPracticeApiTest {
 
     @Test
     void isPracticeCompletedByLessonIdAndStudentId_shouldReturnTrue() {
-        when(practiceSubmissionRepository.existsCheckedByLessonIdAndStudentId(100L, 1L))
+        when(practiceSubmissionRepository.existsCheckedByStableLessonIdAndStudentId(
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+                1L))
                 .thenReturn(true);
 
         boolean result =
-                practiceApi.isPracticeCompletedByLessonIdAndStudentId(100L, 1L);
+                practiceApi.isPracticeCompletedByLessonIdAndStudentId(
+                        UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+                        1L
+                );
 
         assertTrue(result);
 
         verify(practiceSubmissionRepository)
-                .existsCheckedByLessonIdAndStudentId(100L, 1L);
+                .existsCheckedByStableLessonIdAndStudentId(
+                        UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+                        1L
+                );
     }
 
     @Test
     void isPracticeCompletedByLessonIdAndStudentId_shouldReturnFalse() {
-        when(practiceSubmissionRepository.existsCheckedByLessonIdAndStudentId(100L, 1L))
+        when(practiceSubmissionRepository.existsCheckedByStableLessonIdAndStudentId(
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+                1L))
                 .thenReturn(false);
 
         boolean result =
-                practiceApi.isPracticeCompletedByLessonIdAndStudentId(100L, 1L);
+                practiceApi.isPracticeCompletedByLessonIdAndStudentId(
+                        UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+                        1L
+                );
 
         assertFalse(result);
 
         verify(practiceSubmissionRepository)
-                .existsCheckedByLessonIdAndStudentId(100L, 1L);
+                .existsCheckedByStableLessonIdAndStudentId(
+                        UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+                        1L
+                );
     }
 }

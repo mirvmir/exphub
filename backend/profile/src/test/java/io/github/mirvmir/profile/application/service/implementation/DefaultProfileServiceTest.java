@@ -79,7 +79,6 @@ class DefaultProfileServiceTest {
         assertTrue(profile.isEmailVisibility());
 
         verify(profileRepository).save(profile);
-        verifyNoInteractions(eventPublisher);
         verify(identityApi, never()).reissueTokens(anyLong());
     }
 
@@ -159,7 +158,6 @@ class DefaultProfileServiceTest {
         assertNull(response.refreshToken());
 
         verify(profileRepository).save(profile);
-        verifyNoInteractions(eventPublisher);
         verify(identityApi, never()).reissueTokens(anyLong());
     }
 

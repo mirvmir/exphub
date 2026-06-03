@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.UUID;
 
 public record SaveDraftLessonBlocksRequest(
-        @NotNull
         List<@Valid SaveDraftLessonBlockItemRequest> blocks,
         UUID stableLessonId
 ) {

@@ -11,7 +11,7 @@ import io.github.mirvmir.identity.domain.RefreshToken;
 import io.github.mirvmir.identity.domain.Role;
 import io.github.mirvmir.identity.domain.User;
 import io.github.mirvmir.identity.exception.IdentityErrorCode;
-import io.github.mirvmir.identity.exception.UnauthorizedException;
+import io.github.mirvmir.common.exception.UnauthorizedException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

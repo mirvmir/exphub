@@ -21,6 +21,9 @@ public class ActivityEnrollmentEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "activity_id", nullable = false)
+    private Long activityId;
+
     @Column(name = "activity_slot_id", nullable = false)
     private Long activitySlotId;
 

@@ -6,9 +6,11 @@ import io.github.mirvmir.course.web.response.AuthorCourseModuleResponse;
 import io.github.mirvmir.course.web.response.AuthorCourseResponse;
 import io.github.mirvmir.course.web.response.IdResponse;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface AuthorCourseService {
+    List<AuthorCourseResponse> getAllCourse();
     AuthorCourseResponse getCourse(Long courseId);
     AuthorCourseModuleResponse getModule(Long courseId, UUID stableModuleId);
     AuthorCourseLessonResponse getLesson(Long courseId, UUID stableLessonId);

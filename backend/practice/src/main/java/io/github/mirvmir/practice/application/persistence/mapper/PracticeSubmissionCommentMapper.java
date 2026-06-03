@@ -17,7 +17,7 @@ public interface PracticeSubmissionCommentMapper {
         return PracticeSubmissionComment.load(
                 entity.getId(),
                 entity.getPracticeSubmissionAnswerId(),
-                entity.getHtml(),
+                entity.getText(),
                 entity.getFileId(),
                 entity.getCreatedAt()
         );

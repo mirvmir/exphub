@@ -19,6 +19,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -64,6 +65,7 @@ class DefaultCourseProgressServiceTest {
                 1000L,
                 200L,
                 300L,
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
                 null,
                 false,
                 Set.of(300L, 301L),
@@ -112,6 +114,7 @@ class DefaultCourseProgressServiceTest {
                 1000L,
                 200L,
                 300L,
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
                 null,
                 false,
                 Set.of(300L),
@@ -143,6 +146,7 @@ class DefaultCourseProgressServiceTest {
                 1000L,
                 200L,
                 300L,
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
                 now.plusSeconds(3600),
                 false,
                 Set.of(300L),
@@ -170,6 +174,7 @@ class DefaultCourseProgressServiceTest {
                 1000L,
                 200L,
                 300L,
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
                 null,
                 true,
                 Set.of(300L),
@@ -180,7 +185,9 @@ class DefaultCourseProgressServiceTest {
         when(courseEnrollmentRepository.findPayedByUserIdAndCourseId(1L, 100L))
                 .thenReturn(enrollment);
         when(courseApi.getLessonInfo(300L)).thenReturn(lessonInfo);
-        when(practiceApi.isPracticeCompletedByLessonIdAndStudentId(300L, 1L))
+        when(practiceApi.isPracticeCompletedByLessonIdAndStudentId(
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+                1L))
                 .thenReturn(false);
 
         assertThrows(BusinessException.class,
@@ -198,6 +205,7 @@ class DefaultCourseProgressServiceTest {
                 1000L,
                 200L,
                 300L,
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
                 null,
                 true,
                 Set.of(300L),
@@ -208,7 +216,9 @@ class DefaultCourseProgressServiceTest {
         when(courseEnrollmentRepository.findPayedByUserIdAndCourseId(1L, 100L))
                 .thenReturn(enrollment);
         when(courseApi.getLessonInfo(300L)).thenReturn(lessonInfo);
-        when(practiceApi.isPracticeCompletedByLessonIdAndStudentId(300L, 1L))
+        when(practiceApi.isPracticeCompletedByLessonIdAndStudentId(
+                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+                1L))
                 .thenReturn(true);
         when(studentLessonProgressRepository.countCompletedByEnrollmentIdAndLessonIds(anyLong(), anySet()))
                 .thenReturn(1L);

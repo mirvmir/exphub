@@ -5,6 +5,7 @@ import java.time.Instant;
 public record ActivityTimeResponse(
         Long id,
         Instant startAt,
-        Instant endAt
+        Instant endAt,
+        Integer bookingStepMinutes
 ) {
 }

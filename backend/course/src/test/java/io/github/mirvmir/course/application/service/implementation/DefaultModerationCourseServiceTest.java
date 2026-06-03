@@ -56,8 +56,12 @@ class DefaultModerationCourseServiceTest {
 
         assertEquals(ContentStatus.ACTIVE, course.getStatus());
         assertNotNull(course.getPublishedVersion());
-        verify(courseRepository).saveOrUpdate(course);
+
+        verify(courseRepository).findByIdWithDraftContent(1L);
+        verify(courseRepository).approveDraft(course);
         verify(eventPublisher).publish(any(CoursePublishedEvent.class));
+
+        verify(courseRepository, never()).saveOrUpdate(any());
     }
 
     @Test
@@ -85,7 +89,12 @@ class DefaultModerationCourseServiceTest {
 
         assertEquals(ModerationStatus.REJECTED, course.getDraftVersion().getStatus());
         assertEquals("Нужно доработать", course.getDraftVersion().getModerationComment());
-        verify(courseRepository).saveOrUpdate(course);
+
+        verify(courseRepository).findByIdWithDraftContent(1L);
+        verify(courseVersionRepository)
+                .updateModerationState(course.getDraftVersion());
+
+        verify(courseRepository, never()).saveOrUpdate(any());
     }
 
     @Test

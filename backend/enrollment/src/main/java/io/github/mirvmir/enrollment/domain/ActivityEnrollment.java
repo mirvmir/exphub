@@ -16,6 +16,8 @@ import static lombok.AccessLevel.PRIVATE;
 public class ActivityEnrollment {
     private Long id;
     @NonNull
+    private Long activityId;
+    @NonNull
     private Long activitySlotId;
     @NonNull
     private Long userId;
@@ -25,10 +27,12 @@ public class ActivityEnrollment {
     private final Instant subscribedAt;
 
     public static ActivityEnrollment create(Instant now,
+                                            Long activityId,
                                             Long activitySlotId,
                                             Long userId) {
         return new ActivityEnrollment(
                 null,
+                activityId,
                 activitySlotId,
                 userId,
                 ActivityEnrollmentStatus.BOOKED,
@@ -37,12 +41,14 @@ public class ActivityEnrollment {
     }
 
     public static ActivityEnrollment load(Long id,
+                                          Long activityId,
                                           Long activitySlotId,
                                           Long userId,
                                           ActivityEnrollmentStatus status,
                                           Instant subscribedAt) {
         return new ActivityEnrollment(
                 id,
+                activityId,
                 activitySlotId,
                 userId,
                 status,

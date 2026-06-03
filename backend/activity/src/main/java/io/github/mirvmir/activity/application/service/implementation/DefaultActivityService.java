@@ -53,7 +53,7 @@ public class DefaultActivityService implements ActivityService {
     public ActivityDescriptionResponse getActivity(Long id) {
         log.debug("Getting activity description: activityId={}", id);
 
-        Activity activity = activityRepository.findById(id);
+        Activity activity = activityRepository.findActiveById(id);
 
         if (activity == null
                 || (!activity.isActive() && !activity.isArchive())) {
@@ -67,17 +67,26 @@ public class DefaultActivityService implements ActivityService {
         Long currentUserId = identityApi.getCurrentUserId();
         Long authorId = activity.getAuthorId();
 
-        boolean isStudent = enrollmentApi.isStudentOfActivity(
-                currentUserId,
-                id
-        );
-
-        if (!activity.isActive() && !isStudent) {
-            log.warn("Inactive activity requested by non-student: activityId={}, userId={}", id, currentUserId);
-            throw new NotFoundException(
-                    ActivityErrorCode.ACTIVITY_NOT_FOUND,
-                    "Activity with id=" + id + " not found"
+        boolean isStudent = false;
+        if (currentUserId != null) {
+            isStudent = enrollmentApi.isStudentOfActivity(
+                    currentUserId,
+                    id
             );
+
+            if (!activity.isActive() && !isStudent) {
+                log.warn("Inactive activity requested by non-student: activityId={}, userId={}",
+                        id,
+                        currentUserId
+                );
+                throw new NotFoundException(
+                        ActivityErrorCode.ACTIVITY_NOT_FOUND,
+                        "Activity with id=" + id + " not found"
+                );
+            }
+        }
+        else {
+            log.debug("Inactive activity requested by unauthorized user: activityId={}", id);
         }
 
         ProfileNameDto author = profileApi.getProfileName(authorId);
@@ -120,7 +129,7 @@ public class DefaultActivityService implements ActivityService {
             }
         }
 
-        log.debug("Activity description prepared: activityId={}, userId={}, isStudent={}",
+        log.info("Activity description successfully received: activityId={}, userId={}, isStudent={}",
                 activity.getId(),
                 currentUserId,
                 isStudent);

@@ -50,7 +50,11 @@ public enum ActivityErrorCode implements ErrorCode {
     TOPIC_SUBJECT_MISMATCH("TOPIC_SUBJECT_MISMATCH",
             "One or more topics do not belong to the specified subject"),
     ACTIVITY_DESCRIPTION_REQUIRED("ACTIVITY_DESCRIPTION_REQUIRED",
-            "Activity description is required");
+            "Activity description is required"),
+    TOPIC_NOT_FOUND("TOPIC_NOT_FOUND",
+            "One or more topics not found"),
+    ACTIVITY_TIME_INVALID("ACTIVITY_TIME_INVALID",
+            "Activity time invalid");
 
     private final String code;
     private final String message;

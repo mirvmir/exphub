@@ -36,11 +36,9 @@ public class Activity {
     private Money price;
     @NonNull
     private Integer durationMinutes;
-    @NonNull
     private Long subjectId;
     @NonNull
     private ActivityType type;
-    private Integer bookingStepMinutes;
     @NonNull
     private ContentStatus contentStatus;
     @NonNull
@@ -55,10 +53,7 @@ public class Activity {
                                             String descriptionHtml,
                                             BigDecimal amount,
                                             Currency currency,
-                                            Integer durationMinutes,
-                                            Long subjectId,
-                                            Integer bookingStepMinutes,
-                                            Set<Long> topicIds) {
+                                            Integer durationMinutes) {
         Money price = new Money(amount, currency);
         return new Activity(
                 null,
@@ -69,13 +64,12 @@ public class Activity {
                 1,
                 price,
                 durationMinutes,
-                subjectId,
+                null,
                 ActivityType.INDIVIDUAL,
-                bookingStepMinutes,
                 ContentStatus.DRAFT,
                 ModerationStatus.DRAFT,
                 null,
-                topicIds,
+                null,
                 new HashSet<>()
         );
     }
@@ -87,9 +81,7 @@ public class Activity {
                                        Integer maxBookableSeats,
                                        BigDecimal amount,
                                        Currency currency,
-                                       Integer durationMinutes,
-                                       Long subjectId,
-                                       Set<Long> topicIds) {
+                                       Integer durationMinutes) {
         if (maxBookableSeats == null || maxBookableSeats < 2) {
             throw new BusinessException(ActivityErrorCode.GROUP_CAPACITY_INVALID);
         }
@@ -104,13 +96,12 @@ public class Activity {
                 maxBookableSeats,
                 price,
                 durationMinutes,
-                subjectId,
-                ActivityType.GROUP,
                 null,
+                ActivityType.GROUP,
                 ContentStatus.DRAFT,
                 ModerationStatus.DRAFT,
                 null,
-                topicIds,
+                null,
                 new HashSet<>()
         );
     }
@@ -126,7 +117,6 @@ public class Activity {
                                 Integer durationMinutes,
                                 Long subjectId,
                                 ActivityType type,
-                                Integer bookingStepMinutes,
                                 ContentStatus contentStatus,
                                 ModerationStatus moderationStatus,
                                 String moderationComment,
@@ -145,7 +135,6 @@ public class Activity {
                 durationMinutes,
                 subjectId,
                 type,
-                bookingStepMinutes,
                 contentStatus,
                 moderationStatus,
                 moderationComment,
@@ -254,13 +243,14 @@ public class Activity {
 
     public void delete() {
         ensureNotDeleted();
+        ensureNotBlocked();
 
         this.contentStatus = ContentStatus.DELETED;
     }
 
     public void updateTopics(Set<Long> topicIds, Long subjectId) {
-        ensureNotBlocked();
         ensureNotDeleted();
+        ensureNotBlocked();
 
         this.subjectId = subjectId;
         this.topicIds = topicIds == null
@@ -286,7 +276,7 @@ public class Activity {
                 .toMinutes();
 
         if (minutesFromWindowStart < 0
-                || minutesFromWindowStart % bookingStepMinutes != 0) {
+                || minutesFromWindowStart % time.getBookingStepMinutes() != 0) {
             throw new BusinessException(ActivityErrorCode.ACTIVITY_NOT_IN_TIME);
         }
 
@@ -327,7 +317,9 @@ public class Activity {
     }
 
     public ActivityTime createAvailabilityTime(Instant now,
-                                               Instant startAt) {
+                                               Instant startAt,
+                                               Instant endAt,
+                                               Integer bookingStepMinutes) {
         ensureActive();
         ensureIndividual();
 
@@ -335,12 +327,50 @@ public class Activity {
             throw new BusinessException(ActivityErrorCode.ACTIVITY_TIME_IN_PAST);
         }
 
-        Instant endAt = startAt.plus(durationMinutes, ChronoUnit.MINUTES);
+        if (!endAt.isAfter(startAt)) {
+            throw new BusinessException(ActivityErrorCode.ACTIVITY_TIME_INVALID);
+        }
+
+        if (bookingStepMinutes == null || bookingStepMinutes <= 0) {
+            throw new BusinessException(ActivityErrorCode.ACTIVITY_TIME_INVALID);
+        }
+
+        long freeWindowMinutes = Duration
+                .between(startAt, endAt)
+                .toMinutes();
+
+        if (freeWindowMinutes < durationMinutes) {
+            throw new BusinessException(
+                    ActivityErrorCode.ACTIVITY_TIME_INVALID
+            );
+        }
+
+        if (bookingStepMinutes > freeWindowMinutes) {
+            throw new BusinessException(
+                    ActivityErrorCode.ACTIVITY_TIME_INVALID
+            );
+        }
+
+        boolean hasIntersection = activityTimes.stream()
+                .anyMatch(existing ->
+                        startAt.isBefore(existing.getEndAt())
+                                && endAt.isAfter(existing.getStartAt())
+                );
+
+        if (hasIntersection) {
+            throw new BusinessException(
+                    ActivityErrorCode.ACTIVITY_TIME_ALREADY_BOOKED
+            );
+        }
+
         ActivityTime availableTime = ActivityTime.create(
                 startAt,
-                endAt
+                endAt,
+                bookingStepMinutes
         );
+
         activityTimes.add(availableTime);
+
         return availableTime;
     }
 
@@ -421,7 +451,7 @@ public class Activity {
     }
 
     private void ensureNotBlocked() {
-        if (ContentStatus.BLOCKED != this.contentStatus) {
+        if (ContentStatus.BLOCKED == this.contentStatus) {
             throw new BusinessException(ActivityErrorCode.ACTIVITY_BLOCKED);
         }
     }

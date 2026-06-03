@@ -1,6 +1,6 @@
 package io.github.mirvmir.activity.application.persistence.mapper;
 
-import io.github.mirvmir.activity.api.dto.ActivitySlotPurchaseInfoResponse;
+import io.github.mirvmir.activity.api.dto.ActivitySlotBookingInfoResponse;
 import io.github.mirvmir.activity.domain.Activity;
 import io.github.mirvmir.activity.domain.ActivitySlot;
 import io.github.mirvmir.activity.web.response.GroupActivitySlotResponse;
@@ -104,7 +104,7 @@ public interface ActivitySlotResponseMapper {
         );
     }
 
-    default ActivitySlotPurchaseInfoResponse toActivitySlotPurchaseInfoResponse(
+    default ActivitySlotBookingInfoResponse toActivitySlotPurchaseInfoResponse(
             Activity activity,
             ActivitySlot slot
     ) {
@@ -112,7 +112,7 @@ public interface ActivitySlotResponseMapper {
             return null;
         }
 
-        return new ActivitySlotPurchaseInfoResponse(
+        return new ActivitySlotBookingInfoResponse(
                 slot.getId(),
                 activity.getId(),
                 activity.getAuthorId(),

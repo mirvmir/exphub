@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NonNull;
 
 import java.time.Instant;
+import java.util.UUID;
 
 import static lombok.AccessLevel.PRIVATE;
 
@@ -15,7 +16,7 @@ import static lombok.AccessLevel.PRIVATE;
 public class PracticeSubmission {
     private Long id;
     @NonNull
-    private Long lessonId;
+    private UUID stableLessonId;
     @NonNull
     private Long courseEnrollmentId;
     @NonNull
@@ -25,14 +26,14 @@ public class PracticeSubmission {
     private Instant checkedAt;
 
     public static PracticeSubmission create(
-            Long lessonId,
+            UUID stableLessonId,
             Long courseEnrollmentId,
             Long studentId,
             Instant now
     ) {
         return new PracticeSubmission(
                 null,
-                lessonId,
+                stableLessonId,
                 courseEnrollmentId,
                 studentId,
                 now,
@@ -42,7 +43,7 @@ public class PracticeSubmission {
 
     public static PracticeSubmission load(
             Long id,
-            Long lessonId,
+            UUID stableLessonId,
             Long courseEnrollmentId,
             Long studentId,
             Instant createdAt,
@@ -50,7 +51,7 @@ public class PracticeSubmission {
     ) {
         return new PracticeSubmission(
                 id,
-                lessonId,
+                stableLessonId,
                 courseEnrollmentId,
                 studentId,
                 createdAt,

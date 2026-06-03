@@ -8,6 +8,7 @@ import io.github.mirvmir.payment.api.dto.CreatePayoutResponse;
 import io.github.mirvmir.payment.api.dto.CreateRefundRequest;
 import io.github.mirvmir.payment.api.dto.CreateRefundResponse;
 import io.github.mirvmir.payment.application.integration.BankPaymentGatewayClient;
+import io.github.mirvmir.payment.application.properties.BankProperties;
 import io.github.mirvmir.payment.application.integration.dto.BankPayoutResponse;
 import io.github.mirvmir.payment.application.integration.dto.BankRefundResponse;
 import io.github.mirvmir.payment.application.service.port.repository.PaymentRepository;
@@ -46,6 +47,7 @@ class DefaultPaymentApiTest {
     private PayoutRepository payoutRepository;
     private RefundRepository refundRepository;
     private BankPaymentGatewayClient bankPaymentGatewayClient;
+    private BankProperties bankProperties;
 
     private DefaultPaymentApi api;
 
@@ -61,6 +63,10 @@ class DefaultPaymentApiTest {
         payoutRepository = mock(PayoutRepository.class);
         refundRepository = mock(RefundRepository.class);
         bankPaymentGatewayClient = mock(BankPaymentGatewayClient.class);
+        bankProperties = mock(BankProperties.class);
+
+        when(bankProperties.getPayoutWebhookUrl()).thenReturn("http://localhost/payments/webhook/bank/payout");
+        when(bankProperties.getRefundWebhookUrl()).thenReturn("http://localhost/payments/webhook/bank/refund");
 
         api = new DefaultPaymentApi(
                 userCardRepository,
@@ -68,6 +74,7 @@ class DefaultPaymentApiTest {
                 payoutRepository,
                 refundRepository,
                 bankPaymentGatewayClient,
+                bankProperties,
                 clock
         );
     }
@@ -123,7 +130,7 @@ class DefaultPaymentApiTest {
                 });
 
         when(bankPaymentGatewayClient.payout(any()))
-                .thenReturn(new BankPayoutResponse("external-payout-1"));
+                .thenReturn(new BankPayoutResponse("external-payout-1", "PROCESSING"));
 
         CreatePayoutResponse response = api.createPayout(request);
 
@@ -177,7 +184,7 @@ class DefaultPaymentApiTest {
                 List.of(RefundStatus.CREATED, RefundStatus.PROCESSING, RefundStatus.SUCCEEDED)
         )).thenReturn(false);
         when(refundRepository.saveOrUpdate(any())).thenReturn(createdRefund);
-        when(bankPaymentGatewayClient.refund(any())).thenReturn(new BankRefundResponse("external-refund-1"));
+        when(bankPaymentGatewayClient.refund(any())).thenReturn(new BankRefundResponse("external-refund-1", "PROCESSING"));
 
         CreateRefundResponse response = api.refundPayment(request);
 

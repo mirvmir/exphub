@@ -33,14 +33,16 @@ public class DefaultModerationActivityService implements ModerationActivityServi
     @Override
     @Transactional
     public void approve(Long id) {
-        log.info("Activity moderation approval requested: activityId={}", id);
+        log.debug("Activity moderation approval requested: activityId={}", id);
 
         Activity activity = activityRepository.findById(id);
 
         if (activity == null) {
             log.warn("Activity not found for moderation action: activityId={}", id);
-            throw new NotFoundException(ActivityErrorCode.ACTIVITY_NOT_FOUND,
-                    "Activity with id=" + id + " not found");
+            throw new NotFoundException(
+                    ActivityErrorCode.ACTIVITY_NOT_FOUND,
+                    "Activity with id=" + id + " not found"
+            );
         }
 
         activity.approveModeration();
@@ -53,15 +55,19 @@ public class DefaultModerationActivityService implements ModerationActivityServi
     }
 
     @Override
+    @Transactional
     public void reject(Long id,
                        RejectActivityRequest request) {
-        log.info("Activity moderation rejection requested: activityId={}", id);
+        log.debug("Activity moderation rejection requested: activityId={}", id);
 
         Activity activity = activityRepository.findById(id);
 
         if (activity == null) {
-            throw new NotFoundException(ActivityErrorCode.ACTIVITY_NOT_FOUND,
-                    "Activity with id=" + id + " not found");
+            log.warn("Activity not found: activityId={}", id);
+            throw new NotFoundException(
+                    ActivityErrorCode.ACTIVITY_NOT_FOUND,
+                    "Activity with id=" + id + " not found"
+            );
         }
 
         activity.rejectModeration(request.moderationComment());
@@ -70,14 +76,18 @@ public class DefaultModerationActivityService implements ModerationActivityServi
     }
 
     @Override
+    @Transactional
     public void block(Long id) {
-        log.info("Activity blocking requested: activityId={}", id);
+        log.debug("Activity blocking requested: activityId={}", id);
 
         Activity activity = activityRepository.findById(id);
 
         if (activity == null) {
-            throw new NotFoundException(ActivityErrorCode.ACTIVITY_NOT_FOUND,
-                    "Activity with id=" + id + " not found");
+            log.warn("Activity not found: activityId={}", id);
+            throw new NotFoundException(
+                    ActivityErrorCode.ACTIVITY_NOT_FOUND,
+                    "Activity with id=" + id + " not found"
+            );
         }
 
         activity.block();
@@ -85,7 +95,7 @@ public class DefaultModerationActivityService implements ModerationActivityServi
 
         activityRepository.findById(activity.getId());
         List<ActivitySlot> activitySlots = activitySlotRepository.findByActivityId(activity.getId());
-        log.info("Refunding enrollments after activity block: activityId={}, slotsCount={}",
+        log.debug("Refunding enrollments after activity block: activityId={}, slotsCount={}",
                 activity.getId(),
                 activitySlots.size());
 

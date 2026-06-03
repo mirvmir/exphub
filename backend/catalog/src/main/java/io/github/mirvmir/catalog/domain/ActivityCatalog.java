@@ -22,6 +22,8 @@ public class ActivityCatalog {
     @NonNull
     private String title;
     @NonNull
+    private Long authorId;
+    @NonNull
     private String authorName;
     @NonNull
     private String shortDescription;
@@ -42,6 +44,7 @@ public class ActivityCatalog {
 
     public static ActivityCatalog create(Long activityId,
                                          String title,
+                                         Long authorId,
                                          String authorName,
                                          String shortDescription,
                                          BigDecimal amount,
@@ -59,6 +62,7 @@ public class ActivityCatalog {
                 null,
                 activityId,
                 title,
+                authorId,
                 authorName,
                 shortDescription,
                 price,
@@ -80,6 +84,7 @@ public class ActivityCatalog {
     public static ActivityCatalog load(Long id,
                                        Long activityId,
                                        String title,
+                                       Long authorId,
                                        String authorName,
                                        String shortDescription,
                                        BigDecimal amount,
@@ -97,6 +102,7 @@ public class ActivityCatalog {
                 id,
                 activityId,
                 title,
+                authorId,
                 authorName,
                 shortDescription,
                 price,

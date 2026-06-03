@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @AllArgsConstructor
 @RestController
-@RequestMapping("/admin/reviews")
+@RequestMapping("/moderation/reviews")
 @PreAuthorize("hasRole('ADMIN')")
 public class ReviewModerationController {
 

@@ -10,7 +10,7 @@ public interface OrderRepository {
    Order saveOrUpdate(Order order);
    Order findById(Long id);
     Order findByIdForUpdate(Long id);
-    List<Order> findExpiredForUpdate(Instant now, int limit);
+    List<Order> findExpiredForUpdate(Instant now);
    Order findByEnrollmentId(Long enrollmentId,
                             OrderTargetType type);
     Order findByEnrollmentIdForUpdate(Long enrollmentId, OrderTargetType type);

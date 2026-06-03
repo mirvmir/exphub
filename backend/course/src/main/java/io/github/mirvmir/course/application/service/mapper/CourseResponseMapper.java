@@ -1,6 +1,6 @@
 package io.github.mirvmir.course.application.service.mapper;
 
-import io.github.mirvmir.course.api.dto.CoursePurchaseInfoResponse;
+import io.github.mirvmir.course.api.dto.CourseBookingInfoResponse;
 import io.github.mirvmir.course.domain.Course;
 import io.github.mirvmir.course.domain.CourseLesson;
 import io.github.mirvmir.course.domain.CourseModule;
@@ -168,11 +168,11 @@ public class CourseResponseMapper {
         );
     }
 
-    public CoursePurchaseInfoResponse toCoursePurchaseInfoResponse(
+    public CourseBookingInfoResponse toCourseBookingInfoResponse(
             Course course,
             CourseVersion version
     ) {
-        return new CoursePurchaseInfoResponse(
+        return new CourseBookingInfoResponse(
                 course.getId(),
                 version.getId(),
                 course.getAuthorId(),

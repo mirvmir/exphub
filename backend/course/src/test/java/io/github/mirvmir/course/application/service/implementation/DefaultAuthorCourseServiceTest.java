@@ -21,6 +21,7 @@ import io.github.mirvmir.media.api.MediaApi;
 import io.github.mirvmir.profile.api.ProfileApi;
 import io.github.mirvmir.profile.api.dto.ProfileNameDto;
 import io.github.mirvmir.taxonomy.api.TaxonomyApi;
+import io.github.mirvmir.taxonomy.api.dto.TopicTaxonomyInfoResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -123,13 +124,13 @@ class DefaultAuthorCourseServiceTest {
     }
 
     @Test
-    void getCourse_shouldThrowForbidden_whenCurrentUserIsNotAuthor() {
+    void getCourse_shouldThrowNotFound_whenCurrentUserIsNotAuthor() {
         Course course = draftCourse();
 
         when(courseRepository.findById(1L)).thenReturn(course);
         when(identityApi.getCurrentUserId()).thenReturn(99L);
 
-        assertThrows(ForbiddenException.class,
+        assertThrows(NotFoundException.class,
                 () -> service.getCourse(1L));
 
         verifyNoInteractions(courseVersionRepository, profileApi, courseResponseMapper);
@@ -191,8 +192,15 @@ class DefaultAuthorCourseServiceTest {
     void updateTopics_shouldSaveAndPublishTopicChangeEvent() {
         Course course = draftCourse();
 
+        TopicTaxonomyInfoResponse topic11 = mock(TopicTaxonomyInfoResponse.class);
+        TopicTaxonomyInfoResponse topic12 = mock(TopicTaxonomyInfoResponse.class);
+
+        when(topic11.subjectId()).thenReturn(3L);
+        when(topic12.subjectId()).thenReturn(3L);
         when(courseRepository.findById(1L)).thenReturn(course);
         when(identityApi.getCurrentUserId()).thenReturn(2L);
+        when(taxonomyApi.getTopicTaxonomyInfo(Set.of(11L, 12L)))
+                .thenReturn(List.of(topic11, topic12));
         when(courseRepository.saveOrUpdate(course)).thenReturn(course);
 
         service.updateTopics(1L, new UpdateCourseTopicsRequest(3L, Set.of(11L, 12L)));
@@ -238,7 +246,11 @@ class DefaultAuthorCourseServiceTest {
         service.requestPublication(1L);
 
         assertEquals(ModerationStatus.PENDING, course.getDraftVersion().getStatus());
-        verify(courseRepository).saveOrUpdate(course);
+
+        verify(courseRepository).findByIdWithDraftContent(1L);
+        verify(courseVersionRepository).updateModerationState(course.getDraftVersion());
+
+        verify(courseRepository, never()).saveOrUpdate(any());
     }
 
     @Test

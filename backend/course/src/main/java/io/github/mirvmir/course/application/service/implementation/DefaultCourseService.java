@@ -1,6 +1,7 @@
 package io.github.mirvmir.course.application.service.implementation;
 
 import io.github.mirvmir.common.exception.NotFoundException;
+import io.github.mirvmir.common.exception.UnauthorizedException;
 import io.github.mirvmir.course.application.service.mapper.CourseResponseMapper;
 import io.github.mirvmir.course.application.service.port.repository.CourseRepository;
 import io.github.mirvmir.course.application.service.interfaces.CourseService;
@@ -34,7 +35,7 @@ public class DefaultCourseService implements CourseService {
     public CourseInfoResponse getCourse(Long courseId) {
         log.info("Getting course info: courseId={}", courseId);
 
-        Course course = courseRepository.findById(courseId);
+        Course course = courseRepository.findActiveById(courseId);
 
         if (course == null) {
             log.error("Course info getting failed, course not found: courseId={}", courseId);
@@ -47,7 +48,10 @@ public class DefaultCourseService implements CourseService {
 
         Long currentUserId = identityApi.getCurrentUserId();
 
-        boolean isStudent = enrollmentApi.isStudentOfCourse(courseId, currentUserId);
+        boolean isStudent = false;
+        if (currentUserId != null) {
+            isStudent = enrollmentApi.isStudentOfCourse(courseId, currentUserId);
+        }
 
         CourseInfoResponse response = courseResponseMapper.toCourseInfoResponse(
                 course,

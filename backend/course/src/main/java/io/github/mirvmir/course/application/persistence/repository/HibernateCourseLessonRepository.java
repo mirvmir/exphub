@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @AllArgsConstructor
 @Repository
@@ -28,7 +29,8 @@ public class HibernateCourseLessonRepository implements CourseLessonRepository {
                     cm.id,
                     cl.id,
                     cl.opensAt,
-                    cl.isPractice
+                    cl.isPractice,
+                    cl.stableLessonId
                 from CourseLessonEntity cl
                 join cl.courseModule cm
                 join cm.courseVersion cv
@@ -48,6 +50,7 @@ public class HibernateCourseLessonRepository implements CourseLessonRepository {
         Long foundLessonId = (Long) row[3];
         Instant opensAt = (Instant) row[4];
         Boolean isPractice = (Boolean) row[5];
+        UUID stableLessonId = (UUID) row[6];
 
         Set<Long> moduleLessonIds = new LinkedHashSet<>(
                         session.createQuery("""
@@ -77,6 +80,7 @@ public class HibernateCourseLessonRepository implements CourseLessonRepository {
                 publishedVersionId,
                 courseModuleId,
                 foundLessonId,
+                stableLessonId,
                 opensAt,
                 Boolean.TRUE.equals(isPractice),
                 moduleLessonIds,

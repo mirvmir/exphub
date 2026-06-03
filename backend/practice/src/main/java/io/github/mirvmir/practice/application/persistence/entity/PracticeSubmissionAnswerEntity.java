@@ -23,8 +23,8 @@ public class PracticeSubmissionAnswerEntity {
     @Column(name = "practice_submission_id", nullable = false)
     private Long practiceSubmissionId;
 
-    @Column(name = "html", nullable = false, columnDefinition = "text")
-    private String html;
+    @Column(name = "text", nullable = false, columnDefinition = "text")
+    private String text;
 
     @Column(name = "file_id")
     private Long fileId;

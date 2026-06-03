@@ -2,6 +2,7 @@ package io.github.mirvmir.enrollment.application.service.implementation;
 
 import io.github.mirvmir.common.exception.BusinessException;
 import io.github.mirvmir.common.exception.NotFoundException;
+import io.github.mirvmir.common.exception.UnauthorizedException;
 import io.github.mirvmir.course.api.CourseApi;
 import io.github.mirvmir.course.api.dto.CourseLessonInfoResponse;
 import io.github.mirvmir.enrollment.application.service.interfaces.CourseProgressService;
@@ -45,7 +46,12 @@ public class DefaultCourseProgressService implements CourseProgressService {
         Long studentId = identityApi.getCurrentUserId();
         Instant now = Instant.now(clock);
 
-        log.info("Start completing course lesson: studentId={}, courseId={}, courseLessonId={}",
+        if (studentId == null) {
+            log.error("Unauthorized complete lesson request");
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
+
+        log.debug("Start completing course lesson: studentId={}, courseId={}, courseLessonId={}",
                 studentId,
                 courseId,
                 courseLessonId);
@@ -97,7 +103,7 @@ public class DefaultCourseProgressService implements CourseProgressService {
         if (lessonInfo.isPractice()) {
             boolean practiceCompleted =
                     practiceApi.isPracticeCompletedByLessonIdAndStudentId(
-                            courseLessonId,
+                            lessonInfo.stableLessonId(),
                             studentId
                     );
 

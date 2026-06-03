@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Set;
 
 @AllArgsConstructor
@@ -25,32 +26,41 @@ public class AuthorActivityController {
     private final ActivitySlotService activitySlotService;
     private final AuthorActivityTimeService authorActivityTimeService;
 
+    @GetMapping
+    public List<AuthorActivityDescriptionResponse> getAllActivity() {
+        return authorActivityService.getAllActivity();
+    }
+
     @GetMapping("/{activityId}/description")
-    public AuthorActivityDescriptionResponse getDescriptionForAuthor(
-            @PathVariable Long activityId
+    public AuthorActivityDescriptionResponse getDescription(
+            @PathVariable("activityId")
+            Long activityId
     ) {
-        return authorActivityService.getDescriptionForAuthor(activityId);
+        return authorActivityService.getDescription(activityId);
     }
 
     @GetMapping("/{activityId}/availability-times")
-    public Set<ActivityTimeResponse> getAvailabilityTimesForAuthor(
-            @PathVariable Long activityId
+    public Set<ActivityTimeResponse> getAvailabilityTimes(
+            @PathVariable("activityId")
+            Long activityId
     ) {
-        return authorActivityTimeService.getAvailabilityTimesForAuthor(activityId);
+        return authorActivityTimeService.getAvailabilityTimes(activityId);
     }
 
     @GetMapping("/{activityId}/individual-slots")
-    public Set<IndividualActivitySlotResponse> getIndividualSlotsForAuthor(
-            @PathVariable Long activityId
+    public Set<IndividualActivitySlotResponse> getIndividualSlots(
+            @PathVariable("activityId")
+            Long activityId
     ) {
-        return authorActivityService.getIndividualSlotsForAuthor(activityId);
+        return authorActivityService.getIndividualSlots(activityId);
     }
 
     @GetMapping("/{activityId}/group-slots")
-    public Set<GroupActivitySlotResponse> getGroupSlotsForAuthor(
-            @PathVariable Long activityId
+    public Set<GroupActivitySlotResponse> getGroupSlots(
+            @PathVariable("activityId")
+            Long activityId
     ) {
-        return authorActivityService.getGroupSlotsForAuthor(activityId);
+        return authorActivityService.getGroupSlots(activityId);
     }
 
     @PostMapping
@@ -136,8 +146,10 @@ public class AuthorActivityController {
     @DeleteMapping("/{activityId}/availability-times/{activityTimeId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteAvailabilityTime(
-            @PathVariable Long activityId,
-            @PathVariable Long activityTimeId
+            @PathVariable("activityId")
+            Long activityId,
+            @PathVariable("activityTimeId")
+            Long activityTimeId
     ) {
         authorActivityTimeService.deleteAvailabilityTime(activityId, activityTimeId);
     }
@@ -151,7 +163,7 @@ public class AuthorActivityController {
         authorActivityService.deleteActivity(activityId);
     }
 
-    @PostMapping("/{activitySlotId}/cancel")
+    @PostMapping("/slots/{activitySlotId}/cancel")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void cancelSlot(
             @PathVariable("activitySlotId")

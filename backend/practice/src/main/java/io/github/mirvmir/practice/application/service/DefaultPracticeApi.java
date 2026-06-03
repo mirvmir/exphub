@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @AllArgsConstructor
 @Service
 public class DefaultPracticeApi implements PracticeApi {
@@ -15,12 +17,12 @@ public class DefaultPracticeApi implements PracticeApi {
     @Override
     @Transactional(readOnly = true)
     public boolean isPracticeCompletedByLessonIdAndStudentId(
-            Long courseLessonId,
+            UUID stableLessonId,
             Long studentId
     ) {
         return practiceSubmissionRepository
-                .existsCheckedByLessonIdAndStudentId(
-                        courseLessonId,
+                .existsCheckedByStableLessonIdAndStudentId(
+                        stableLessonId,
                         studentId
                 );
     }

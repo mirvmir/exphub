@@ -123,6 +123,7 @@ public class Course {
     }
 
     public void requestPublication() {
+        ensureNotDeleted();
         ensureCanEditDraft();
 
         draftVersion.validateBeforePublication();
@@ -170,6 +171,7 @@ public class Course {
     }
 
     public void delete() {
+        ensureNotDeleted();
         ensureNotBlocked();
 
         this.status = ContentStatus.DELETED;
@@ -221,6 +223,24 @@ public class Course {
                 .orElse(true);
     }
 
+    public void updateLessonOpensAt(UUID stableLessonId,
+                                    Instant opensAt) {
+        ensureNotDeleted();
+        ensureNotBlocked();
+
+        if (stableLessonId == null) {
+            throw new BusinessException(CourseErrorCode.STABLE_LESSON_ID_REQUIRED);
+        }
+
+        lessonOpenings.removeIf(opening ->
+                stableLessonId.equals(opening.getStableLessonId())
+        );
+
+        lessonOpenings.add(
+                CourseLessonOpening.create(stableLessonId, opensAt)
+        );
+    }
+
     private void ensureCanEditDraft() {
         ensureNotDeleted();
         ensureNotBlocked();
@@ -244,23 +264,5 @@ public class Course {
         if (ContentStatus.BLOCKED == this.status) {
             throw new BusinessException(CourseErrorCode.COURSE_BLOCKED);
         }
-    }
-
-    public void updateLessonOpensAt(UUID stableLessonId,
-                                    Instant opensAt) {
-        ensureNotDeleted();
-        ensureNotBlocked();
-
-        if (stableLessonId == null) {
-            throw new BusinessException(CourseErrorCode.STABLE_LESSON_ID_REQUIRED);
-        }
-
-        lessonOpenings.removeIf(opening ->
-                stableLessonId.equals(opening.getStableLessonId())
-        );
-
-        lessonOpenings.add(
-                CourseLessonOpening.create(stableLessonId, opensAt)
-        );
     }
 }

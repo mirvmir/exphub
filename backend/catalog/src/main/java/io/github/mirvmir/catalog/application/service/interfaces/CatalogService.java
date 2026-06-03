@@ -10,4 +10,7 @@ public interface CatalogService {
     void addScore(Long activityId,
                   Long courseId,
                   Double score);
+    void updateProfile(Long userId,
+                       String newGivenName,
+                       String newFamilyName);
 }

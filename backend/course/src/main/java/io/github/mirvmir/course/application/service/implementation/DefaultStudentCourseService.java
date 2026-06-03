@@ -3,6 +3,7 @@ package io.github.mirvmir.course.application.service.implementation;
 import io.github.mirvmir.common.exception.BusinessException;
 import io.github.mirvmir.common.exception.ForbiddenException;
 import io.github.mirvmir.common.exception.NotFoundException;
+import io.github.mirvmir.common.exception.UnauthorizedException;
 import io.github.mirvmir.course.application.service.mapper.CourseResponseMapper;
 import io.github.mirvmir.course.application.service.port.repository.CourseRepository;
 import io.github.mirvmir.course.application.service.port.repository.CourseVersionRepository;
@@ -214,6 +215,12 @@ public class DefaultStudentCourseService implements StudentCourseService {
 
     private StudentCourseEnrollmentResponse getCurrentStudentEnrollment(Long courseId) {
         Long studentId = identityApi.getCurrentUserId();
+
+        if (studentId == null) {
+            log.info("Unauthorized get current student enrollment request");
+
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
 
         StudentCourseEnrollmentResponse enrollment =
                 enrollmentApi.getStudentCourseEnrollment(

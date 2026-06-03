@@ -1,8 +1,8 @@
 package io.github.mirvmir.activity.application.service;
 
 import io.github.mirvmir.activity.api.ActivityApi;
-import io.github.mirvmir.activity.api.dto.ActivityPurchaseInfoResponse;
-import io.github.mirvmir.activity.api.dto.ActivitySlotPurchaseInfoResponse;
+import io.github.mirvmir.activity.api.dto.ActivityBookingInfoResponse;
+import io.github.mirvmir.activity.api.dto.ActivitySlotBookingInfoResponse;
 import io.github.mirvmir.activity.api.dto.CreateIndividualActivitySlotRequest;
 import io.github.mirvmir.activity.api.dto.CreatedActivitySlotResponse;
 import io.github.mirvmir.activity.application.persistence.mapper.ActivityResponseMapper;
@@ -34,7 +34,7 @@ public class DefaultActivityApi implements ActivityApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ActivitySlotPurchaseInfoResponse getSlotPurchaseInfo(Long activitySlotId) {
+    public ActivitySlotBookingInfoResponse getSlotBookingInfo(Long activitySlotId) {
         ActivitySlot slot = activitySlotRepository.findById(activitySlotId);
 
         if (slot == null) {
@@ -55,7 +55,7 @@ public class DefaultActivityApi implements ActivityApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ActivityPurchaseInfoResponse getPurchaseInfo(Long activityId) {
+    public ActivityBookingInfoResponse getBookingInfo(Long activityId) {
         Activity activity = activityRepository.findById(activityId);
 
         if (activity == null || !activity.isActive()) {

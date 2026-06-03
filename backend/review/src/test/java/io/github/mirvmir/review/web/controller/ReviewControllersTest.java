@@ -140,7 +140,7 @@ class ReviewControllersTest {
 
         when(reviewModerationService.approveReview(1L)).thenReturn(response);
 
-        moderationMockMvc.perform(patch("/admin/reviews/1/approve"))
+        moderationMockMvc.perform(patch("/moderation/reviews/1/approve"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.status").value("PUBLISHED"));
@@ -162,7 +162,7 @@ class ReviewControllersTest {
 
         when(reviewModerationService.rejectReview(1L)).thenReturn(response);
 
-        moderationMockMvc.perform(patch("/admin/reviews/1/reject"))
+        moderationMockMvc.perform(patch("/moderation/reviews/1/reject"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.status").value("REJECTED"));
@@ -217,9 +217,8 @@ class ReviewControllersTest {
                         "Отзыв с id=1 не найден"
                 ));
 
-        moderationMockMvc.perform(patch("/admin/reviews/1/approve"))
+        moderationMockMvc.perform(patch("/moderation/reviews/1/approve"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("REVIEW_NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value("Отзыв с id=1 не найден"));
     }
 

@@ -7,7 +7,7 @@ public record BankPayoutRequest(
         String cardToken,
         BigDecimal amount,
         Currency currency,
-        Long payoutId,
+        String payoutId,
         String description,
         String webhookUrl
 ) {

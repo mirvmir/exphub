@@ -13,10 +13,13 @@ import io.github.mirvmir.activity.application.properties.ActivityCancellationPro
 import io.github.mirvmir.activity.web.request.CancelActivitySlotRequest;
 import io.github.mirvmir.activity.web.request.UpdateActivitySlotRoomJoinUrlRequest;
 import io.github.mirvmir.activity.web.request.UpdateActivityTopicsRequest;
+import io.github.mirvmir.activity.web.response.ActivitySlotWithStatusResponse;
 import io.github.mirvmir.common.exception.BusinessException;
 import io.github.mirvmir.common.exception.ForbiddenException;
 import io.github.mirvmir.common.exception.NotFoundException;
+import io.github.mirvmir.common.exception.UnauthorizedException;
 import io.github.mirvmir.enrollment.api.EnrollmentApi;
+import io.github.mirvmir.enrollment.api.dto.StudentActivityEnrollmentResponse;
 import io.github.mirvmir.identity.api.IdentityApi;
 import io.github.mirvmir.taxonomy.api.TaxonomyApi;
 import io.github.mirvmir.taxonomy.api.dto.TopicTaxonomyInfoResponse;
@@ -27,8 +30,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Instant;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Slf4j
@@ -49,11 +53,82 @@ public class DefaultActivitySlotService implements ActivitySlotService {
     private final Clock clock;
 
     @Override
+    @Transactional(readOnly = true)
+    public Set<ActivitySlotWithStatusResponse> getCurrentStudentActivities() {
+        Long studentId = identityApi.getCurrentUserId();
+
+        log.debug("Getting student activities: studentId={}", studentId);
+
+        Set<StudentActivityEnrollmentResponse> enrollments =
+                enrollmentApi.getStudentActivityEnrollments(studentId);
+
+        if (enrollments.isEmpty()) {
+            log.info("Student activities successfully received: studentId={}, count={}",
+                    studentId,
+                    0);
+            return Set.of();
+        }
+
+        Set<Long> activityIds = enrollments.stream()
+                .map(StudentActivityEnrollmentResponse::activityId)
+                .collect(Collectors.toSet());
+        Set<Long> slotIds = enrollments.stream()
+                .map(StudentActivityEnrollmentResponse::activitySlotId)
+                .collect(Collectors.toSet());
+
+        Map<Long, Activity> activitiesById = activityRepository.findByIds(activityIds)
+                .stream()
+                .collect(Collectors.toMap(Activity::getId, Function.identity()));
+        Map<Long, ActivitySlot> slotsById = activitySlotRepository.findByIds(slotIds)
+                .stream()
+                .collect(Collectors.toMap(ActivitySlot::getId, Function.identity()));
+
+        Set<ActivitySlotWithStatusResponse> result = enrollments.stream()
+                .map(enrollment -> {
+                    Activity activity = activitiesById.get(enrollment.activityId());
+                    ActivitySlot slot = slotsById.get(enrollment.activitySlotId());
+
+                    if (activity == null || slot == null) {
+                        log.debug("Student activity enrollment getting failed, activity or slot not found: enrollmentId={}, activityId={}, slotId={}",
+                                enrollment.enrollmentId(),
+                                enrollment.activityId(),
+                                enrollment.activitySlotId());
+                        return null;
+                    }
+
+                    return new ActivitySlotWithStatusResponse(
+                            slot.getId(),
+                            slot.getStartAt(),
+                            slot.getEndAt(),
+                            slot.getStatus(),
+                            studentId
+                    );
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        log.info("Student activities successfully received: studentId={}, count={}",
+                studentId,
+                result.size());
+        return result;
+    }
+
+    @Override
     @Transactional
     public void cancelByAuthor(Long activitySlotId,
                                CancelActivitySlotRequest request) {
         Long currentUserId = identityApi.getCurrentUserId();
-        log.info("Author cancellation requested: activitySlotId={}, userId={}", activitySlotId, currentUserId);
+
+        if (currentUserId == null) {
+            log.warn("Unauthorized author cancellation request: activitySlotId={}, reason={}",
+                    activitySlotId,
+                    request.reason()
+            );
+
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
+
+        log.debug("Author cancellation requested: activitySlotId={}, userId={}", activitySlotId, currentUserId);
         Instant now = Instant.now(clock);
 
         ActivitySlot slot = getExistingSlot(activitySlotId);
@@ -85,14 +160,25 @@ public class DefaultActivitySlotService implements ActivitySlotService {
         log.info("Activity slot cancelled by author: activityId={}, activitySlotId={}, userId={}",
                 activity.getId(),
                 slot.getId(),
-                currentUserId);
+                currentUserId
+        );
     }
 
     @Override
+    @Transactional
     public void cancelByStudent(Long activitySlotId,
                                 CancelActivitySlotRequest request) {
         Long currentUserId = identityApi.getCurrentUserId();
-        log.info("Student cancellation requested: activitySlotId={}, userId={}", activitySlotId, currentUserId);
+
+        if (currentUserId == null) {
+            log.warn("Unauthorized student cancellation request: activitySlotId={}, reason={}",
+                    activitySlotId,
+                    request.reason()
+            );
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
+
+        log.debug("Student cancellation requested: activitySlotId={}, userId={}", activitySlotId, currentUserId);
         Instant now = Instant.now(clock);
 
         ActivitySlot slot = getExistingSlot(activitySlotId);
@@ -113,12 +199,7 @@ public class DefaultActivitySlotService implements ActivitySlotService {
                     request.reason()
             );
         }
-
-        if (activity.isGroup()) {
-            if (!activity.isGroup()) {
-                throw new BusinessException(ActivityErrorCode.ONLY_FOR_GROUP);
-            }
-
+        else if (activity.isGroup()) {
             enrollmentApi.cancelByActivitySlotIdAndStudentId(
                     activitySlotId,
                     currentUserId,
@@ -129,7 +210,7 @@ public class DefaultActivitySlotService implements ActivitySlotService {
         activityEventPublisher.delete(
                 new ActivityDeleteEvent(activity.getId())
         );
-        log.info("Activity slot cancellation by student processed: activityId={}, activitySlotId={}, userId={}",
+        log.info("Activity slot successfully cancellation by student: activityId={}, activitySlotId={}, userId={}",
                 activity.getId(),
                 slot.getId(),
                 currentUserId);
@@ -139,7 +220,15 @@ public class DefaultActivitySlotService implements ActivitySlotService {
     @Transactional
     public void complete(Long activitySlotId) {
         Long currentUserId = identityApi.getCurrentUserId();
-        log.info("Activity slot completion requested: activitySlotId={}, userId={}", activitySlotId, currentUserId);
+
+        if (currentUserId == null) {
+            log.warn("Unauthorized activity slot completion request: activitySlotId={}",
+                    activitySlotId
+            );
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
+
+        log.debug("Activity slot completion requested: activitySlotId={}, userId={}", activitySlotId, currentUserId);
 
         ActivitySlot slot = getExistingSlot(activitySlotId);
         Activity activity = getExistingActivity(slot.getActivityId());
@@ -156,7 +245,7 @@ public class DefaultActivitySlotService implements ActivitySlotService {
         slot.complete();
 
         activitySlotRepository.saveOrUpdate(slot);
-        log.info("Activity slot completed: activityId={}, activitySlotId={}, userId={}",
+        log.info("Activity slot successfully completed: activityId={}, activitySlotId={}, userId={}",
                 activity.getId(),
                 slot.getId(),
                 currentUserId);
@@ -167,8 +256,16 @@ public class DefaultActivitySlotService implements ActivitySlotService {
     public void updateRoomJoinUrl(Long activitySlotId,
                                   UpdateActivitySlotRoomJoinUrlRequest request) {
         Long currentUserId = identityApi.getCurrentUserId();
+
+        if (currentUserId == null) {
+            log.warn("Unauthorized room join URL update request: activitySlotId={}",
+                    activitySlotId
+            );
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
+
         Instant now = Instant.now(clock);
-        log.info("Room join URL update requested: activitySlotId={}, userId={}", activitySlotId, currentUserId);
+        log.debug("Room join URL update requested: activitySlotId={}, userId={}", activitySlotId, currentUserId);
 
         ActivitySlot slot = getExistingSlot(activitySlotId);
         Activity activity = getExistingActivity(slot.getActivityId());
@@ -195,9 +292,18 @@ public class DefaultActivitySlotService implements ActivitySlotService {
     }
 
     @Override
+    @Transactional
     public void updateTopics(Long activityId, UpdateActivityTopicsRequest request) {
         Long currentUserId = identityApi.getCurrentUserId();
-        log.info("Activity topics update requested: activityId={}, userId={}", activityId, currentUserId);
+
+        if (currentUserId == null) {
+            log.warn("Unauthorized topics update request: activityId={}",
+                    activityId
+            );
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
+
+        log.debug("Activity topics update requested: activityId={}, userId={}", activityId, currentUserId);
 
         Activity activity = getExistingActivity(activityId);
 
@@ -210,9 +316,17 @@ public class DefaultActivitySlotService implements ActivitySlotService {
         }
 
         List<TopicTaxonomyInfoResponse> topicsInfo = taxonomyApi.getTopicTaxonomyInfo(request.topicIds());
+        if (topicsInfo.size() != request.topicIds().size()) {
+            log.warn("Activity topics update failed, topic not found: topicIds={}",
+                    request.topicIds());
+            throw new NotFoundException(ActivityErrorCode.TOPIC_NOT_FOUND);
+        }
         boolean inSubject = topicsInfo.stream()
                 .allMatch(topicInfo -> request.subjectId().equals(topicInfo.subjectId()));
         if (!inSubject) {
+            log.warn("Activity topics update failed, topic not in subject: topicIds={}, subjectId={}",
+                    request.topicIds(),
+                    request.subjectId());
             throw new BusinessException(ActivityErrorCode.TOPIC_SUBJECT_MISMATCH);
         }
 

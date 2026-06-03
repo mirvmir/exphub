@@ -6,6 +6,7 @@ public record BankRefundWebhookRequest(
         @NotBlank
         String externalRefundId,
         @NotBlank
-        String status
+        String status,
+        String failureReason
 ) {
 }

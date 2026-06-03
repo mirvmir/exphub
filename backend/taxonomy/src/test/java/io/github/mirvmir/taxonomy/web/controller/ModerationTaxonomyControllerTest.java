@@ -1,6 +1,5 @@
 package io.github.mirvmir.taxonomy.web.controller;
 
-import io.github.mirvmir.common.exception.BusinessException;
 import io.github.mirvmir.common.exception.GlobalExceptionHandler;
 import io.github.mirvmir.common.exception.NotFoundException;
 import io.github.mirvmir.taxonomy.application.service.interfaces.TaxonomyModerationService;
@@ -24,7 +23,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-class TaxonomyModerationControllerTest {
+class ModerationTaxonomyControllerTest {
 
     private TaxonomyModerationService taxonomyModerationService;
     private MockMvc mockMvc;
@@ -34,7 +33,7 @@ class TaxonomyModerationControllerTest {
         taxonomyModerationService = mock(TaxonomyModerationService.class);
 
         mockMvc = MockMvcBuilders
-                .standaloneSetup(new TaxonomyModerationController(taxonomyModerationService))
+                .standaloneSetup(new ModerationTaxonomyController(taxonomyModerationService))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
@@ -51,7 +50,7 @@ class TaxonomyModerationControllerTest {
                         SuggestionsStatus.PENDING
                 )));
 
-        mockMvc.perform(get("/admin/taxonomy/topics/suggestions"))
+        mockMvc.perform(get("/moderation/taxonomy/topics/suggestions"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1L))
                 .andExpect(jsonPath("$[0].status").value("PENDING"));
@@ -68,7 +67,7 @@ class TaxonomyModerationControllerTest {
                         "ORM"
                 ));
 
-        mockMvc.perform(post("/admin/taxonomy/topics/suggestions/1/approve"))
+        mockMvc.perform(post("/moderation/taxonomy/topics/suggestions/1/approve"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(100L))
                 .andExpect(jsonPath("$.name").value("Hibernate"));
@@ -79,7 +78,7 @@ class TaxonomyModerationControllerTest {
         when(taxonomyModerationService.approveSuggestion(1L))
                 .thenThrow(new NotFoundException(TaxonomyErrorCode.TOPIC_SUGGESTION_NOT_FOUND));
 
-        mockMvc.perform(post("/admin/taxonomy/topics/suggestions/1/approve"))
+        mockMvc.perform(post("/moderation/taxonomy/topics/suggestions/1/approve"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("TOPIC_SUGGESTION_NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value("Topic suggestion not found"));
@@ -97,7 +96,7 @@ class TaxonomyModerationControllerTest {
                         SuggestionsStatus.MERGED
                 ));
 
-        mockMvc.perform(post("/admin/taxonomy/topics/suggestions/1/merge")
+        mockMvc.perform(post("/moderation/taxonomy/topics/suggestions/1/merge")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -121,7 +120,7 @@ class TaxonomyModerationControllerTest {
                         SuggestionsStatus.REJECTED
                 ));
 
-        mockMvc.perform(post("/admin/taxonomy/topics/suggestions/1/reject")
+        mockMvc.perform(post("/moderation/taxonomy/topics/suggestions/1/reject")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -137,7 +136,7 @@ class TaxonomyModerationControllerTest {
         when(taxonomyModerationService.createSubject(any()))
                 .thenReturn(new SubjectResponse(1L, "Java"));
 
-        mockMvc.perform(post("/admin/taxonomy/subjects")
+        mockMvc.perform(post("/moderation/taxonomy/subjects")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -159,7 +158,7 @@ class TaxonomyModerationControllerTest {
                         List.of()
                 ));
 
-        mockMvc.perform(post("/admin/taxonomy/subjects/1/sections")
+        mockMvc.perform(post("/moderation/taxonomy/subjects/1/sections")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -183,7 +182,7 @@ class TaxonomyModerationControllerTest {
                         "Spring Framework"
                 ));
 
-        mockMvc.perform(post("/admin/taxonomy/subjects/1/sections/2/topics")
+        mockMvc.perform(post("/moderation/taxonomy/subjects/1/sections/2/topics")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {

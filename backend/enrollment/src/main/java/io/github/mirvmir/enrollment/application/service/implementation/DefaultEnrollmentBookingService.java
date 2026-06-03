@@ -1,14 +1,15 @@
 package io.github.mirvmir.enrollment.application.service.implementation;
 
 import io.github.mirvmir.activity.api.ActivityApi;
-import io.github.mirvmir.activity.api.dto.ActivityPurchaseInfoResponse;
-import io.github.mirvmir.activity.api.dto.ActivitySlotPurchaseInfoResponse;
+import io.github.mirvmir.activity.api.dto.ActivityBookingInfoResponse;
+import io.github.mirvmir.activity.api.dto.ActivitySlotBookingInfoResponse;
 import io.github.mirvmir.activity.api.dto.CreateIndividualActivitySlotRequest;
 import io.github.mirvmir.activity.api.dto.CreatedActivitySlotResponse;
 import io.github.mirvmir.common.exception.BusinessException;
 import io.github.mirvmir.common.exception.NotFoundException;
+import io.github.mirvmir.common.exception.UnauthorizedException;
 import io.github.mirvmir.course.api.CourseApi;
-import io.github.mirvmir.course.api.dto.CoursePurchaseInfoResponse;
+import io.github.mirvmir.course.api.dto.CourseBookingInfoResponse;
 import io.github.mirvmir.enrollment.application.properties.BookingProperties;
 import io.github.mirvmir.enrollment.application.service.interfaces.EnrollmentBookingService;
 import io.github.mirvmir.enrollment.application.service.port.repository.ActivityEnrollmentRepository;
@@ -58,14 +59,19 @@ public class DefaultEnrollmentBookingService implements EnrollmentBookingService
         Long userId = identityApi.getCurrentUserId();
         Instant now = Instant.now(clock);
 
-        log.info("Start booking course: userId={}, courseId={}",
+        if (userId == null) {
+            log.error("Unauthorized book course request");
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
+
+        log.debug("Course booking requested: userId={}, courseId={}",
                 userId,
                 courseId);
 
-        CoursePurchaseInfoResponse course = courseApi.getInfo(courseId);
+        CourseBookingInfoResponse course = courseApi.getInfo(courseId);
 
-        if (course == null) {
-            log.error("Course booking stopped because course purchase info was not found: userId={}, courseId={}",
+        if (course == null || !course.active()) {
+            log.error("Course booking stopped because course was not found: userId={}, courseId={}",
                     userId,
                     courseId);
             throw new NotFoundException(EnrollmentErrorCode.COURSE_NOT_FOUND);
@@ -136,6 +142,9 @@ public class DefaultEnrollmentBookingService implements EnrollmentBookingService
                 course.courseId()
         );
 
+        log.info("Course booking completed: userId={}, courseId={}",
+                userId,
+                courseId);
         return new BookingResponse(
                 savedOrder.getId(),
                 payment.paymentId(),
@@ -155,15 +164,20 @@ public class DefaultEnrollmentBookingService implements EnrollmentBookingService
         Long userId = identityApi.getCurrentUserId();
         Instant now = Instant.now(clock);
 
-        log.info("Start booking group activity slot: userId={}, activitySlotId={}",
+        if (userId == null) {
+            log.error("Unauthorized book group activity request");
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
+
+        log.debug("Group activity slot booking requested: userId={}, activitySlotId={}",
                 userId,
                 activitySlotId);
 
-        ActivitySlotPurchaseInfoResponse slot =
-                activityApi.getSlotPurchaseInfo(activitySlotId);
+        ActivitySlotBookingInfoResponse slot =
+                activityApi.getSlotBookingInfo(activitySlotId);
 
-        if (slot == null) {
-            log.error("Group activity booking stopped because slot purchase info was not found: userId={}, activitySlotId={}",
+        if (slot == null || !slot.active()) {
+            log.error("Group activity booking stopped because activity slot was not found: userId={}, activitySlotId={}",
                     userId,
                     activitySlotId);
             throw new NotFoundException(
@@ -186,6 +200,7 @@ public class DefaultEnrollmentBookingService implements EnrollmentBookingService
 
         ActivityEnrollment enrollment =
                 activityEnrollmentRepository.tryEnroll(
+                        slot.activityId(),
                         activitySlotId,
                         userId,
                         now
@@ -262,17 +277,22 @@ public class DefaultEnrollmentBookingService implements EnrollmentBookingService
         Long userId = identityApi.getCurrentUserId();
         Instant now = Instant.now(clock);
 
-        log.info("Start booking individual activity: userId={}, activityId={}, activityTimeId={}, startAt={}",
+        if (userId == null) {
+            log.info("Unauthorized book individual activity request");
+            throw new UnauthorizedException("UNAUTHORIZED", "User not authorized");
+        }
+
+        log.info("Individual activity booking requested: userId={}, activityId={}, activityTimeId={}, startAt={}",
                 userId,
                 activityId,
                 request.activityTimeId(),
                 request.startAt());
 
-        ActivityPurchaseInfoResponse activity =
-                activityApi.getPurchaseInfo(activityId);
+        ActivityBookingInfoResponse activity =
+                activityApi.getBookingInfo(activityId);
 
-        if (activity == null) {
-            log.error("Individual activity booking stopped because activity purchase info was not found: userId={}, activityId={}",
+        if (activity == null || !activity.active()) {
+            log.error("Individual activity booking stopped because activity was not found: userId={}, activityId={}",
                     userId,
                     activityId);
             throw new NotFoundException(EnrollmentErrorCode.ACTIVITY_NOT_FOUND,
@@ -309,6 +329,7 @@ public class DefaultEnrollmentBookingService implements EnrollmentBookingService
 
         ActivityEnrollment enrollment = ActivityEnrollment.create(
                 now,
+                activityId,
                 createdSlot.activitySlotId(),
                 userId
         );
@@ -378,6 +399,13 @@ public class DefaultEnrollmentBookingService implements EnrollmentBookingService
                                                 Long orderId,
                                                 String targetName,
                                                 Long targetId) {
+        log.debug("Payment creation requested: orderId={}, targetName={}, targetId={}, userId={}, amount={}, currency={}",
+                orderId,
+                targetName,
+                targetId,
+                userId,
+                amount,
+                currency);
         try {
             CreatePaymentResponse payment = paymentApi.createPayment(
                     new CreatePaymentRequest(
@@ -398,6 +426,13 @@ public class DefaultEnrollmentBookingService implements EnrollmentBookingService
                 throw new IllegalStateException("Payment response is null");
             }
 
+            log.info("Payment creation completed for booking: orderId={}, targetName={}, targetId={}, userId={}, amount={}, currency={}",
+                    orderId,
+                    targetName,
+                    targetId,
+                    userId,
+                    amount,
+                    currency);
             return payment;
         } catch (RuntimeException exception) {
             log.error("Payment creation failed for booking: orderId={}, targetName={}, targetId={}, userId={}, amount={}, currency={}",

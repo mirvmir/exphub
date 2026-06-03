@@ -3,7 +3,7 @@ package io.github.mirvmir.course.application.service;
 import io.github.mirvmir.common.exception.NotFoundException;
 import io.github.mirvmir.course.api.CourseApi;
 import io.github.mirvmir.course.api.dto.CourseLessonInfoResponse;
-import io.github.mirvmir.course.api.dto.CoursePurchaseInfoResponse;
+import io.github.mirvmir.course.api.dto.CourseBookingInfoResponse;
 import io.github.mirvmir.course.api.dto.CourseTeacherResponse;
 import io.github.mirvmir.course.application.service.mapper.CourseResponseMapper;
 import io.github.mirvmir.course.application.service.port.repository.CourseRepository;
@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
+import java.util.UUID;
 
 @AllArgsConstructor
 @Service
@@ -27,10 +28,10 @@ public class DefaultCourseApi implements CourseApi {
 
     @Override
     @Transactional(readOnly = true)
-    public CoursePurchaseInfoResponse getInfo(Long courseId) {
+    public CourseBookingInfoResponse getInfo(Long courseId) {
         Course course = courseRepository.findById(courseId);
 
-        return courseResponseMapper.toCoursePurchaseInfoResponse(
+        return courseResponseMapper.toCourseBookingInfoResponse(
                 course,
                 course.getPublishedVersion()
         );
@@ -58,6 +59,11 @@ public class DefaultCourseApi implements CourseApi {
     }
 
     @Override
+    public Long getCourseIdByStableLessonId(UUID stableLessonId) {
+        return courseRepository.findByStableLessonId(stableLessonId).getId();
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public boolean canTeacherAccessFile(Long userId,
                                         Long fileId) {
@@ -72,8 +78,8 @@ public class DefaultCourseApi implements CourseApi {
 
     @Override
     @Transactional(readOnly = true)
-    public boolean isPractice(Long courseLessonId) {
-        return courseRepository.isPractice(courseLessonId);
+    public boolean isPractice(UUID stableLessonId) {
+        return courseRepository.isPractice(stableLessonId);
     }
 
     @Override

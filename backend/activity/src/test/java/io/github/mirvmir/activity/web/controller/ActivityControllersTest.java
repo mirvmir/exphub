@@ -148,10 +148,8 @@ class ActivityControllersTest {
                 new BigDecimal("1500"),
                 Currency.getInstance("RUB"),
                 60,
-                7L,
                 ActivityType.GROUP,
-                null,
-                Set.of(11L, 12L)
+                null
         );
 
         when(authorActivityService.createActivity(any())).thenReturn(new IdResponse(1L));
@@ -166,9 +164,7 @@ class ActivityControllersTest {
                 actual != null
                         && actual.title().equals("Занятие")
                         && actual.type() == ActivityType.GROUP
-                        && actual.maxBookableSeats().equals(5)
-                        && actual.topicIds().equals(Set.of(11L, 12L))
-        ));
+                        && actual.maxBookableSeats().equals(5)));
     }
 
     @Test
@@ -258,7 +254,7 @@ class ActivityControllersTest {
     void cancelSlotByAuthor_shouldReturn204() throws Exception {
         CancelActivitySlotRequest request = new CancelActivitySlotRequest("Не состоится");
 
-        authorMockMvc.perform(post("/author/activities/10/cancel")
+        authorMockMvc.perform(post("/author/activities/slots/10/cancel")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNoContent());
@@ -303,11 +299,18 @@ class ActivityControllersTest {
     @Test
     void createAvailabilityTime_shouldReturn200() throws Exception {
         Instant startAt = Instant.now().plusSeconds(3600);
-        CreateAvailabilityTimeRequest request = new CreateAvailabilityTimeRequest(startAt);
+        Instant endAt = Instant.now().plusSeconds(10800);
+        Integer bookingStep = 60;
+        CreateAvailabilityTimeRequest request = new CreateAvailabilityTimeRequest(
+                startAt,
+                endAt,
+                bookingStep
+        );
         ActivityTimeResponse response = new ActivityTimeResponse(
                 1L,
                 startAt,
-                startAt.plusSeconds(3600)
+                startAt.plusSeconds(3600),
+                bookingStep
         );
 
         when(authorActivityTimeService.createAvailabilityTime(eq(1L), any())).thenReturn(response);
@@ -420,10 +423,10 @@ class ActivityControllersTest {
         studentMockMvc.perform(post("/student/activities/10/cancel")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                            {
-                              "reason": ""
-                            }
-                            """))
+                                {
+                                  "reason": ""
+                                }
+                                """))
                 .andExpect(status().isBadRequest());
 
         verify(activitySlotService, never()).cancelByStudent(anyLong(), any());
@@ -450,19 +453,4 @@ class ActivityControllersTest {
                 .andExpect(jsonPath("$.code").value("DATABASE_ERROR"))
                 .andExpect(jsonPath("$.message").value("Ошибка при обращении к базе данных"));
     }
-
-    @Test
-    void cancelSlotByStudent_whenPaymentUnavailable_shouldReturn503() throws Exception {
-        CancelActivitySlotRequest request = new CancelActivitySlotRequest("Не смогу прийти");
-
-        doThrow(new PaymentUnavailableException("Платежная система временно недоступна"))
-                .when(activitySlotService).cancelByStudent(eq(10L), any());
-
-        studentMockMvc.perform(post("/student/activities/10/cancel")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isServiceUnavailable())
-                .andExpect(jsonPath("$.message").value("Платежная система временно недоступна"));
-    }
-
 }

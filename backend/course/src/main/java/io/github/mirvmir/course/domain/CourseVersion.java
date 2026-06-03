@@ -160,8 +160,7 @@ public class CourseVersion {
     }
 
     public void saveModuleLessons(Long moduleId,
-                                  List<SaveDraftLessonItemRequest> lessonRequests
-) {
+                                  List<SaveDraftLessonItemRequest> lessonRequests) {
         ensureEditable();
 
         CourseModule module = findModule(moduleId);

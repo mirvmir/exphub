@@ -33,16 +33,17 @@ class DefaultIndividualActivityAvailabilityServiceTest {
         Activity activity = activity(60, Set.of(
                 ActivityTime.load(1L,
                         Instant.parse("2026-05-13T10:00:00Z"),
-                        Instant.parse("2026-05-13T13:00:00Z"))
+                        Instant.parse("2026-05-13T13:00:00Z"),
+                        60)
         ));
 
         Set<IndividualActivitySlotResponse> result = service.calculateAvailableTimes(activity, List.of());
 
-        assertEquals(1, result.size());
+        assertEquals(3, result.size());
         IndividualActivitySlotResponse response = result.iterator().next();
         assertEquals(activity.getId(), response.activityId());
         assertEquals(Instant.parse("2026-05-13T10:00:00Z"), response.startTime());
-        assertEquals(Instant.parse("2026-05-13T13:00:00Z"), response.endTime());
+        assertEquals(Instant.parse("2026-05-13T11:00:00Z"), response.endTime());
     }
 
     @Test
@@ -50,7 +51,8 @@ class DefaultIndividualActivityAvailabilityServiceTest {
         Activity activity = activity(60, Set.of(
                 ActivityTime.load(1L,
                         Instant.parse("2026-05-13T10:00:00Z"),
-                        Instant.parse("2026-05-13T15:00:00Z"))
+                        Instant.parse("2026-05-13T15:00:00Z"),
+                        60)
         ));
         List<ActivitySlot> plannedSlots = List.of(
                 slot(10L, activity.getId(),
@@ -83,7 +85,8 @@ class DefaultIndividualActivityAvailabilityServiceTest {
         Activity activity = activity(90, Set.of(
                 ActivityTime.load(1L,
                         Instant.parse("2026-05-13T10:00:00Z"),
-                        Instant.parse("2026-05-13T13:00:00Z"))
+                        Instant.parse("2026-05-13T13:00:00Z"),
+                        60)
         ));
         List<ActivitySlot> plannedSlots = List.of(
                 slot(10L, activity.getId(),
@@ -110,7 +113,8 @@ class DefaultIndividualActivityAvailabilityServiceTest {
         Activity activity = activity(0, Set.of(
                 ActivityTime.load(1L,
                         Instant.parse("2026-05-13T10:00:00Z"),
-                        Instant.parse("2026-05-13T13:00:00Z"))
+                        Instant.parse("2026-05-13T13:00:00Z"),
+                        60)
         ));
 
         assertThrows(IllegalStateException.class,
@@ -130,7 +134,6 @@ class DefaultIndividualActivityAvailabilityServiceTest {
                 durationMinutes,
                 7L,
                 ActivityType.INDIVIDUAL,
-                30,
                 ContentStatus.ACTIVE,
                 ModerationStatus.APPROVED,
                 null,

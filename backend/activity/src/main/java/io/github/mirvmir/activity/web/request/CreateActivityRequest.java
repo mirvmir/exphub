@@ -1,10 +1,7 @@
 package io.github.mirvmir.activity.web.request;
 
 import io.github.mirvmir.activity.domain.ActivityType;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 import java.util.Currency;
@@ -13,14 +10,15 @@ import java.util.Set;
 public record CreateActivityRequest(
         @NotBlank
         String title,
-        @Size(max = 500)
+        @NotBlank
+        @Size(max = 250)
         String shortDescription,
         String descriptionHtml,
         @NotNull
         @Positive
         Integer maxBookableSeats,
         @NotNull
-        @Positive
+        @PositiveOrZero
         BigDecimal priceAmount,
         @NotNull
         Currency priceCurrency,
@@ -28,11 +26,8 @@ public record CreateActivityRequest(
         @Positive
         Integer durationMinutes,
         @NotNull
-        Long subjectId,
-        @NotNull
         ActivityType type,
         @Positive
-        Integer bookingStepMinutes,
-        Set<Long> topicIds
+        Integer bookingStepMinutes
 ) {
 }
